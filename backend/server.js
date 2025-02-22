@@ -27,3 +27,17 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+app.post('/api/add-test', async (req, res) => {
+  // リクエストボディから 'name' フィールドを取得する例です
+  const { name } = req.body;
+  const { data, error } = await supabase
+    .from('test')
+    .insert([{ name }]);
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data);
+});
