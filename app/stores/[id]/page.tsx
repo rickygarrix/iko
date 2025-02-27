@@ -1,79 +1,82 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
 
-export default async function StoreDetail({ params }: { params: { id: string } }) {
-  // `id` に該当する店舗データを取得
-  const { data: store, error } = await supabase
-    .from("stores")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+type Store = {
+  id: string;
+  name: string;
+  opening_hours: string;
+  phone_number: string;
+  address: string;
+  website: string;
+  instagram: string;
+  alcohol: boolean;
+  genre: string;
+  entry_fee: string;
+  capacity: number;
+  regular_holiday: string;
+  reservation: string;
+};
 
-  if (!store || error) {
-    return notFound();
-  }
+export default function StoreDetail({ params }: { params: { id: string } }) {
+  const [store, setStore] = useState<Store | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!params.id) return;
+
+    const fetchStore = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("stores")
+        .select("*")
+        .eq("id", params.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching store:", error);
+        return;
+      }
+
+      setStore(data);
+      setLoading(false);
+    };
+
+    fetchStore();
+  }, [params.id]);
+
+  if (loading) return <p className="text-white p-4">ロード中...</p>;
+  if (!store) return <p className="text-white p-4">店舗が見つかりません。</p>;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      <div className="max-w-3xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold mb-4 text-blue-400">{store.name}</h1>
-        <p className="text-lg mb-4">{store.genre} / {store.capacity}人</p>
+      <button onClick={() => router.back()} className="mb-4 text-blue-400">
+        ← 戻る
+      </button>
+      <h1 className="text-3xl font-bold">{store.name}</h1>
+      <p className="text-lg text-gray-400">{store.genre} / {store.capacity}人</p>
+      <p className="mt-2">📍 住所: {store.address}</p>
+      <p>🕒 営業時間: {store.opening_hours}</p>
+      <p>📞 電話番号: {store.phone_number}</p>
+      <p>🍸 アルコール提供: {store.alcohol ? "あり" : "なし"}</p>
+      <p>💰 入場料: {store.entry_fee}</p>
+      <p>🛑 定休日: {store.regular_holiday}</p>
+      <p>📅 予約: {store.reservation}</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="font-semibold text-gray-300">📍 住所:</p>
-            <p className="text-gray-400">{store.address}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-300">⏰ 営業時間:</p>
-            <p className="text-gray-400">{store.opening_hours}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-300">💰 入場料:</p>
-            <p className="text-gray-400">{store.entry_fee}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-300">🍹 アルコール提供:</p>
-            <p className="text-gray-400">{store.alcohol ? "あり" : "なし"}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-300">📞 電話番号:</p>
-            <p className="text-gray-400">{store.phone_number}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-300">📅 定休日:</p>
-            <p className="text-gray-400">{store.regular_holiday}</p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-300">📌 予約:</p>
-            <p className="text-gray-400">{store.reservation}</p>
-          </div>
-        </div>
-
-        {/* 公式サイト & Instagram */}
-        <div className="mt-6">
-          {store.website && (
-            <a href={store.website} target="_blank" className="text-blue-400 hover:underline block">
-              🌍 公式サイト
-            </a>
-          )}
-          {store.instagram && (
-            <a href={store.instagram} target="_blank" className="text-pink-400 hover:underline block">
-              📷 Instagram
-            </a>
-          )}
-        </div>
-
-        {/* 戻るボタン */}
-        <div className="mt-6">
-          <a href="/search" className="text-blue-300 hover:underline">🔙 検索ページに戻る</a>
-        </div>
+      <div className="mt-4">
+        {store.website && (
+          <a href={store.website} target="_blank" rel="noopener noreferrer" className="text-blue-400">
+            🌐 公式サイト
+          </a>
+        )}
+        {store.instagram && (
+          <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="ml-4 text-pink-400">
+            📷 Instagram
+          </a>
+        )}
       </div>
     </div>
   );
