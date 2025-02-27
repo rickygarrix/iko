@@ -5,8 +5,17 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function Search() {
-  const [stores, setStores] = useState<any[]>([]); // クラブ情報を保存
-  const [loading, setLoading] = useState(true); // ロード状態
+  const [stores, setStores] = useState<Array<{
+    id: string;
+    name: string;
+    address: string;
+    opening_hours: string;
+    phone_number: string;
+    genre: string;
+    capacity: number;
+  }>>([]);
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -16,7 +25,7 @@ export default function Search() {
         console.error("🔥 Supabase Error:", JSON.stringify(error, null, 2));
       } else {
         console.log("✅ Supabase Data:", data);
-        setStores(data);
+        setStores(data || []); // data が null の場合にエラー回避
       }
       setLoading(false);
     };
@@ -34,7 +43,7 @@ export default function Search() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {stores.map((store) => (
-            <Link key={store.id} href={`/stores/${store.id}`}>
+            <Link key={store.id} href={`/stores/${store.id}`} passHref>
               <div className="p-4 bg-gray-800 rounded shadow cursor-pointer hover:bg-gray-700 transition">
                 <h2 className="text-xl font-semibold">{store.name}</h2>
                 <p className="text-gray-400">{store.genre} / {store.capacity}人</p>
