@@ -4,8 +4,17 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase"; // Supabase クライアントをインポート
 import Link from "next/link";
 
+// クラブ情報の型を定義
+type Store = {
+  id: string;
+  name: string;
+  genre: string;
+  capacity: number;
+  address: string;
+};
+
 export default function Search() {
-  const [stores, setStores] = useState<any[]>([]); // クラブ情報を保存
+  const [stores, setStores] = useState<Store[]>([]); // クラブ情報を保存
   const [loading, setLoading] = useState(true); // ロード状態
 
   useEffect(() => {
@@ -17,7 +26,7 @@ export default function Search() {
         console.error("🔥 Supabase Error:", JSON.stringify(error, null, 2));
       } else {
         console.log("✅ Supabase Data:", data);
-        setStores(data);
+        setStores(data as Store[]); // 型アサーションで Store[] に変換
       }
       setLoading(false);
     };

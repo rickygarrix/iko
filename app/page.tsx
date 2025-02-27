@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Navbar from "@/components/Navbar"; // ✅ 修正後の正しいパス
 
 export default function Home() {
