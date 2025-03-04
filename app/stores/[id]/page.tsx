@@ -1,10 +1,8 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// 店舗データの型
 type Store = {
   id: string;
   name: string;
@@ -21,31 +19,29 @@ type Store = {
 };
 
 export default function StoreDetail() {
-  const params = useParams();
-  const id = typeof params.id === "string" ? params.id : ""; // `id` を `string` 型にする
+  const { id } = useParams();
+  const router = useRouter(); // 🔥 ホームに戻る機能を追加！
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStore = async () => {
-      if (!id) return; // `id` が空なら処理をスキップ
       setLoading(true);
-
       const { data, error } = await supabase
         .from("stores")
         .select("*")
-        .eq("id", String(id)) // `id` を文字列として扱う
+        .eq("id", id)
         .single();
 
       if (error) {
-        console.error("❌ Supabase Error:", error);
+        console.error("Supabase Error:", error);
       } else {
         setStore(data);
       }
       setLoading(false);
     };
 
-    fetchStore();
+    if (id) fetchStore();
   }, [id]);
 
   if (loading) return <p>Loading...</p>;
@@ -53,7 +49,12 @@ export default function StoreDetail() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-3xl font-bold">{store.name}</h1>
+      {/* 🔥 「オトナビ」を押すとホームに戻る */}
+      <h1 className="text-3xl font-bold mb-6 cursor-pointer" onClick={() => router.push("/")}>
+        オトナビ
+      </h1>
+
+      <h2 className="text-2xl font-bold">{store.name}</h2>
       <p className="mt-4 text-gray-300">{store.address}</p>
       <p className="text-gray-400">{store.genre} / {store.capacity}人</p>
       <p className="text-gray-300">営業時間: {store.opening_hours}</p>

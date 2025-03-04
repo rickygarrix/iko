@@ -47,7 +47,6 @@ function SearchResults() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-6">検索結果</h1>
 
       {loading ? (
         <p>ロード中...</p>
@@ -75,9 +74,9 @@ export default function SearchPage() {
     <Suspense fallback={<p>検索結果を読み込み中...</p>}>
       <div className="min-h-screen bg-gray-900 text-white p-6">
         {/* ホームに戻る */}
-        <Link href="/" className="text-3xl font-bold mb-6 cursor-pointer hover:underline">
-          オトナビ
-        </Link>
+        <h1 className="text-3xl font-bold mb-6 no-underline hover:no-underline">
+          <Link href="/">オトナビ</Link>
+        </h1>
         <SearchResults />
       </div>
     </Suspense>
