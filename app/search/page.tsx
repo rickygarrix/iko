@@ -1,36 +1,50 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-export default function Search() {
-  const [stores, setStores] = useState<Array<{
-    id: string;
-    name: string;
-    address: string;
-    opening_hours: string;
-    phone_number: string;
-    genre: string;
-    capacity: number;
-  }>>([]);
+type Store = {
+  id: string;
+  name: string;
+  address: string;
+  genre: string;
+  capacity: number;
+};
 
+export default function Search() {
+  const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams(); // URLのクエリを取得
 
   useEffect(() => {
     const fetchStores = async () => {
       setLoading(true);
-      const { data, error } = await supabase.from("stores").select("*");
+      let query = supabase.from("stores").select("*");
+
+      // URLクエリの値を取得（複数選択対応）
+      const genres = searchParams.get("genre")?.split(",") || [];
+      const areas = searchParams.get("area")?.split(",") || [];
+      const capacities = searchParams.get("capacity")?.split(",") || [];
+
+      // クエリにフィルターを適用（OR検索）
+      if (genres.length > 0) query = query.in("genre", genres);
+      if (areas.length > 0) query = query.in("area", areas);
+      if (capacities.length > 0) query = query.lte("capacity", Math.max(...capacities.map(Number)));
+
+      const { data, error } = await query;
+
       if (error) {
-        console.error("🔥 Supabase Error:", JSON.stringify(error, null, 2));
+        console.error("🔥 Supabase Error:", error);
       } else {
         console.log("✅ Supabase Data:", data);
-        setStores(data || []); // data が null の場合にエラー回避
+        setStores(data);
       }
       setLoading(false);
     };
+
     fetchStores();
-  }, []);
+  }, [searchParams]); // URLが変わったら再検索
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">

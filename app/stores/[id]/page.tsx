@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// 店舗のデータの型を定義
+// 店舗データの型
 type Store = {
   id: string;
   name: string;
@@ -21,28 +21,31 @@ type Store = {
 };
 
 export default function StoreDetail() {
-  const { id } = useParams(); // URL から id を取得
+  const params = useParams();
+  const id = typeof params.id === "string" ? params.id : ""; // `id` を `string` 型にする
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStore = async () => {
+      if (!id) return; // `id` が空なら処理をスキップ
       setLoading(true);
+
       const { data, error } = await supabase
         .from("stores")
         .select("*")
-        .eq("id", id)
+        .eq("id", String(id)) // `id` を文字列として扱う
         .single();
 
       if (error) {
-        console.error("Supabase Error:", error);
+        console.error("❌ Supabase Error:", error);
       } else {
         setStore(data);
       }
       setLoading(false);
     };
 
-    if (id) fetchStore();
+    fetchStore();
   }, [id]);
 
   if (loading) return <p>Loading...</p>;
