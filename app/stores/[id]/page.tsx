@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
+// 店舗のデータ型を定義
 type Store = {
   id: string;
   name: string;
@@ -14,13 +16,14 @@ type Store = {
   phone_number: string;
   reservation: string;
   entry_fee: string;
+  area: string;
+  payment_methods: string | string[] | null; // 🔥 修正済み（配列・文字列・nullを考慮）
   website?: string | null;
   instagram?: string | null;
 };
 
 export default function StoreDetail() {
   const { id } = useParams();
-  const router = useRouter(); // 🔥 ホームに戻る機能を追加！
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +37,7 @@ export default function StoreDetail() {
         .single();
 
       if (error) {
-        console.error("Supabase Error:", error);
+        console.error("🔥 Supabase Error:", error);
       } else {
         setStore(data);
       }
@@ -44,17 +47,19 @@ export default function StoreDetail() {
     if (id) fetchStore();
   }, [id]);
 
-  if (loading) return <p>Loading...</p>;
-  if (!store) return <p>店舗が見つかりません。</p>;
+  if (loading) return <p className="text-white">Loading...</p>;
+  if (!store) return <p className="text-red-500">店舗が見つかりません。</p>;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      {/* 🔥 「オトナビ」を押すとホームに戻る */}
-      <h1 className="text-3xl font-bold mb-6 cursor-pointer" onClick={() => router.push("/")}>
-        オトナビ
-      </h1>
+      {/* 🔥 オトナビロゴ（クリックでホームへ） */}
+      <Link href="/" passHref>
+        <h1 className="text-3xl font-bold cursor-pointer hover:text-blue-400 transition">
+          オトナビ
+        </h1>
+      </Link>
 
-      <h2 className="text-2xl font-bold">{store.name}</h2>
+      <h2 className="text-3xl font-bold">{store.name}</h2>
       <p className="mt-4 text-gray-300">{store.address}</p>
       <p className="text-gray-400">{store.genre} / {store.capacity}人</p>
       <p className="text-gray-300">営業時間: {store.opening_hours}</p>
@@ -62,7 +67,17 @@ export default function StoreDetail() {
       <p className="text-gray-300">電話番号: {store.phone_number}</p>
       <p className="text-gray-300">予約: {store.reservation}</p>
       <p className="text-gray-300">入場料: {store.entry_fee}</p>
+      <p className="text-gray-300">エリア: {store.area}</p>
 
+      {/* 🔥 支払い方法（配列対応） */}
+      <p className="text-gray-300">
+        支払い方法:{" "}
+        {Array.isArray(store.payment_methods)
+          ? store.payment_methods.join(", ")
+          : store.payment_methods || "情報なし"}
+      </p>
+
+      {/* 🔥 公式サイト / Instagram */}
       {store.website && (
         <p className="mt-4">
           <a
@@ -75,7 +90,6 @@ export default function StoreDetail() {
           </a>
         </p>
       )}
-
       {store.instagram && (
         <p className="mt-2">
           <a
