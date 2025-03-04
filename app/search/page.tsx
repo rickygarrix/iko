@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
+// 店舗データの型定義
 type Store = {
   id: string;
   name: string;
@@ -12,42 +14,39 @@ type Store = {
   capacity: number;
 };
 
-export default function Search() {
+function SearchResults() {
+  const searchParams = useSearchParams();
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
-  const searchParams = useSearchParams(); // URLのクエリを取得
 
   useEffect(() => {
     const fetchStores = async () => {
       setLoading(true);
       let query = supabase.from("stores").select("*");
 
-      // URLクエリの値を取得（複数選択対応）
-      const genres = searchParams.get("genre")?.split(",") || [];
-      const areas = searchParams.get("area")?.split(",") || [];
-      const capacities = searchParams.get("capacity")?.split(",") || [];
+      const genre = searchParams.get("genre");
+      const area = searchParams.get("area");
+      const capacity = searchParams.get("capacity");
 
-      // クエリにフィルターを適用（OR検索）
-      if (genres.length > 0) query = query.in("genre", genres);
-      if (areas.length > 0) query = query.in("area", areas);
-      if (capacities.length > 0) query = query.lte("capacity", Math.max(...capacities.map(Number)));
+      if (genre) query = query.eq("genre", genre);
+      if (area) query = query.eq("area", area);
+      if (capacity) query = query.lte("capacity", Number(capacity));
 
       const { data, error } = await query;
 
       if (error) {
         console.error("🔥 Supabase Error:", error);
       } else {
-        console.log("✅ Supabase Data:", data);
         setStores(data);
       }
       setLoading(false);
     };
 
     fetchStores();
-  }, [searchParams]); // URLが変わったら再検索
+  }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
+    <div>
       <h1 className="text-3xl font-bold mb-6">検索結果</h1>
 
       {loading ? (
@@ -68,5 +67,19 @@ export default function Search() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<p>検索結果を読み込み中...</p>}>
+      <div className="min-h-screen bg-gray-900 text-white p-6">
+        {/* ホームに戻る */}
+        <Link href="/" className="text-3xl font-bold mb-6 cursor-pointer hover:underline">
+          オトナビ
+        </Link>
+        <SearchResults />
+      </div>
+    </Suspense>
   );
 }
