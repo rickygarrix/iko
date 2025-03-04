@@ -54,7 +54,7 @@ export default function StoreDetail() {
     <div className="min-h-screen bg-gray-900 text-white p-6">
       {/* 🔥 オトナビロゴ（クリックでホームへ） */}
       <Link href="/" passHref>
-        <h1 className="text-3xl font-bold cursor-pointer hover:text-blue-400 transition">
+        <h1 className="text-4xl font-bold cursor-pointer transition">
           オトナビ
         </h1>
       </Link>
