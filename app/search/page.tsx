@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-// 店舗データの型を定義
+// 店舗データの型
 type Store = {
   id: string;
   name: string;
@@ -12,26 +12,35 @@ type Store = {
   genre: string;
   capacity: number;
   area: string;
-  payment_methods: string[] | null; // 配列 or null
+  payment_methods: string[] | null;
 };
 
 export default function SearchResults() {
+  return (
+    <Suspense fallback={<p className="text-gray-400 mt-6">ロード中...</p>}>
+      <SearchContent />
+    </Suspense>
+  );
+}
+
+function SearchContent() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // URLの検索パラメータを取得
+  // URLの検索パラメータを取得し、useMemoでキャッシュ
   const searchParams = useSearchParams();
-  const selectedGenres = searchParams.getAll("genre");
-  const selectedAreas = searchParams.getAll("area");
-  const selectedPayments = searchParams.getAll("payment");
+  const selectedGenres = useMemo(() => searchParams.getAll("genre"), [searchParams]);
+  const selectedAreas = useMemo(() => searchParams.getAll("area"), [searchParams]);
+  const selectedPayments = useMemo(() => searchParams.getAll("payment"), [searchParams]);
 
   useEffect(() => {
-    const fetchStores = async () => {
+    const fetchStores = async (): Promise<void> => {
       setLoading(true);
+
       let query = supabase.from("stores").select("*");
 
-      // フィルターを適用（空ならフィルターなしで取得）
+      // フィルターが適用されている場合のみ追加
       if (selectedGenres.length > 0) {
         query = query.in("genre", selectedGenres);
       }
@@ -42,7 +51,6 @@ export default function SearchResults() {
         query = query.overlaps("payment_methods", selectedPayments);
       }
 
-      // データ取得
       const { data, error } = await query;
 
       if (error) {
@@ -52,20 +60,21 @@ export default function SearchResults() {
       } else {
         setStores(data || []);
       }
+
       setLoading(false);
     };
 
     fetchStores();
-  }, [selectedGenres.length, selectedAreas.length, selectedPayments.length]); // フィルタ変更時のみ再取得
+  }, [selectedGenres, selectedAreas, selectedPayments]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      {/* オトナビのロゴ（クリックでホームへ戻る） */}
+      {/* 🔥 オトナビのロゴ（クリックでホームへ戻る） */}
       <Link href="/" passHref>
         <h1 className="text-4xl font-bold cursor-pointer transition">オトナビ</h1>
       </Link>
 
-      {/* エラー表示 */}
+      {/* 🔥 エラーがある場合に表示 */}
       {error && <p className="text-red-400 mt-4">エラーが発生しました: {error}</p>}
 
       {loading ? (
@@ -82,7 +91,7 @@ export default function SearchResults() {
                 <p className="text-gray-300">{store.address}</p>
                 <p className="text-gray-300">エリア: {store.area}</p>
                 <p className="text-gray-300">
-                  支払い方法: {store.payment_methods && store.payment_methods.length > 0
+                  支払い方法: {Array.isArray(store.payment_methods) && store.payment_methods.length > 0
                     ? store.payment_methods.join(", ")
                     : "情報なし"}
                 </p>
