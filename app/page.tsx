@@ -172,17 +172,23 @@ export default function Home() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {recommendedStores.map((store) => (
-            <div
-              key={store.id}
-              className="p-4 bg-gray-800 rounded shadow cursor-pointer hover:bg-gray-700 transition"
-              onClick={() => router.push(`/stores/${store.id}`)}
-            >
-              <h2 className="text-xl font-semibold">{store.name}</h2>
-              <p className="text-gray-400">{store.genre} / {store.capacity}人</p>
-              <p className="text-gray-300">エリア: {store.area}</p>
-              <p className="text-gray-300">営業時間: {store.opening_hours}</p>
-            </div>
-          ))}
+            <Link key={store.id} href={`/stores/${store.id}`} passHref>
+              <div className="p-4 bg-gray-800 rounded shadow cursor-pointer hover:bg-gray-700 transition">
+               {/* ハコの画像を表示 */}
+               {store.image_url && (
+                  <img
+                    src={store.image_url}
+                    alt={store.name}
+                    className="w-full h-32 object-cover rounded-md mb-2"
+                  />
+                )}
+               <h2 className="text-xl font-semibold">{store.name}</h2>
+               <p className="text-gray-400">{store.genre} / {store.capacity}人</p>
+               <p className="text-gray-300">エリア: {store.area}</p>
+               <p className="text-gray-300">営業時間: {store.opening_hours}</p>
+             </div>
+             </Link>
+           ))}
         </div>
       )}
     </div>
