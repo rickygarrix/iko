@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 // 店舗データの型
 type Store = {
@@ -13,6 +14,7 @@ type Store = {
   area: string;
   opening_hours: string;
   payment_methods: string[] | null;
+  image_url?: string | null;
 };
 
 // フィルター用の型
@@ -84,12 +86,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">オトナビ</h1>
+      {/* 🔹 ナビゲーションバー */}
+      <div className="flex justify-between items-center mb-6">
+        <Link href="/" passHref>
+          <h1 className="text-3xl font-bold cursor-pointer hover:text-blue-400 transition">オトナビ</h1>
+        </Link>
+        <Link href="/about" passHref>
+          <p className="text-lg cursor-pointer hover:text-blue-400 transition">オトナビとは？</p>
+        </Link>
+      </div>
 
-      {/* 🔥 エラーがある場合に表示 */}
-      {error && <p className="text-red-400 mt-4">エラーが発生しました: {error}</p>}
-
-      {/* 検索フィルター */}
+      {/* 🔹 検索フィルター */}
       <div className="mb-6 p-4 bg-gray-800 rounded">
         <h2 className="text-lg font-semibold mb-2">検索フィルター</h2>
 
@@ -155,7 +162,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* おすすめのクラブ */}
+      {/* 🔹 おすすめのクラブ */}
       <h2 className="text-lg font-semibold mt-6">おすすめのクラブ</h2>
 
       {loading ? (
