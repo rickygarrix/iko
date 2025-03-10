@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import { checkIfOpen } from "@/lib/utils"; // ✅ ここでインポート
+import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
 
 type SearchResultsProps = {
@@ -11,18 +11,21 @@ type SearchResultsProps = {
   selectedAreas: string[];
   selectedPayments: string[];
   showOnlyOpen: boolean;
+  isSearchTriggered: boolean;
 };
 
 export default function SearchResults({
-  selectedGenres, selectedAreas, selectedPayments, showOnlyOpen
+  selectedGenres, selectedAreas, selectedPayments, showOnlyOpen, isSearchTriggered
 }: SearchResultsProps) {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    handleSearch();
-  }, [selectedGenres, selectedAreas, selectedPayments, showOnlyOpen]); // ✅ 検索条件が変わるたびに検索を実行
+    if (isSearchTriggered) {
+      handleSearch(); // ✅ 検索ボタンが押された時のみ検索を実行
+    }
+  }, [isSearchTriggered]);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -44,7 +47,9 @@ export default function SearchResults({
 
   return (
     <div>
-      {loading ? (
+      {!isSearchTriggered ? (
+        <p className="text-gray-400 mt-6">🔍 検索条件を選んで「検索」ボタンを押してください</p>
+      ) : loading ? (
         <p className="mt-6">ロード中...</p>
       ) : stores.length === 0 ? (
         <p className="text-gray-400 mt-6">該当する店舗がありません。</p>

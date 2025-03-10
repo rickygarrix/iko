@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { checkIfOpen } from "@/lib/utils";
+import Image from "next/image";
 
 type Store = {
   id: string;
@@ -15,6 +16,8 @@ type Store = {
 
 
 };
+
+
 
 export default function RecommendedStores() {
   const [recommendedStores, setRecommendedStores] = useState<Store[]>([]);
