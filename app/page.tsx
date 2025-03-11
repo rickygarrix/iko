@@ -11,7 +11,7 @@ import RecommendedStores from "@/components/RecommendedStores";
 export default function Home() {
   const router = useRouter();
 
-  // ✅ フィルターの状態管理（追加）
+  // ✅ フィルターの状態管理
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
@@ -24,6 +24,11 @@ export default function Home() {
     if (selectedAreas.length > 0) params.append("area", selectedAreas.join(","));
     if (selectedPayments.length > 0) params.append("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.append("open", "true");
+
+    // 🔹 検索条件がない場合、`all=true` をセット
+    if (params.toString() === "") {
+      params.set("all", "true");
+    }
 
     router.push(`/search?${params.toString()}`);
   };
