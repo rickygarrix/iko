@@ -18,7 +18,7 @@ export default function AnimatedText() {
       setTimeout(() => {
         setIndex((prevIndex) => (prevIndex + 1) % messages.length);
         setFade(true);
-      }, 500); // フェードアウト時間
+      }, 500);
     }, 3000);
 
     return () => clearInterval(interval);

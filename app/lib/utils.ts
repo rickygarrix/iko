@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import isBetween from "dayjs/plugin/isBetween";
@@ -14,20 +15,21 @@ export const convertToJapaneseDay = (day: string) => {
     .replace("Thursday", "木曜日")
     .replace("Friday", "金曜日")
     .replace("Saturday", "土曜日")
-    .replace("曜日", ""); // ✅ 曜日を削除
+    .replace("曜日", "");
 };
 
 // ✅ **営業時間を判定**
 export const checkIfOpen = (opening_hours: string) => {
-  const nowRaw = dayjs().locale("ja");
-  let now = nowRaw;
+    const nowRaw = dayjs().locale("ja");
+    // eslint-disable-next-line prefer-const
+    let now = nowRaw;
+    // ✅ 6時より前なら前日扱い
+    if (nowRaw.hour() < 6) {
+      now = nowRaw.subtract(1, "day");
+    }
 
-  // ✅ **6時前の時刻補正**
-  const isEarlyMorning = nowRaw.hour() < 6;
-  let logicalDay = isEarlyMorning ? nowRaw.subtract(1, "day") : nowRaw;
-
-  let today = convertToJapaneseDay(logicalDay.format("dddd"));
-  let tomorrow = convertToJapaneseDay(logicalDay.add(1, "day").format("dddd"));
+  let today = convertToJapaneseDay(now.format("dddd"));
+  let tomorrow = convertToJapaneseDay(now.add(1, "day").format("dddd"));
   const currentTime = nowRaw.format("HH:mm");
 
   console.log(`📆 現在の曜日: '${today}', 時刻: ${currentTime}`);
@@ -57,21 +59,18 @@ export const checkIfOpen = (opening_hours: string) => {
 
   const foundKey = Object.keys(hoursMap).find((key) => key.startsWith(today));
 
-  if (!foundKey || !hoursMap[foundKey] || hoursMap[foundKey].length === 0) {
-    console.warn(`⚠️ '${today}' は休業日`);
+  if (!foundKey || !hoursMap.hasOwnProperty(foundKey) || !Array.isArray(hoursMap[foundKey]) || hoursMap[foundKey]?.length === 0) {
+    console.warn(`⚠️ '${today}' は休業日`);  // ❌ `console.error()` を `console.warn()` に変更
 
-    // ✅ 次の営業日を探す（現在の曜日のままで）
-    let nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(today));
-    if (!nextDayKey || hoursMap[nextDayKey].length === 0) {
-        nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
-    }
+    const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
 
-    if (!nextDayKey || !hoursMap[nextDayKey]) {
+    // ✅ `nextDayKey` の存在チェックをより厳密にする
+    if (!nextDayKey || !hoursMap.hasOwnProperty(nextDayKey) || !Array.isArray(hoursMap[nextDayKey])) {
         return { isOpen: false, nextOpening: "営業情報なし" };
     }
 
     return { isOpen: false, nextOpening: `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から` };
-  }
+}
 
   const todayHours = hoursMap[foundKey] || [];
   console.log(`📆 今日(${today}) の営業時間:`, todayHours);
@@ -107,20 +106,23 @@ export const checkIfOpen = (opening_hours: string) => {
   }
 
   if (!isOpen) {
-      // ✅ **6時前に営業終了した場合は、次の営業を表示しない**
-      if (nowRaw.hour() >= 27 || nowRaw.hour() < 6) {
-          return { isOpen: false, nextOpening: "" };
-      }
+    // ✅ **6時前に営業時間外なら次の営業時間を表示しない**
+    if (nowRaw.hour() < 6) {
+      return { isOpen: false, nextOpening: "" };
+    }
 
-      let futureHours = todayHours.filter(period => dayjs(`${now.format("YYYY-MM-DD")} ${period.open}`).isAfter(now));
-      if (futureHours.length > 0) {
-          nextOpening = `次の営業: ${today} ${futureHours[0]?.open} から`;
-      } else {
-          let nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
-          if (nextDayKey && hoursMap[nextDayKey].length > 0) {
-              nextOpening = `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`;
-          }
+    let futureHours = todayHours.filter(period =>
+      dayjs(`${now.format("YYYY-MM-DD")} ${period.open}`).isAfter(now)
+    );
+
+    if (futureHours.length > 0) {
+      nextOpening = `次の営業: ${today} ${futureHours[0]?.open} から`;
+    } else {
+      let nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
+      if (nextDayKey && hoursMap[nextDayKey].length > 0) {
+        nextOpening = `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`;
       }
+    }
   }
 
   return { isOpen, nextOpening };

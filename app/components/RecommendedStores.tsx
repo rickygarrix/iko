@@ -12,12 +12,8 @@ type Store = {
   opening_hours: string;
   image_url?: string | null;
   capacity: string;
-  payment_methods:string;
-
-
+  payment_methods: string[];
 };
-
-
 
 export default function RecommendedStores() {
   const [recommendedStores, setRecommendedStores] = useState<Store[]>([]);
@@ -46,10 +42,12 @@ export default function RecommendedStores() {
           return (
             <Link key={store.id} href={`/stores/${store.id}`} passHref>
               <div className="p-4 bg-gray-800 rounded shadow flex">
-                <img
+                <Image
                   src={store.image_url ?? "/default-image.jpg"}
                   alt={store.name}
-                  className="w-32 h-32 object-cover rounded"
+                  width={128}
+                  height={128}
+                  className="object-cover rounded"
                 />
                 <div className="ml-4 flex flex-col justify-between">
                   <h1 className="text-xl font-semibold">{store.name}</h1>

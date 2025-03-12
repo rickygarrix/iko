@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
+import Image from "next/image";
 
 type SearchResultsProps = {
   selectedGenres: string[];
@@ -24,12 +24,14 @@ export default function SearchResults({
 
   useEffect(() => {
     if (isSearchTriggered) {
-      handleSearch(); // ✅ 検索ボタンが押された時のみ検索を実行
+      handleSearch();
     }
   }, [isSearchTriggered]);
 
   const handleSearch = async () => {
     setLoading(true);
+    setError(null);
+
     let query = supabase.from("stores").select("*");
 
     if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
@@ -52,6 +54,8 @@ export default function SearchResults({
         <p className="text-gray-400 mt-6">🔍 検索条件を選んで「検索」ボタンを押してください</p>
       ) : loading ? (
         <p className="mt-6">ロード中...</p>
+      ) : error ? (
+        <p className="mt-6 text-red-500">⚠️ エラーが発生しました: {error}</p>
       ) : stores.length === 0 ? (
         <p className="text-gray-400 mt-6">該当する店舗がありません。</p>
       ) : (
@@ -61,7 +65,13 @@ export default function SearchResults({
             return (
               <Link key={store.id} href={`/stores/${store.id}`} passHref>
                 <div className="p-4 bg-gray-800 rounded shadow flex">
-                  <img src={store.image_url ?? "/default-image.jpg"} alt={store.name} className="w-32 h-32 object-cover rounded" />
+                  <Image
+                    src={store.image_url ?? "/default-image.jpg"}
+                    alt={store.name}
+                    width={128}
+                    height={128}
+                    className="w-32 h-32 object-cover rounded"
+                  />
                   <div className="ml-4 flex flex-col justify-between">
                     <h2 className="text-xl font-semibold">{store.name}</h2>
                     <p className="text-gray-400">📍 {store.area} / 🎵 {store.genre}</p>

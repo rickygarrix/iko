@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useParams } from "next/navigation";
-import Link from "next/link";
+//import Link from "next/link";
+import Image from "next/image";
 
 type Store = {
   id: string;
@@ -18,8 +19,8 @@ type Store = {
   phone: string;
   website?: string;
   image_url?: string;
-  discription: string; // ✅ 追加: 店の説明
-  access: string; // ✅ 追加: 最寄駅からの行き方
+  discription: string;
+  access: string;
   map?: string;
 };
 
@@ -53,17 +54,18 @@ export default function StoreDetail() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-
       {/* 🔹 店舗情報エリア */}
       <div className="bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col md:flex-row gap-6">
         {/* 画像とリンクを縦に配置 */}
         <div className="flex flex-col items-center space-y-4">
           {/* 🔹 店舗画像 */}
           {store.image_url && (
-            <img
+            <Image
               src={store.image_url}
               alt={store.name}
-              className="w-80 h-80 object-cover rounded-lg"
+              width={320}
+              height={320}
+              className="object-cover rounded-lg"
             />
           )}
 
@@ -91,7 +93,7 @@ export default function StoreDetail() {
         </div>
 
         {/* 🔹 店舗詳細 */}
-        <div className="w-1/2 pl-6">
+        <div className="w-full sm:w-1/2">
           <h1 className="text-2xl font-bold">{store.name}</h1>
           <p className="text-gray-400">🎵 ジャンル: {store.genre}</p>
           <p className="text-gray-400">👥 {store.capacity}人</p>

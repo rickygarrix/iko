@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+//import Header from "@/components/Header";
+//import Footer from "@/components/Footer";
 import AnimatedText from "@/components/AnimatedText";
 import RecommendedStores from "@/components/RecommendedStores";
 
@@ -35,7 +36,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      <Header />
       <SearchFilter
         selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
         selectedAreas={selectedAreas} setSelectedAreas={setSelectedAreas}
