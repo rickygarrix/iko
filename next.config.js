@@ -1,22 +1,9 @@
-const securityHeaders = [
-  {
-    key: "Content-Security-Policy",
-    value: "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com;"
-  }
-];
-
-module.exports = {
-  experimental: { appDir: true },
-  reactStrictMode: true,
+const nextConfig = {
+  experimental: { appDir: true }, // ✅ App Routerを有効化
+  reactStrictMode: true, // ✅ デバッグ強化
   images: {
-    domains: ["blogger.googleusercontent.com", "lh3.googleusercontent.com"],
-  },
-  async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: securityHeaders,
-      },
-    ];
+    domains: ["blogger.googleusercontent.com", "lh3.googleusercontent.com"], // ✅ 必要なドメインを追加
   },
 };
+
+module.exports = nextConfig;
