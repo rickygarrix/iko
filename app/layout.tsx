@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import "./globals.css";
+import GoogleMapsProvider from "@/components/GoogleMapsProvider"; // ✅ GoogleMapsProvider を修正
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,23 +20,16 @@ export const metadata: Metadata = {
   description: "音楽スポットを見つけよう",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
-        {/* ヘッダーを追加 */}
-        <Header />
-
-        {/* メインコンテンツ */}
-        <main className="flex-grow">{children}</main>
-
-        {/* フッターを追加 */}
-        <Footer />
-      </body>
-    </html>
+    <GoogleMapsProvider> {/* ✅ `GoogleMapsProvider` を `<html>` の中に移動 */}
+      <html lang="ja">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+          <Header />
+          <main className="flex-grow">{children}</main>
+          <Footer />
+        </body>
+      </html>
+    </GoogleMapsProvider>
   );
 }
