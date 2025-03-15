@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { GoogleMap, Marker, useJsApiLoader, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 
@@ -9,32 +9,25 @@ const containerStyle = {
   height: "80vh",
 };
 
-const SEARCH_RADIUS = 5000; // 5km
+const SEARCH_RADIUS = 5; // 5km
 
 export default function MapView() {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
   });
 
-  const [locations, setLocations] = useState<
-    { id: string; lat: number; lng: number; name: string }[]
-  >([]);
+  const [locations, setLocations] = useState<{ id: string; lat: number; lng: number; name: string }[]>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({
-    lat: 35.6895, // デフォルトは東京
-    lng: 139.6917,
-  });
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   useEffect(() => {
-    // ✅ 現在地を取得
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           const newCenter = { lat: latitude, lng: longitude };
-
           console.log("📍 現在地取得:", newCenter);
           setCurrentLocation(newCenter);
           setMapCenter(newCenter);
@@ -45,13 +38,11 @@ export default function MapView() {
     }
   }, []);
 
-  // ✅ Supabaseから5km圏内の店舗だけ取得
-  const fetchNearbyStores = async (lat: number, lng: number) => {
+  // ✅ 5km圏内の店舗を取得（useCallbackでメモ化）
+  const fetchNearbyStores = useCallback(async (lat: number, lng: number) => {
     if (!lat || !lng) return;
 
-    const { data, error } = await supabase
-      .from("stores")
-      .select("id, name, latitude, longitude");
+    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude");
 
     if (error) {
       console.error("🔥 Supabase Error:", error.message);
@@ -63,35 +54,27 @@ export default function MapView() {
         .map((store) => ({
           id: store.id,
           name: store.name,
-          lat: Number(store.latitude), // ✅ `lat` に変換
-          lng: Number(store.longitude), // ✅ `lng` に変換
+          lat: Number(store.latitude),
+          lng: Number(store.longitude),
         }))
-        .filter((store) => {
-          const distance = getDistanceFromLatLonInKm(
-            lat, lng,
-            store.lat, store.lng
-          );
-          return distance <= 5; // 5km以内
-        });
+        .filter((store) => getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS);
 
-      setLocations(filteredData); // ✅ ここで正しい型を渡す
+      setLocations(filteredData);
     }
-  };
+  }, []);
 
-  // ✅ 緯度・経度から距離を計算する関数
+  // ✅ 緯度・経度から距離を計算（km単位）
   const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371; // 地球の半径（km）
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   };
 
-  // ✅ 地図の位置が動いたときに「ここで検索」ボタンを表示
+  // ✅ 地図移動時に「ここで検索」ボタンを表示
   const handleMapDragEnd = () => {
     if (mapRef.current) {
       const newCenter = mapRef.current.getCenter();
@@ -102,7 +85,7 @@ export default function MapView() {
     }
   };
 
-  // ✅ 「ここで検索する」ボタンを押したとき
+  // ✅ 「ここで検索」ボタン押下時の動作
   const handleSearchInThisArea = () => {
     fetchNearbyStores(mapCenter.lat, mapCenter.lng);
     setShowSearchButton(false);
@@ -116,7 +99,9 @@ export default function MapView() {
         mapContainerStyle={containerStyle}
         center={mapCenter}
         zoom={14}
-        onLoad={(map) => { mapRef.current = map; }}
+        onLoad={(map) => {
+          mapRef.current = map;
+        }}
         onDragEnd={handleMapDragEnd}
       >
         {/* 🔹 現在地を青い円で表示 */}
