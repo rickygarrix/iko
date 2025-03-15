@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { GoogleMap, Marker, useJsApiLoader, Circle } from "@react-google-maps/api";
+import { useEffect, useState, useRef } from "react";
+import { GoogleMap, Marker, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 
 const containerStyle = {
@@ -12,14 +12,11 @@ const containerStyle = {
 const SEARCH_RADIUS = 5; // 5km
 
 export default function MapView() {
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-  });
-
   const [locations, setLocations] = useState<{ id: string; lat: number; lng: number; name: string }[]>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<{ id: string; name: string; lat: number; lng: number } | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   useEffect(() => {
@@ -27,19 +24,16 @@ export default function MapView() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const newCenter = { lat: latitude, lng: longitude };
-          console.log("📍 現在地取得:", newCenter);
-          setCurrentLocation(newCenter);
-          setMapCenter(newCenter);
-          fetchNearbyStores(newCenter.lat, newCenter.lng);
+          setCurrentLocation({ lat: latitude, lng: longitude });
+          setMapCenter({ lat: latitude, lng: longitude });
+          fetchNearbyStores(latitude, longitude);
         },
         (error) => console.error("📍 現在地取得エラー:", error)
       );
     }
   }, []);
 
-  // ✅ 5km圏内の店舗を取得（useCallbackでメモ化）
-  const fetchNearbyStores = useCallback(async (lat: number, lng: number) => {
+  const fetchNearbyStores = async (lat: number, lng: number) => {
     if (!lat || !lng) return;
 
     const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude");
@@ -61,11 +55,10 @@ export default function MapView() {
 
       setLocations(filteredData);
     }
-  }, []);
+  };
 
-  // ✅ 緯度・経度から距離を計算（km単位）
   const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // 地球の半径（km）
+    const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -74,7 +67,6 @@ export default function MapView() {
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   };
 
-  // ✅ 地図移動時に「ここで検索」ボタンを表示
   const handleMapDragEnd = () => {
     if (mapRef.current) {
       const newCenter = mapRef.current.getCenter();
@@ -85,13 +77,10 @@ export default function MapView() {
     }
   };
 
-  // ✅ 「ここで検索」ボタン押下時の動作
   const handleSearchInThisArea = () => {
     fetchNearbyStores(mapCenter.lat, mapCenter.lng);
     setShowSearchButton(false);
   };
-
-  if (!isLoaded) return <p>Loading Google Maps...</p>;
 
   return (
     <div style={{ position: "relative" }}>
@@ -104,7 +93,6 @@ export default function MapView() {
         }}
         onDragEnd={handleMapDragEnd}
       >
-        {/* 🔹 現在地を青い円で表示 */}
         {currentLocation && (
           <Circle
             center={currentLocation}
@@ -119,7 +107,6 @@ export default function MapView() {
           />
         )}
 
-        {/* 🔹 5km圏内の店舗のピンを表示 */}
         {locations.map((location) => (
           <Marker
             key={location.id}
@@ -130,42 +117,40 @@ export default function MapView() {
               fontSize: "12px",
               fontWeight: "bold",
             }}
+            onClick={() => setSelectedStore(location)}
           />
         ))}
       </GoogleMap>
 
-      {/* 🔹 「ここで検索」ボタン */}
       {showSearchButton && (
+        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)" }}>
+          <button onClick={handleSearchInThisArea} className="bg-orange-500 text-white p-2 rounded shadow-lg">
+            🔍 ここで検索する
+          </button>
+        </div>
+      )}
+
+      {/* 🔹 クリックした店舗の詳細を表示 */}
+      {selectedStore && (
         <div
           style={{
             position: "absolute",
-            top: 20,
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            alignItems: "center",
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            padding: "12px",
-            borderRadius: "8px",
-            boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+            bottom: 0,
+            left: 0,
+            width: "100%",
+            backgroundColor: "white",
+            padding: "16px",
+            borderTopLeftRadius: "10px",
+            borderTopRightRadius: "10px",
+            boxShadow: "0px -2px 10px rgba(0, 0, 0, 0.1)",
+            textAlign: "center",
+            color: "black",
+            fontSize: "16px",
+            cursor: "pointer",
           }}
         >
-          <button
-            onClick={handleSearchInThisArea}
-            style={{
-              backgroundColor: "#ff5722",
-              color: "white",
-              padding: "10px 20px",
-              borderRadius: "5px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              border: "2px solid #e64a19",
-              marginRight: "12px",
-            }}
-          >
-            🔍 ここで検索する
-          </button>
+          <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{selectedStore.name}</h2>
+          <p>📍 {selectedStore.lat}, {selectedStore.lng}</p>
         </div>
       )}
     </div>
