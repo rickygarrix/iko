@@ -21,7 +21,6 @@ export const convertToJapaneseDay = (day: string) => {
 // ✅ **営業時間を判定**
 export const checkIfOpen = (opening_hours: string) => {
     const nowRaw = dayjs().locale("ja");
-    // eslint-disable-next-line prefer-const
     let now = nowRaw;
     // ✅ 6時より前なら前日扱い
     if (nowRaw.hour() < 6) {

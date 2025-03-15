@@ -1,16 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
+import { useEffect, useState, useRef } from "react";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { supabase } from "@/lib/supabase";
 
 const containerStyle = {
   width: "100%",
-  height: "500px",
-};
-
-const defaultCenter = {
-  lat: 35.6895, // 東京の緯度
-  lng: 139.6917, // 東京の経度
+  height: "80vh",
 };
 
 export default function MapView() {
@@ -18,11 +14,61 @@ export default function MapView() {
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
   });
 
-  if (!isLoaded) return <p className="text-center text-white">地図を読み込み中...</p>;
+  const [locations, setLocations] = useState<
+    { id: string; lat: number; lng: number; name: string }[]
+  >([]);
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  useEffect(() => {
+    const fetchStores = async () => {
+      const { data, error } = await supabase
+        .from("stores")
+        .select("id, name, latitude, longitude");
+
+      if (error) {
+        console.error("🔥 Supabase Error:", error.message);
+        return;
+      }
+
+      if (data) {
+        setLocations(
+          data.map((store) => ({
+            id: store.id,
+            lat: Number(store.latitude),
+            lng: Number(store.longitude),
+            name: store.name,
+          }))
+        );
+      }
+    };
+
+    fetchStores();
+  }, []);
+
+  if (!isLoaded) return <p>Loading Google Maps...</p>;
 
   return (
-    <div className="mt-6">
-      <GoogleMap mapContainerStyle={containerStyle} center={defaultCenter} zoom={12} />
-    </div>
+    <GoogleMap
+      mapContainerStyle={containerStyle}
+      center={{ lat: 35.6895, lng: 139.6917 }} // 東京
+      zoom={14}
+      onLoad={(map) => {
+        mapRef.current = map;
+      }}
+    >
+      {/* 🔹 店舗のピンを表示 */}
+      {locations.map((location) => (
+        <Marker
+          key={location.id}
+          position={{ lat: location.lat, lng: location.lng }}
+          label={{
+            text: location.name,
+            color: "black",
+            fontSize: "12px",
+            fontWeight: "bold",
+          }}
+        />
+      ))}
+    </GoogleMap>
   );
 }
