@@ -12,11 +12,15 @@ const containerStyle = {
 const SEARCH_RADIUS = 5; // 5km
 
 export default function MapView() {
-  const [locations, setLocations] = useState<{ id: string; lat: number; lng: number; name: string }[]>([]);
+  const [locations, setLocations] = useState<
+    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; isOpen: boolean }[]
+  >([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<{ id: string; name: string; lat: number; lng: number } | null>(null);
+  const [selectedStore, setSelectedStore] = useState<
+    { id: string; name: string; genre: string; area: string; image_url?: string; isOpen: boolean } | null
+  >(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   useEffect(() => {
@@ -36,7 +40,7 @@ export default function MapView() {
   const fetchNearbyStores = async (lat: number, lng: number) => {
     if (!lat || !lng) return;
 
-    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude");
+    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude, genre, area, image_url, opening_hours");
 
     if (error) {
       console.error("🔥 Supabase Error:", error.message);
@@ -50,6 +54,10 @@ export default function MapView() {
           name: store.name,
           lat: Number(store.latitude),
           lng: Number(store.longitude),
+          genre: store.genre,
+          area: store.area,
+          image_url: store.image_url || "/default-image.jpg",
+          isOpen: checkIfOpen(store.opening_hours).isOpen, // ✅ 営業状況を取得
         }))
         .filter((store) => getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS);
 
@@ -65,6 +73,22 @@ export default function MapView() {
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
+  const checkIfOpen = (openingHours: string) => {
+    if (!openingHours) return { isOpen: false, nextOpening: "不明" };
+
+    const now = new Date();
+    const day = now.getDay();
+    const currentTime = now.getHours() * 100 + now.getMinutes();
+
+    const hours = openingHours.split(", ").map((range) => {
+      const [open, close] = range.split("〜").map((t) => parseInt(t.replace(":", ""), 10));
+      return { open, close };
+    });
+
+    const isOpen = hours.some(({ open, close }) => currentTime >= open && currentTime <= close);
+    return { isOpen, nextOpening: isOpen ? "営業中" : "営業時間外" };
   };
 
   const handleMapDragEnd = () => {
@@ -130,7 +154,6 @@ export default function MapView() {
         </div>
       )}
 
-      {/* 🔹 クリックした店舗の詳細を表示 */}
       {selectedStore && (
         <div
           style={{
@@ -146,11 +169,19 @@ export default function MapView() {
             textAlign: "center",
             color: "black",
             fontSize: "16px",
-            cursor: "pointer",
           }}
         >
           <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{selectedStore.name}</h2>
-          <p>📍 {selectedStore.lat}, {selectedStore.lng}</p>
+          <p>🎵 ジャンル: {selectedStore.genre}</p>
+          <p>📍 エリア: {selectedStore.area}</p>
+          <p style={{ color: selectedStore.isOpen ? "green" : "red", fontWeight: "bold" }}>
+            {selectedStore.isOpen ? "営業中" : "営業時間外"}
+          </p>
+          <img
+            src={selectedStore.image_url}
+            alt={selectedStore.name}
+            style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px", marginTop: "8px" }}
+          />
         </div>
       )}
     </div>
