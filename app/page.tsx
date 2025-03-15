@@ -1,24 +1,21 @@
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
-//import Header from "@/components/Header";
-//import Footer from "@/components/Footer";
+import GoogleMapsProvider from "@/components/GoogleMapsProvider";
+import MapView from "@/components/MapView";
 import AnimatedText from "@/components/AnimatedText";
 import RecommendedStores from "@/components/RecommendedStores";
 
 export default function Home() {
   const router = useRouter();
-
-  // ✅ フィルターの状態管理
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
+  const [showMap, setShowMap] = useState<boolean>(false); // 🔹 地図表示の切り替え
 
-  // 🔹 検索ボタンの動作
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (selectedGenres.length > 0) params.append("genre", selectedGenres.join(","));
@@ -26,7 +23,6 @@ export default function Home() {
     if (selectedPayments.length > 0) params.append("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.append("open", "true");
 
-    // 🔹 検索条件がない場合、`all=true` をセット
     if (params.toString() === "") {
       params.set("all", "true");
     }
@@ -43,8 +39,27 @@ export default function Home() {
         showOnlyOpen={showOnlyOpen} setShowOnlyOpen={setShowOnlyOpen}
         handleSearch={handleSearch}
       />
-      <AnimatedText />
-      <RecommendedStores />
+      <div className="mt-4 text-center">
+        {/* 🔹 地図を表示するボタン */}
+        <button
+          onClick={() => setShowMap(!showMap)}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          {showMap ? "リスト表示に戻る" : "📍 地図から探す"}
+        </button>
+      </div>
+
+      {/* 🔹 地図の表示 */}
+      {showMap ? (
+        <GoogleMapsProvider>
+          <MapView />
+        </GoogleMapsProvider>
+      ) : (
+        <>
+          <AnimatedText />
+          <RecommendedStores />
+        </>
+      )}
     </div>
   );
 }
