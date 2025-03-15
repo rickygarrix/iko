@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { GoogleMap, Marker, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
+import Image from "next/image";
+import { useRouter } from "next/navigation"; // ✅ 追加
 
 const containerStyle = {
   width: "100%",
@@ -12,14 +14,15 @@ const containerStyle = {
 const SEARCH_RADIUS = 5; // 5km
 
 export default function MapView() {
+  const router = useRouter(); // ✅ 追加
   const [locations, setLocations] = useState<
-    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; isOpen: boolean }[]
+    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string }[]
   >([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [selectedStore, setSelectedStore] = useState<
-    { id: string; name: string; genre: string; area: string; image_url?: string; isOpen: boolean } | null
+    { id: string; name: string; genre: string; area: string; image_url?: string } | null
   >(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
@@ -30,7 +33,6 @@ export default function MapView() {
           const { latitude, longitude } = position.coords;
           setCurrentLocation({ lat: latitude, lng: longitude });
           setMapCenter({ lat: latitude, lng: longitude });
-          fetchNearbyStores(latitude, longitude);
         },
         (error) => console.error("📍 現在地取得エラー:", error)
       );
@@ -40,7 +42,7 @@ export default function MapView() {
   const fetchNearbyStores = async (lat: number, lng: number) => {
     if (!lat || !lng) return;
 
-    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude, genre, area, image_url, opening_hours");
+    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude, genre, area, image_url");
 
     if (error) {
       console.error("🔥 Supabase Error:", error.message);
@@ -57,7 +59,6 @@ export default function MapView() {
           genre: store.genre,
           area: store.area,
           image_url: store.image_url || "/default-image.jpg",
-          isOpen: checkIfOpen(store.opening_hours).isOpen, // ✅ 営業状況を取得
         }))
         .filter((store) => getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS);
 
@@ -73,22 +74,6 @@ export default function MapView() {
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-  };
-
-  const checkIfOpen = (openingHours: string) => {
-    if (!openingHours) return { isOpen: false, nextOpening: "不明" };
-
-    const now = new Date();
-    const day = now.getDay();
-    const currentTime = now.getHours() * 100 + now.getMinutes();
-
-    const hours = openingHours.split(", ").map((range) => {
-      const [open, close] = range.split("〜").map((t) => parseInt(t.replace(":", ""), 10));
-      return { open, close };
-    });
-
-    const isOpen = hours.some(({ open, close }) => currentTime >= open && currentTime <= close);
-    return { isOpen, nextOpening: isOpen ? "営業中" : "営業時間外" };
   };
 
   const handleMapDragEnd = () => {
@@ -169,19 +154,20 @@ export default function MapView() {
             textAlign: "center",
             color: "black",
             fontSize: "16px",
+            cursor: "pointer",
           }}
+          onClick={() => router.push(`/stores/${selectedStore.id}`)} // ✅ クリック時に店舗詳細へ遷移
         >
+          <Image
+            src={selectedStore.image_url || "/default-image.jpg"}
+            alt={selectedStore.name}
+            width={100}
+            height={100}
+            className="rounded"
+          />
           <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{selectedStore.name}</h2>
           <p>🎵 ジャンル: {selectedStore.genre}</p>
           <p>📍 エリア: {selectedStore.area}</p>
-          <p style={{ color: selectedStore.isOpen ? "green" : "red", fontWeight: "bold" }}>
-            {selectedStore.isOpen ? "営業中" : "営業時間外"}
-          </p>
-          <img
-            src={selectedStore.image_url}
-            alt={selectedStore.name}
-            style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "8px", marginTop: "8px" }}
-          />
         </div>
       )}
     </div>

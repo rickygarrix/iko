@@ -1,21 +1,16 @@
 "use client";
 
 import { LoadScript } from "@react-google-maps/api";
-import { useState, useEffect } from "react";
+
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!;
 
 export default function GoogleMapsProvider({ children }: { children: React.ReactNode }) {
-  const [googleMapsApiKey, setGoogleMapsApiKey] = useState<string | null>(null);
-
-  useEffect(() => {
-    setGoogleMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "");
-  }, []);
-
-  if (!googleMapsApiKey) {
-    return <p className="text-center text-white">Google Maps 読み込み中...</p>;
+  if (typeof window !== "undefined" && window.google) {
+    return <>{children}</>; // ✅ Google APIがすでにロード済みなら再ロードしない
   }
 
   return (
-    <LoadScript googleMapsApiKey={googleMapsApiKey}>
+    <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
       {children}
     </LoadScript>
   );

@@ -1,0 +1,50 @@
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+import isBetween from "dayjs/plugin/isBetween";
+
+dayjs.extend(isBetween);
+
+// ✅ **Google Maps 用の営業時間判定**
+export const checkIfOpenForMap = (opening_hours: string) => {
+  const now = dayjs().locale("ja");
+  const currentTime = now.format("HH:mm");
+
+  console.log(`📆 Google Map - 現在の時刻: ${currentTime}`);
+  console.log(`🔍 営業時間データ:`, opening_hours);
+
+  if (!opening_hours) return { isOpen: false, nextOpening: "情報なし" };
+
+  const hoursList = opening_hours.split(", ").map((range) => {
+    let [openTime, closeTime] = range.split("〜").map((t) => t.trim());
+
+    let open = now.set("hour", parseInt(openTime.split(":")[0], 10)).set("minute", parseInt(openTime.split(":")[1], 10));
+    let close = now.set("hour", parseInt(closeTime.split(":")[0], 10)).set("minute", parseInt(closeTime.split(":")[1], 10));
+
+    // ✅ `25:00` のような時間を翌日扱いにする
+    if (parseInt(closeTime.split(":")[0], 10) >= 24) {
+      close = close.add(1, "day").set("hour", parseInt(closeTime.split(":")[0], 10) - 24);
+    }
+
+    return { open, close };
+  });
+
+  let isOpen = false;
+  let nextOpening = "";
+
+  for (const { open, close } of hoursList) {
+    if (now.isBetween(open, close, null, "[)")) {
+      isOpen = true;
+      nextOpening = `本日 ${close.format("HH:mm")} まで営業`;
+      break;
+    }
+  }
+
+  if (!isOpen) {
+    const futureHours = hoursList.filter(({ open }) => open.isAfter(now));
+    if (futureHours.length > 0) {
+      nextOpening = `次の営業: ${futureHours[0].open.format("HH:mm")} から`;
+    }
+  }
+
+  return { isOpen, nextOpening };
+};
