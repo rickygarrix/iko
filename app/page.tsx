@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import SearchFilter from "@/components/SearchFilter";
 import AnimatedText from "@/components/AnimatedText";
 import RecommendedStores from "@/components/RecommendedStores";
-import Script from "next/script"; // ✅ 追加
+import Script from "next/script";
 
-const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+// ✅ 地図コンポーネントを非同期で読み込み（SSR無効化）
+const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 export default function Home() {
   const router = useRouter();
@@ -17,6 +18,12 @@ export default function Home() {
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [showMap, setShowMap] = useState<boolean>(false);
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState<string | null>(null);
+
+  // ✅ 環境変数の取得（クライアントサイドで処理）
+  useEffect(() => {
+    setGoogleMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "");
+  }, []);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -35,10 +42,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       {/* ✅ Google Maps APIのスクリプトをグローバルで一度だけ読み込む */}
-      <Script
-        strategy="beforeInteractive"
-        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-      />
+      {googleMapsApiKey && (
+        <Script
+          strategy="beforeInteractive"
+          src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`}
+        />
+      )}
 
       <SearchFilter
         selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
@@ -57,6 +66,7 @@ export default function Home() {
         </button>
       </div>
 
+      {/* ✅ 地図とリストの表示切り替え */}
       {showMap ? <MapView /> : <><AnimatedText /><RecommendedStores /></>}
     </div>
   );

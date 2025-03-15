@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation"; // ✅ 追加
 import { GoogleMap, Marker, useJsApiLoader, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
@@ -11,15 +12,17 @@ const containerStyle = {
 };
 
 export default function MapView() {
+  const router = useRouter(); // ✅ 追加
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
   });
 
   const [locations, setLocations] = useState<
-    { id: number; lat: number; lng: number; name: string; area: string; genre: string; isOpen: boolean }[]
+    { id: string; lat: number; lng: number; name: string; area: string; genre: string; isOpen: boolean }[]
   >([]);
   const [selectedStore, setSelectedStore] = useState<
-    { id: number; name: string; area: string; genre: string; isOpen: boolean } | null
+    { id: string; name: string; area: string; genre: string; isOpen: boolean } | null
   >(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
@@ -83,6 +86,10 @@ export default function MapView() {
     }
   };
 
+  const handleStoreClick = (id: string) => {
+    router.push(`/stores/${id}`); // ✅ クリックで店舗詳細ページへ遷移
+  };
+
   const handleMapDragEnd = () => {
     if (mapRef.current) {
       const newCenter = mapRef.current.getCenter();
@@ -129,9 +136,9 @@ export default function MapView() {
         )}
 
         {/* 店舗のピンを表示 */}
-        {locations.map((location, index) => (
+        {locations.map((location) => (
           <Marker
-            key={index}
+            key={location.id}
             position={{ lat: location.lat, lng: location.lng }}
             onClick={() => {
               console.log("✅ ピンがクリックされた:", location);
@@ -164,7 +171,7 @@ export default function MapView() {
           }}
         >
           <button
-            onClick={handleSearchInThisArea}
+            onClick={handleSearchInThisArea} // ✅ 修正
             style={{
               backgroundColor: "#ff5722",
               color: "white",
@@ -191,7 +198,7 @@ export default function MapView() {
         </div>
       )}
 
-      {/* 🔹 クリックした店舗の詳細 */}
+      {/* 🔹 クリックした店舗の詳細（タップ可能にする） */}
       {selectedStore && (
         <div
           style={{
@@ -209,6 +216,7 @@ export default function MapView() {
             fontSize: "16px",
             cursor: "pointer",
           }}
+          onClick={() => handleStoreClick(selectedStore.id)}
         >
           <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{selectedStore.name}</h2>
           <p>📍 {selectedStore.area} / 🎵 {selectedStore.genre}</p>
