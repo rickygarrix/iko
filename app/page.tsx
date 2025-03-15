@@ -1,30 +1,24 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import SearchFilter from "@/components/SearchFilter";
+//import Header from "@/components/Header";
+//import Footer from "@/components/Footer";
 import AnimatedText from "@/components/AnimatedText";
 import RecommendedStores from "@/components/RecommendedStores";
-import Script from "next/script";
-
-// ✅ 地図コンポーネントを非同期で読み込み（SSR無効化）
-const MapView = dynamic(() => import("./components/MapView"), { ssr: false });
 
 export default function Home() {
   const router = useRouter();
+
+  // ✅ フィルターの状態管理
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
-  const [showMap, setShowMap] = useState<boolean>(false);
-  const [googleMapsApiKey, setGoogleMapsApiKey] = useState<string | null>(null);
 
-  // ✅ 環境変数の取得（クライアントサイドで処理）
-  useEffect(() => {
-    setGoogleMapsApiKey(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "");
-  }, []);
-
+  // 🔹 検索ボタンの動作
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (selectedGenres.length > 0) params.append("genre", selectedGenres.join(","));
@@ -32,6 +26,7 @@ export default function Home() {
     if (selectedPayments.length > 0) params.append("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.append("open", "true");
 
+    // 🔹 検索条件がない場合、`all=true` をセット
     if (params.toString() === "") {
       params.set("all", "true");
     }
@@ -41,14 +36,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
-      {/* ✅ Google Maps APIのスクリプトをグローバルで一度だけ読み込む */}
-      {googleMapsApiKey && (
-        <Script
-          strategy="beforeInteractive"
-          src={`https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places`}
-        />
-      )}
-
       <SearchFilter
         selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
         selectedAreas={selectedAreas} setSelectedAreas={setSelectedAreas}
@@ -56,18 +43,8 @@ export default function Home() {
         showOnlyOpen={showOnlyOpen} setShowOnlyOpen={setShowOnlyOpen}
         handleSearch={handleSearch}
       />
-
-      <div className="mt-4 text-center">
-        <button
-          onClick={() => setShowMap(!showMap)}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          {showMap ? "リスト表示に戻る" : "📍 地図から探す"}
-        </button>
-      </div>
-
-      {/* ✅ 地図とリストの表示切り替え */}
-      {showMap ? <MapView /> : <><AnimatedText /><RecommendedStores /></>}
+      <AnimatedText />
+      <RecommendedStores />
     </div>
   );
 }
