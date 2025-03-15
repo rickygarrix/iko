@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { GoogleMap, Marker, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import { useRouter } from "next/navigation"; // ✅ 追加
+import { useRouter } from "next/navigation";
 
 const containerStyle = {
   width: "100%",
@@ -14,7 +14,7 @@ const containerStyle = {
 const SEARCH_RADIUS = 5; // 5km
 
 export default function MapView() {
-  const router = useRouter(); // ✅ 追加
+  const router = useRouter();
   const [locations, setLocations] = useState<
     { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string }[]
   >([]);
@@ -156,7 +156,7 @@ export default function MapView() {
             fontSize: "16px",
             cursor: "pointer",
           }}
-          onClick={() => router.push(`/stores/${selectedStore.id}`)} // ✅ クリック時に店舗詳細へ遷移
+          onClick={() => router.push(`/stores/${selectedStore.id}`)}
         >
           <Image
             src={selectedStore.image_url || "/default-image.jpg"}
