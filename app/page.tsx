@@ -86,81 +86,103 @@ export default function Home() {
     router.push(`/search?${params.toString()}`);
   };
 
-  // 🔹 営業時間判定関数
   const checkIfOpen = (opening_hours: string) => {
-    const now = dayjs().locale("ja");
-    const today = now.format("dddd").trim();
-    const tomorrow = now.add(1, "day").format("dddd").trim();
+    const nowRaw = dayjs().locale("ja"); // ✅ 現在の時刻を取得
+    let now = nowRaw;
 
-    console.log(`📆 現在の曜日: '${today}'`);
-    console.log(`📆 明日の曜日: '${tomorrow}'`);
+    // ✅ 朝6時より前なら前日扱い
+    if (nowRaw.hour() < 6) {
+        now = nowRaw.subtract(1, "day");
+    }
+
+    let today = convertToJapaneseDay(now.format("dddd"));  // ✅ "金曜" に変換
+    let tomorrow = convertToJapaneseDay(now.add(1, "day").format("dddd"));
+    const currentTime = nowRaw.format("HH:mm"); // 現在の正確な時刻を取得
+
+    console.log(`📆 現在の曜日: '${today}', 時刻: ${currentTime}`);
     console.log(`🔍 Supabase から取得した営業時間のデータ:`, opening_hours);
 
-    // ✅ `opening_hours` を改行で分割してオブジェクトに変換
-    const hoursMap: { [key: string]: string } = {};
+    // ✅ 営業時間マップを作成
+    const hoursMap: { [key: string]: { open: string; close: string }[] } = {};
     opening_hours.split("\n").forEach((line) => {
-      const match = line.match(/^(.+?日)\s*(.+)$/); // 修正: `日曜日 13` を正しく処理
-      if (match) {
-        const day = match[1].trim();
-        const hours = match[2].trim();
-        hoursMap[day] = hours;
-      }
+        const match = line.match(/^(.+?曜)\s*(.+)$/);
+        if (match) {
+            const day = match[1].trim();
+            let hoursList = match[2].trim().split(", ");
+
+            hoursMap[day] = hoursList.map((hours) => {
+                const [openTime, closeTime] = hours.split("〜").map((t) => t.trim());
+                return { open: openTime, close: closeTime };
+            });
+        }
     });
 
-    console.log("🗺 営業時間マップ:", hoursMap);
+    console.log("🗺 営業時間マップのキー:", Object.keys(hoursMap));
+
     console.log("🔍 検索対象:", today);
 
-    // 🔥 修正: `today` のキーを適切に処理する
     const foundKey = Object.keys(hoursMap).find((key) => key.startsWith(today));
 
     if (!foundKey) {
-      console.error(`⚠️ '${today}' のデータが見つかりません`);
-      return { isOpen: false, nextOpening: "情報なし" };
+        console.error(`⚠️ '${today}' のデータが見つかりません`);
+        return { isOpen: false, nextOpening: "情報なし" };
     }
 
-    const todayHours = hoursMap[foundKey] || "情報なし";
-
+    const todayHours = hoursMap[foundKey] || [];
     console.log(`📆 今日(${today}) の営業時間:`, todayHours);
 
-    if (!todayHours || todayHours === "情報なし") {
-      return { isOpen: false, nextOpening: "情報なし" };
+    if (!todayHours.length) {
+        return { isOpen: false, nextOpening: "情報なし" };
     }
 
-    if (todayHours.includes("休み")) {
-      return { isOpen: false, nextOpening: "本日休業" };
+    let nextOpening = "";
+    let isOpen = false;
+
+    for (const period of todayHours) {
+        let openHour = parseInt(period.open.split(":")[0], 10);
+        let openMinute = parseInt(period.open.split(":")[1], 10);
+        let closeHour = parseInt(period.close.split(":")[0], 10);
+        let closeMinute = parseInt(period.close.split(":")[1], 10);
+
+        let open = now.set("hour", openHour).set("minute", openMinute);
+        let close = now.set("hour", closeHour).set("minute", closeMinute);
+
+        // ✅ 24時以降の営業時間を「翌日」にする処理
+        if (closeHour >= 24) {
+            closeHour -= 24;
+            close = now.add(1, "day").set("hour", closeHour).set("minute", closeMinute);
+        }
+
+        console.log(`🕒 営業時間: ${open.format("YYYY-MM-DD HH:mm")} 〜 ${close.format("YYYY-MM-DD HH:mm")}`);
+
+        if (nowRaw.isBetween(open, close, null, "[)")) {
+            isOpen = true;
+            nextOpening = `本日 ${close.format("HH:mm")} まで営業`;
+            break;
+        }
     }
 
-    // ✅ "13:00〜翌00:30" のようなデータから時間部分を抽出
-    const timeRanges = todayHours.split(", ");
-
-    for (const range of timeRanges) {
-      let [openTime, closeTime] = range.split("〜").map((t) => t.trim());
-
-      if (closeTime.includes("翌")) {
-        closeTime = closeTime.replace("翌", "").trim();
-        closeTime = now.add(1, "day").format("YYYY-MM-DD") + ` ${closeTime}`;
-      } else {
-        closeTime = now.format("YYYY-MM-DD") + ` ${closeTime}`;
-      }
-      openTime = now.format("YYYY-MM-DD") + ` ${openTime}`;
-
-      const open = dayjs(openTime, "YYYY-MM-DD HH:mm");
-      const close = dayjs(closeTime, "YYYY-MM-DD HH:mm");
-
-      console.log(`🕒 営業時間: ${open.format("HH:mm")} 〜 ${close.format("HH:mm")}`);
-
-      if (now.isBetween(open, close, null, "[)")) {
-        return { isOpen: true, nextOpening: `本日 ${close.format("HH:mm")} まで営業` };
-      }
+    if (!isOpen) {
+        const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
+        if (nextDayKey) {
+            nextOpening = `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`;
+        }
     }
 
-    const nextOpenTime = hoursMap[tomorrow]?.split("〜")[0].trim();
-    if (nextOpenTime) {
-      return { isOpen: false, nextOpening: `次の営業: ${tomorrow} ${nextOpenTime} から` };
-    }
+    return { isOpen, nextOpening };
+};
 
-    return { isOpen: false, nextOpening: "営業時間外" };
-  };
+// ✅ **曜日の変換関数**
+const convertToJapaneseDay = (day: string) => {
+  return day.replace("Sunday", "日曜日")
+            .replace("Monday", "月曜日")
+            .replace("Tuesday", "火曜日")
+            .replace("Wednesday", "水曜日")
+            .replace("Thursday", "木曜日")
+            .replace("Friday", "金曜日")
+            .replace("Saturday", "土曜日")
+            .replace("曜日", "");  // ✅ 曜日を削除
+};
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -188,7 +210,6 @@ export default function Home() {
                 />
                 <div className="ml-4 flex flex-col justify-between">
                   <h2 className="text-xl font-semibold">{store.name}</h2>
-                  <p className="text-gray-300">📍: {store.area}</p>
                   <p className={isOpen ? "text-green-400" : "text-red-400"}>🕗 {isOpen ? "営業中" : "営業時間外"}</p>
                   <p className="text-white">{nextOpening}</p>
                 </div>
