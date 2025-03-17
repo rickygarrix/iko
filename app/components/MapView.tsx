@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { GoogleMap, Marker, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 import { parseOpeningHours } from "@/lib/parseOpeningHours";
-import { useRouter } from "next/navigation"; // ✅ 追加
+import { useRouter } from "next/navigation";
 
 const containerStyle = {
   width: "100%",
@@ -12,19 +12,30 @@ const containerStyle = {
 };
 
 const SEARCH_RADIUS = 5; // 5km
+const GENRES = ["Jazz", "House", "Techno", "EDM"];
+
+type Store = {
+  id: string;
+  name: string;
+  genre: string;
+  area: string;
+  lat: number;
+  lng: number;
+  image_url?: string;
+  opening_hours?: string;
+  isOpen: boolean;
+  displayText: string;
+};
 
 export default function MapView() {
   const router = useRouter();
-  const [locations, setLocations] = useState<
-    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean; displayText: string }[]
-  >([]);
+  const [locations, setLocations] = useState<Store[]>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [showOnlyOpen, setShowOnlyOpen] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<
-    { id: string; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean; displayText: string } | null
-  >(null);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   useEffect(() => {
@@ -40,7 +51,7 @@ export default function MapView() {
     }
   }, []);
 
-  const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean) => {
+  const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean, genres: string[]) => {
     if (!lat || !lng) return;
 
     const { data, error } = await supabase
@@ -53,7 +64,7 @@ export default function MapView() {
     }
 
     if (data) {
-      const filteredData = data
+      const filteredData: Store[] = data
         .map((store) => {
           const { isOpen, displayText } = parseOpeningHours(store.opening_hours);
           return {
@@ -65,13 +76,15 @@ export default function MapView() {
             area: store.area,
             image_url: store.image_url || "/default-image.jpg",
             opening_hours: store.opening_hours || "営業時間情報なし",
-            isOpen,
-            displayText,
+            isOpen: isOpen ?? false, // `undefined` の場合に `false` にする
+            displayText: displayText ?? "営業時間情報なし",
           };
         })
         .filter((store) => {
           const withinDistance = getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS;
-          return filterOpen ? withinDistance && store.isOpen : withinDistance;
+          const matchesOpen = filterOpen ? store.isOpen : true;
+          const matchesGenre = genres.length > 0 ? genres.includes(store.genre) : true;
+          return withinDistance && matchesOpen && matchesGenre;
         });
 
       setLocations(filteredData);
@@ -91,12 +104,21 @@ export default function MapView() {
   const handleFilterChange = () => {
     const newFilter = !showOnlyOpen;
     setShowOnlyOpen(newFilter);
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng, newFilter);
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, newFilter, selectedGenres);
+    setShowSearchButton(false);
+  };
+
+  const handleGenreChange = (genre: string) => {
+    const newGenres = selectedGenres.includes(genre)
+      ? selectedGenres.filter((g) => g !== genre)
+      : [...selectedGenres, genre];
+    setSelectedGenres(newGenres);
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, newGenres);
     setShowSearchButton(false);
   };
 
   const handleSearchInThisArea = () => {
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen);
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres);
     setShowSearchButton(false);
   };
 
@@ -120,73 +142,41 @@ export default function MapView() {
         }}
       >
         {currentLocation && (
-          <Circle
-            center={currentLocation}
-            radius={50}
-            options={{
-              strokeColor: "#007bff",
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
-              fillColor: "#007bff",
-              fillOpacity: 0.35,
-            }}
-          />
+          <Circle center={currentLocation} radius={50} options={{ strokeColor: "#007bff", fillColor: "#007bff", fillOpacity: 0.35 }} />
         )}
 
         {locations.map((location) => (
           <Marker
             key={location.id}
             position={{ lat: location.lat, lng: location.lng }}
-            label={{
-              text: location.name,
-              color: "black",
-              fontSize: "12px",
-              fontWeight: "bold",
-            }}
+            label={{ text: location.name, color: "black", fontSize: "12px", fontWeight: "bold" }}
             onClick={() => setSelectedStore(location)}
           />
         ))}
       </GoogleMap>
 
+      {/* ✅ 営業中・ジャンルフィルター（常に表示） */}
+      <div style={{ position: "absolute", top: 20, left: 20, backgroundColor: "#FFA500", padding: "10px", borderRadius: "10px", display: "flex", flexDirection: "column", gap: "5px" }}>
+        <label><input type="checkbox" checked={showOnlyOpen} onChange={handleFilterChange} /> 営業中</label>
+        {GENRES.map((genre) => (
+          <label key={genre}><input type="checkbox" checked={selectedGenres.includes(genre)} onChange={() => handleGenreChange(genre)} /> {genre}</label>
+        ))}
+      </div>
+
+      {/* ✅ ここで検索するボタン（地図移動時に表示） */}
       {showSearchButton && (
-        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: "10px", backgroundColor: "#FFA500", padding: "10px", borderRadius: "10px" }}>
-          <button onClick={handleSearchInThisArea} className="bg-orange-500 text-white p-2 rounded shadow-lg">
-            🔍 ここで検索する
-          </button>
-          <label style={{ display: "flex", alignItems: "center", color: "white" }}>
-            <input type="checkbox" checked={showOnlyOpen} onChange={handleFilterChange} style={{ marginRight: "5px" }} />
-            営業中のみ表示
-          </label>
+        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", backgroundColor: "#FFA500", padding: "10px", borderRadius: "10px" }}>
+          <button onClick={handleSearchInThisArea}>🔍 ここで検索する</button>
         </div>
       )}
 
       {/* ✅ 店舗情報の表示 */}
       {selectedStore && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            width: "100%",
-            backgroundColor: "white",
-            padding: "16px",
-            borderTopLeftRadius: "10px",
-            borderTopRightRadius: "10px",
-            boxShadow: "0px -2px 10px rgba(0, 0, 0, 0.1)",
-            textAlign: "center",
-            color: "black",
-            fontSize: "16px",
-            cursor: "pointer",
-          }}
-          onClick={() => router.push(`/stores/${selectedStore.id}`)} // ✅ クリックで詳細ページへ遷移
-        >
-          <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{selectedStore.name}</h2>
-          <p>🎵 ジャンル: {selectedStore.genre}</p>
-          <p>📍 エリア: {selectedStore.area}</p>
-          <p style={{ fontWeight: "bold", color: selectedStore.isOpen ? "green" : "red" }}>
-            {selectedStore.isOpen ? "営業中" : "営業時間外"}
-          </p>
-          <p>⏰ 本日の営業時間: {selectedStore?.displayText || "営業時間情報なし"}</p>
+        <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", backgroundColor: "white", padding: "16px", textAlign: "center", color: "black", fontSize: "16px", cursor: "pointer" }} onClick={() => router.push(`/stores/${selectedStore.id}`)}>
+          <h2>{selectedStore.name}</h2>
+          <p>🎵 {selectedStore.genre} | 📍 {selectedStore.area}</p>
+          <p style={{ fontWeight: "bold", color: selectedStore.isOpen ? "green" : "red" }}>{selectedStore.isOpen ? "営業中" : "営業時間外"}</p>
+          <p>⏰ {selectedStore.displayText}</p>
         </div>
       )}
     </div>
