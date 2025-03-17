@@ -3,9 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { GoogleMap, Marker, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { parseOpeningHours } from "@/lib/parseOpeningHours"; // ✅ 追加
+import { parseOpeningHours } from "@/lib/parseOpeningHours";
+import { useRouter } from "next/navigation"; // ✅ 追加
 
 const containerStyle = {
   width: "100%",
@@ -17,13 +16,15 @@ const SEARCH_RADIUS = 5; // 5km
 export default function MapView() {
   const router = useRouter();
   const [locations, setLocations] = useState<
-    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean }[]
+    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean; displayText: string }[]
   >([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<{ id: string; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean } | null>(null);
-  const [showOnlyOpen, setShowOnlyOpen] = useState(false); // ✅ 営業中の店舗のみ表示の状態
+  const [showOnlyOpen, setShowOnlyOpen] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<
+    { id: string; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean; displayText: string } | null
+  >(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
   useEffect(() => {
@@ -39,10 +40,12 @@ export default function MapView() {
     }
   }, []);
 
-  const fetchNearbyStores = async (lat: number, lng: number) => {
+  const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean) => {
     if (!lat || !lng) return;
 
-    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude, genre, area, image_url, opening_hours");
+    const { data, error } = await supabase
+      .from("stores")
+      .select("id, name, latitude, longitude, genre, area, image_url, opening_hours");
 
     if (error) {
       console.error("🔥 Supabase Error:", error.message);
@@ -52,11 +55,7 @@ export default function MapView() {
     if (data) {
       const filteredData = data
         .map((store) => {
-          const { displayText, isOpen } = parseOpeningHours(store.opening_hours);
-
-          <p style={{ fontSize: "14px", fontWeight: "bold", color: isOpen ? "green" : "red" }}>
-            {displayText}
-          </p>
+          const { isOpen, displayText } = parseOpeningHours(store.opening_hours);
           return {
             id: store.id,
             name: store.name,
@@ -66,13 +65,14 @@ export default function MapView() {
             area: store.area,
             image_url: store.image_url || "/default-image.jpg",
             opening_hours: store.opening_hours || "営業時間情報なし",
-            isOpen, // ✅ 営業中かどうかの判定を追加
+            isOpen,
+            displayText,
           };
         })
-        .filter((store) =>
-          getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS &&
-          (!showOnlyOpen || store.isOpen) // ✅ チェックが入っている場合は営業中の店舗のみ表示
-        );
+        .filter((store) => {
+          const withinDistance = getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS;
+          return filterOpen ? withinDistance && store.isOpen : withinDistance;
+        });
 
       setLocations(filteredData);
     }
@@ -88,18 +88,15 @@ export default function MapView() {
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   };
 
-  const handleMapDragEnd = () => {
-    if (mapRef.current) {
-      const newCenter = mapRef.current.getCenter();
-      if (newCenter) {
-        setMapCenter({ lat: newCenter.lat(), lng: newCenter.lng() });
-        setShowSearchButton(true);
-      }
-    }
+  const handleFilterChange = () => {
+    const newFilter = !showOnlyOpen;
+    setShowOnlyOpen(newFilter);
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, newFilter);
+    setShowSearchButton(false);
   };
 
   const handleSearchInThisArea = () => {
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng);
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen);
     setShowSearchButton(false);
   };
 
@@ -112,7 +109,15 @@ export default function MapView() {
         onLoad={(map) => {
           mapRef.current = map;
         }}
-        onDragEnd={handleMapDragEnd}
+        onDragEnd={() => {
+          if (mapRef.current) {
+            const newCenter = mapRef.current.getCenter();
+            if (newCenter) {
+              setMapCenter({ lat: newCenter.lat(), lng: newCenter.lng() });
+              setShowSearchButton(true);
+            }
+          }
+        }}
       >
         {currentLocation && (
           <Circle
@@ -143,41 +148,19 @@ export default function MapView() {
         ))}
       </GoogleMap>
 
-      {/* ✅ 検索ボタンとチェックボックスの追加 */}
       {showSearchButton && (
-        <div
-          style={{
-            position: "absolute",
-            top: 20,
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            backgroundColor: "#FFA500",
-            padding: "10px",
-            borderRadius: "10px",
-            boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.2)",
-          }}
-        >
+        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: "10px", backgroundColor: "#FFA500", padding: "10px", borderRadius: "10px" }}>
           <button onClick={handleSearchInThisArea} className="bg-orange-500 text-white p-2 rounded shadow-lg">
             🔍 ここで検索する
           </button>
           <label style={{ display: "flex", alignItems: "center", color: "white" }}>
-            <input
-              type="checkbox"
-              checked={showOnlyOpen}
-              onChange={(e) => {
-                setShowOnlyOpen(e.target.checked);
-                fetchNearbyStores(mapCenter.lat, mapCenter.lng); // ✅ フィルタ更新
-              }}
-              style={{ marginRight: "5px" }}
-            />
+            <input type="checkbox" checked={showOnlyOpen} onChange={handleFilterChange} style={{ marginRight: "5px" }} />
             営業中のみ表示
           </label>
         </div>
       )}
 
+      {/* ✅ 店舗情報の表示 */}
       {selectedStore && (
         <div
           style={{
@@ -195,36 +178,15 @@ export default function MapView() {
             fontSize: "16px",
             cursor: "pointer",
           }}
-          onClick={() => router.push(`/stores/${selectedStore.id}`)}
+          onClick={() => router.push(`/stores/${selectedStore.id}`)} // ✅ クリックで詳細ページへ遷移
         >
-          <Image
-            src={selectedStore.image_url || "/default-image.jpg"}
-            alt={selectedStore.name}
-            width={100}
-            height={100}
-            className="rounded"
-          />
           <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{selectedStore.name}</h2>
           <p>🎵 ジャンル: {selectedStore.genre}</p>
           <p>📍 エリア: {selectedStore.area}</p>
-
-          {/* ✅ 営業時間の追加 */}
-          {selectedStore.opening_hours && (
-            (() => {
-              const { displayText, isOpen } = parseOpeningHours(selectedStore?.opening_hours);
-
-              <p style={{ fontSize: "14px", color: "#555", marginTop: "8px" }}>
-                ⏰ {displayText}
-              </p>
-              return (
-                <>
-                  <p style={{ fontSize: "14px", fontWeight: "bold", color: isOpen ? "green" : "red" }}>
-                    {isOpen ? "営業中" : "営業時間外"}
-                  </p>
-                </>
-              );
-            })()
-          )}
+          <p style={{ fontWeight: "bold", color: selectedStore.isOpen ? "green" : "red" }}>
+            {selectedStore.isOpen ? "営業中" : "営業時間外"}
+          </p>
+          <p>⏰ 本日の営業時間: {selectedStore?.displayText || "営業時間情報なし"}</p>
         </div>
       )}
     </div>
