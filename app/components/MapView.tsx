@@ -32,7 +32,7 @@ export default function MapView() {
   const [locations, setLocations] = useState<Store[]>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
-  const [showSearchButton, setShowSearchButton] = useState(false);
+  const [showSearchButton, setShowSearchButton] = useState(true);
   const [showOnlyOpen, setShowOnlyOpen] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -105,7 +105,6 @@ export default function MapView() {
     const newFilter = !showOnlyOpen;
     setShowOnlyOpen(newFilter);
     fetchNearbyStores(mapCenter.lat, mapCenter.lng, newFilter, selectedGenres);
-    setShowSearchButton(false);
   };
 
   const handleGenreChange = (genre: string) => {
@@ -114,7 +113,6 @@ export default function MapView() {
       : [...selectedGenres, genre];
     setSelectedGenres(newGenres);
     fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, newGenres);
-    setShowSearchButton(false);
   };
 
   const handleSearchInThisArea = () => {
@@ -138,6 +136,11 @@ export default function MapView() {
               setMapCenter({ lat: newCenter.lat(), lng: newCenter.lng() });
               setShowSearchButton(true);
             }
+          }
+        }}
+        onZoomChanged={() => {
+          if (mapRef.current) {
+            setShowSearchButton(true); // ✅ 追加：ズーム変更時にもボタンを表示
           }
         }}
       >
@@ -164,9 +167,19 @@ export default function MapView() {
       </div>
 
       {/* ✅ ここで検索するボタン（地図移動時に表示） */}
+      {/* ✅ showSearchButton が true の場合に表示 */}
       {showSearchButton && (
-        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", backgroundColor: "#FFA500", padding: "10px", borderRadius: "10px" }}>
-          <button onClick={handleSearchInThisArea}>🔍 ここで検索する</button>
+        <div style={{
+          position: "absolute",
+          top: 20,
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: "#FFA500",
+          padding: "10px",
+          borderRadius: "10px",
+          zIndex: 1000 // ← 他の要素より前面に表示
+        }}>
+          <button onClick={handleSearchInThisArea}>🔍 このエリアで検索する</button>
         </div>
       )}
 
