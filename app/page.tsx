@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
-import GoogleMapsProvider from "@/components/GoogleMapsProvider";
-import MapView from "@/components/MapView";
 import AnimatedText from "@/components/AnimatedText";
 import RecommendedStores from "@/components/RecommendedStores";
 
@@ -14,7 +12,6 @@ export default function Home() {
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
-  const [showMap, setShowMap] = useState<boolean>(false); // 🔹 地図表示の切り替え
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -42,24 +39,17 @@ export default function Home() {
       <div className="mt-4 text-center">
         {/* 🔹 地図を表示するボタン */}
         <button
-          onClick={() => setShowMap(!showMap)}
+          onClick={() => router.push("/map")}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
-          {showMap ? "リスト表示に戻る" : "📍 地図から探す"}
+          📍 地図から探す
         </button>
       </div>
+      <>
+        <AnimatedText />
+        <RecommendedStores />
+      </>
 
-      {/* 🔹 地図の表示 */}
-      {showMap ? (
-        <GoogleMapsProvider>
-          <MapView />
-        </GoogleMapsProvider>
-      ) : (
-        <>
-          <AnimatedText />
-          <RecommendedStores />
-        </>
-      )}
     </div>
   );
 }

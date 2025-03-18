@@ -11,7 +11,7 @@ const containerStyle = {
   height: "80vh",
 };
 
-const SEARCH_RADIUS = 5; // 5km
+const SEARCH_RADIUS = 5;
 const GENRES = ["Jazz", "House", "Techno", "EDM"];
 
 type Store = {
@@ -27,8 +27,18 @@ type Store = {
   displayText: string;
   nextOpening: string;
 };
-
-export default function MapView() {
+// 2点間の距離を計算する関数（ハーバーサインの公式を使用）
+const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // 地球の半径（km）
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+};
+export default function MapPage() {
   const router = useRouter();
   const [locations, setLocations] = useState<Store[]>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -47,10 +57,16 @@ export default function MapView() {
           setCurrentLocation({ lat: latitude, lng: longitude });
           setMapCenter({ lat: latitude, lng: longitude });
         },
-        (error) => console.error("📍 現在地取得エラー:", error),
-
+        (error) => console.error("📍 現在地取得エラー:", error)
       );
     }
+
+    const handleFullscreenChange = () => {
+      setShowSearchButton(true);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean, genres: string[]) => {
@@ -78,9 +94,9 @@ export default function MapView() {
             area: store.area,
             image_url: store.image_url || "/default-image.jpg",
             opening_hours: store.opening_hours || "営業時間情報なし",
-            isOpen: isOpen ?? false, // `undefined` の場合に `false` にする
+            isOpen: isOpen ?? false,
             displayText: displayText,
-            nextOpening: nextOpening ?? "次の営業情報なし" // ✅ `nextOpening` をセット
+            nextOpening: nextOpening ?? "次の営業情報なし"
           };
         })
         .filter((store) => {
@@ -94,20 +110,14 @@ export default function MapView() {
     }
   };
 
-  const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  const handleSearchInThisArea = () => {
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres);
+    setShowSearchButton(false);
   };
 
   const handleFilterChange = () => {
-    const newFilter = !showOnlyOpen;
-    setShowOnlyOpen(newFilter);
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng, newFilter, selectedGenres);
+    setShowOnlyOpen((prev) => !prev);
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, !showOnlyOpen, selectedGenres);
   };
 
   const handleGenreChange = (genre: string) => {
@@ -118,11 +128,6 @@ export default function MapView() {
     fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, newGenres);
   };
 
-  const handleSearchInThisArea = () => {
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres);
-    setShowSearchButton(false);
-  };
-
   return (
     <div style={{ position: "relative" }}>
       <GoogleMap
@@ -130,7 +135,10 @@ export default function MapView() {
         center={mapCenter}
         zoom={14}
         options={{
-          gestureHandling: "greedy", // ✅ 1本指でドラッグ可能にする
+          gestureHandling: "greedy",
+          fullscreenControl: false,
+          disableDefaultUI: false,
+          mapTypeControl: false,
         }}
         onLoad={(map) => {
           mapRef.current = map;
@@ -146,7 +154,7 @@ export default function MapView() {
         }}
         onZoomChanged={() => {
           if (mapRef.current) {
-            setShowSearchButton(true); // ✅ 追加：ズーム変更時にもボタンを表示
+            setShowSearchButton(true);
           }
         }}
       >
@@ -173,7 +181,6 @@ export default function MapView() {
       </div>
 
       {/* ✅ ここで検索するボタン（地図移動時に表示） */}
-      {/* ✅ showSearchButton が true の場合に表示 */}
       {showSearchButton && (
         <div style={{
           position: "absolute",
@@ -183,7 +190,7 @@ export default function MapView() {
           backgroundColor: "#FFA500",
           padding: "10px",
           borderRadius: "10px",
-          zIndex: 1000 // ← 他の要素より前面に表示
+          zIndex: 1000
         }}>
           <button onClick={handleSearchInThisArea}>🔍 このエリアで検索する</button>
         </div>

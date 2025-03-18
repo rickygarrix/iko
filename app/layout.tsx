@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import "./globals.css";
+import GoogleMapsProvider from "@/components/GoogleMapsProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,14 +28,17 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
-        {/* ヘッダーを追加 */}
-        <Header />
+        {/* Google Maps のプロバイダーを追加 */}
+        <GoogleMapsProvider>
+          {/* ヘッダーを追加 */}
+          <Header />
 
-        {/* メインコンテンツ */}
-        <main className="flex-grow">{children}</main>
+          {/* メインコンテンツ */}
+          <main className="flex-grow">{children}</main>
 
-        {/* フッターを追加 */}
-        <Footer />
+          {/* フッターを追加 */}
+          <Footer />
+        </GoogleMapsProvider>
       </body>
     </html>
   );
