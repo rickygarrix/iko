@@ -1,9 +1,8 @@
 "use client";
 
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useParams } from "next/navigation";
-//import Link from "next/link";
 import Image from "next/image";
 
 type Store = {
@@ -26,9 +25,15 @@ type Store = {
 };
 
 export default function StoreDetail() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { id } = useParams();
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // 🔹 「前のページ」の情報を取得
+  const previousPage = searchParams.get("prev") || "";
+  const queryParams = searchParams.toString(); // すべてのクエリパラメータを保持
 
   useEffect(() => {
     const fetchStore = async () => {
@@ -53,8 +58,25 @@ export default function StoreDetail() {
   if (loading) return <p className="text-center text-white">ロード中...</p>;
   if (!store) return <p className="text-center text-white">店舗が見つかりませんでした。</p>;
 
+  // 🔹 「戻る」ボタンの処理
+  const handleBack = () => {
+    if (previousPage) {
+      router.push(`${previousPage}?${queryParams}`);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
+      {/* 🔹 戻るボタン */}
+      <button
+        onClick={handleBack}
+        className="bg-gray-700 text-white px-4 py-2 rounded-md mb-4 hover:bg-gray-600 transition"
+      >
+        ← 戻る
+      </button>
+
       {/* 🔹 店舗情報エリア */}
       <div className="bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col md:flex-row gap-6">
         {/* 画像とリンクを縦に配置 */}

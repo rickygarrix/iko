@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { GoogleMap, Marker, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 import { parseOpeningHours } from "@/lib/parseOpeningHours";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const containerStyle = {
   width: "100%",
@@ -40,6 +40,8 @@ const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon
 };
 export default function MapPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryParams = searchParams.toString(); // 🔹 地図のフィルター情報を保持
   const [locations, setLocations] = useState<Store[]>([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
@@ -145,7 +147,7 @@ export default function MapPage() {
           disableDefaultUI: true, // すべてのデフォルトUIを非表示
           mapTypeControl: false, // 地図の種類変更ボタンを無効化
           streetViewControl: false, // ストリートビュー（ペグマン）を無効化
-          zoomControl: true, // ズームコントロールは有効化
+          zoomControl: false, // ズームコントロールは有効化
         }}
         onLoad={(map) => {
           mapRef.current = map;
@@ -205,7 +207,7 @@ export default function MapPage() {
 
       {/* ✅ 店舗情報の表示 */}
       {selectedStore && (
-        <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", backgroundColor: "white", padding: "16px", textAlign: "center", color: "black", fontSize: "16px", cursor: "pointer" }} onClick={() => router.push(`/stores/${selectedStore.id}`)}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", backgroundColor: "white", padding: "16px", textAlign: "center", color: "black", fontSize: "16px", cursor: "pointer" }} onClick={() => router.push(`/stores/${selectedStore.id}?prev=/map&${queryParams}`)}>
           <h2>{selectedStore.name}</h2>
           <p>🎵 {selectedStore.genre} | 📍 {selectedStore.area}</p>
           <p style={{ fontWeight: "bold", color: selectedStore.isOpen ? "green" : "red" }}>{selectedStore.isOpen ? "営業中" : "営業時間外"}</p>
