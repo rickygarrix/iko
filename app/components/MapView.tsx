@@ -25,6 +25,7 @@ type Store = {
   opening_hours?: string;
   isOpen: boolean;
   displayText: string;
+  nextOpening: string;
 };
 
 export default function MapView() {
@@ -46,7 +47,8 @@ export default function MapView() {
           setCurrentLocation({ lat: latitude, lng: longitude });
           setMapCenter({ lat: latitude, lng: longitude });
         },
-        (error) => console.error("📍 現在地取得エラー:", error)
+        (error) => console.error("📍 現在地取得エラー:", error),
+
       );
     }
   }, []);
@@ -66,7 +68,7 @@ export default function MapView() {
     if (data) {
       const filteredData: Store[] = data
         .map((store) => {
-          const { isOpen, displayText } = parseOpeningHours(store.opening_hours);
+          const { isOpen, displayText, nextOpening } = parseOpeningHours(store.opening_hours);
           return {
             id: store.id,
             name: store.name,
@@ -77,7 +79,8 @@ export default function MapView() {
             image_url: store.image_url || "/default-image.jpg",
             opening_hours: store.opening_hours || "営業時間情報なし",
             isOpen: isOpen ?? false, // `undefined` の場合に `false` にする
-            displayText: displayText ?? "営業時間情報なし",
+            displayText: displayText,
+            nextOpening: nextOpening ?? "次の営業情報なし" // ✅ `nextOpening` をセット
           };
         })
         .filter((store) => {
@@ -126,6 +129,9 @@ export default function MapView() {
         mapContainerStyle={containerStyle}
         center={mapCenter}
         zoom={14}
+        options={{
+          gestureHandling: "greedy", // ✅ 1本指でドラッグ可能にする
+        }}
         onLoad={(map) => {
           mapRef.current = map;
         }}
@@ -189,7 +195,7 @@ export default function MapView() {
           <h2>{selectedStore.name}</h2>
           <p>🎵 {selectedStore.genre} | 📍 {selectedStore.area}</p>
           <p style={{ fontWeight: "bold", color: selectedStore.isOpen ? "green" : "red" }}>{selectedStore.isOpen ? "営業中" : "営業時間外"}</p>
-          <p>⏰ {selectedStore.displayText}</p>
+          <p>{selectedStore.isOpen ? selectedStore.displayText : selectedStore.nextOpening}</p>
         </div>
       )}
     </div>
