@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 const containerStyle = {
   width: "100%",
-  height: "80vh",
+  height: "85vh",
 };
 
 const SEARCH_RADIUS = 5;
@@ -48,6 +48,11 @@ export default function MapPage() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const handleReturnToCurrentLocation = () => {
+    if (currentLocation && mapRef.current) {
+      mapRef.current.panTo(currentLocation);
+    }
+  };
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -136,9 +141,11 @@ export default function MapPage() {
         zoom={14}
         options={{
           gestureHandling: "greedy",
-          fullscreenControl: false,
-          disableDefaultUI: false,
-          mapTypeControl: false,
+          fullscreenControl: false, // フルスクリーンボタンを無効化
+          disableDefaultUI: true, // すべてのデフォルトUIを非表示
+          mapTypeControl: false, // 地図の種類変更ボタンを無効化
+          streetViewControl: false, // ストリートビュー（ペグマン）を無効化
+          zoomControl: true, // ズームコントロールは有効化
         }}
         onLoad={(map) => {
           mapRef.current = map;
@@ -205,6 +212,28 @@ export default function MapPage() {
           <p>{selectedStore.isOpen ? selectedStore.displayText : selectedStore.nextOpening}</p>
         </div>
       )}
+
+      {/* ✅ 現在地に戻るボタン */}
+      <button
+        onClick={handleReturnToCurrentLocation}
+        style={{
+          position: "absolute",
+          bottom: "140px",
+          right: "20px",
+          backgroundColor: "#FFA500",
+          color: "white",
+          padding: "10px 15px",
+          borderRadius: "50%",
+          border: "none",
+          fontSize: "20px",
+          cursor: "pointer",
+          boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+          zIndex: 1000,
+        }}
+        title="現在地に戻る"
+      >
+        📍
+      </button>
     </div>
   );
 }
