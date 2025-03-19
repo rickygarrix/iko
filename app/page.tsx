@@ -75,6 +75,8 @@ export default function Home() {
     window.stores = recommendedStores; // ✅ 追加
   }, [recommendedStores]);
 
+
+
   // 🔹 検索ボタンの動作
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -203,6 +205,7 @@ const convertToJapaneseDay = (day: string) => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
+
       <SearchFilter
         selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
         selectedAreas={selectedAreas} setSelectedAreas={setSelectedAreas}
