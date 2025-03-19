@@ -30,9 +30,6 @@ export default function StoreDetail() {
   const { id } = useParams();
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showOnlyOpen, setShowOnlyOpen] = useState(false);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [locations, setLocations] = useState<Store[]>([]);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   // 🔹 「前のページ」の情報を取得
@@ -57,82 +54,25 @@ export default function StoreDetail() {
     };
 
     fetchStore();
+
+    // 🔹 sessionStorage から保存された地図の位置を取得
+    const savedCenter = sessionStorage.getItem("mapCenter");
+    if (savedCenter) {
+      const parsedCenter = JSON.parse(savedCenter);
+      setMapCenter(parsedCenter);
+      sessionStorage.setItem("mapCenter", JSON.stringify(parsedCenter)); // **地図の状態を更新**
+    }
   }, [id]);
 
   if (loading) return <p className="text-center text-white">ロード中...</p>;
   if (!store) return <p className="text-center text-white">店舗が見つかりませんでした。</p>;
 
-  // ✅ `fetchNearbyStores` を `StoreDetail.tsx` に追加
-  const fetchNearbyStores = async (
-    lat: number,
-    lng: number,
-    filterOpen: boolean,
-    genres: string[]
-  ): Promise<Store[]> => {
-    if (!lat || !lng) return [];
-
-    const { data, error } = await supabase
-      .from("stores")
-      .select("id, name, latitude, longitude, genre, area, image_url, opening_hours, entry_fee, regular_holiday, capacity, payment_methods, address, phone, discription, access");
-
-    if (error) {
-      console.error("🔥 Supabase Error:", error.message);
-      return [];
-    }
-
-    if (data) {
-      return data.map((store) => ({
-        id: store.id,
-        name: store.name,
-        lat: Number(store.latitude),
-        lng: Number(store.longitude),
-        genre: store.genre,
-        area: store.area,
-        image_url: store.image_url || "/default-image.jpg",
-        opening_hours: store.opening_hours || "営業時間情報なし",
-        isOpen: store.opening_hours ? true : false,
-        displayText: "営業中",
-        nextOpening: "不明",
-        entry_fee: store.entry_fee || "不明",
-        regular_holiday: store.regular_holiday || "なし",
-        capacity: store.capacity || "不明",
-        payment_methods: store.payment_methods || [],
-        address: store.address || "未登録",
-        phone: store.phone || "未登録",
-        discription: store.discription || "説明なし",
-        access: store.access || "アクセス情報なし",
-      }));
-    }
-
-    return [];
-  };
-
   const handleBack = () => {
-    if (previousPage === "/map" || previousPage === "/search") {
-      // 🔹 sessionStorage からデータを取得
-      const savedCenter = sessionStorage.getItem("mapCenter");
-      const savedZoom = sessionStorage.getItem("mapZoom");
-      const savedFilters = sessionStorage.getItem("filters");
-      const savedLocations = sessionStorage.getItem("locations");
-
-      // 🔹 セッションストレージのデータを適用
-      if (savedCenter) setMapCenter(JSON.parse(savedCenter));
-
-      if (savedFilters) {
-        const filters = JSON.parse(savedFilters);
-        setShowOnlyOpen(filters.showOnlyOpen);
-        setSelectedGenres(filters.selectedGenres);
+    if (previousPage === "/map") {
+      // 🔹 戻る際に sessionStorage に mapCenter を再保存
+      if (mapCenter) {
+        sessionStorage.setItem("mapCenter", JSON.stringify(mapCenter));
       }
-
-      if (savedLocations) {
-        setLocations(JSON.parse(savedLocations));
-      } else if (mapCenter) {
-        fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres).then((results: Store[]) => {
-          setLocations(results);
-          sessionStorage.setItem("locations", JSON.stringify(results));
-        });
-      }
-
       router.push(`/map?${queryParams}`);
     } else {
       router.back();
