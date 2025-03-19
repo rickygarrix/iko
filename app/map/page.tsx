@@ -120,6 +120,10 @@ export default function MapPage() {
   const handleSearchInThisArea = () => {
     fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres);
     setShowSearchButton(false);
+    // 🔹 ここで zoom を 14 に変更
+    if (mapRef.current) {
+      mapRef.current.setZoom(14);
+    }
   };
 
   const handleFilterChange = () => {
@@ -140,7 +144,7 @@ export default function MapPage() {
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={mapCenter}
-        zoom={14}
+        zoom={13}
         options={{
           gestureHandling: "greedy",
           fullscreenControl: false, // フルスクリーンボタンを無効化

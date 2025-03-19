@@ -60,9 +60,11 @@ export default function StoreDetail() {
 
   // 🔹 「戻る」ボタンの処理
   const handleBack = () => {
-    if (previousPage) {
+    if (previousPage === "/map" || previousPage === "/search") {
+      // 🔹 `/map` や `/search` から来た場合は、クエリパラメータを保持して戻る
       router.push(`${previousPage}?${queryParams}`);
     } else {
+      // 🔹 それ以外の場合は通常の `router.back()` を実行
       router.back();
     }
   };
