@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -12,7 +11,7 @@ const containerStyle = {
   height: "85vh",
 };
 
-const SEARCH_RADIUS = 2;
+const SEARCH_RADIUS = 5;
 const GENRES = ["Jazz", "House", "Techno", "EDM"];
 
 type Store = {
@@ -49,15 +48,47 @@ export default function MapPage() {
   const [showSearchButton, setShowSearchButton] = useState(true);
   const [showOnlyOpen, setShowOnlyOpen] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [zoomLevel, setZoomLevel] = useState(13);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const handleReturnToCurrentLocation = () => {
     if (currentLocation && mapRef.current) {
       mapRef.current.panTo(currentLocation);
+      setZoomLevel(14); // 🔹 ズームレベルを適切な大きさに変更
     }
   };
 
   useEffect(() => {
+
+    const savedCenter = sessionStorage.getItem("mapCenter");
+    const savedZoom = sessionStorage.getItem("mapZoom");
+    const savedFilters = sessionStorage.getItem("filters");
+    const savedLocations = sessionStorage.getItem("locations");
+    const savedStore = sessionStorage.getItem("selectedStore"); // **選択した店舗情報を取得**
+
+    if (savedCenter) setMapCenter(JSON.parse(savedCenter));
+    if (savedZoom !== null) setZoomLevel(JSON.parse(savedZoom));
+
+    if (savedFilters) {
+      const { showOnlyOpen, selectedGenres } = JSON.parse(savedFilters);
+      setShowOnlyOpen(showOnlyOpen);
+      setSelectedGenres(selectedGenres);
+    }
+
+    if (savedLocations) {
+      setLocations(JSON.parse(savedLocations));
+    }
+
+    // 🔹 locations の保存データがある場合は復元、なければ検索を実行
+    if (savedLocations) {
+      setLocations(JSON.parse(savedLocations));
+    } else {
+      fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres).then((results) => {
+        setLocations(results);
+        sessionStorage.setItem("locations", JSON.stringify(results));
+      });
+    }
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -73,12 +104,14 @@ export default function MapPage() {
       setShowSearchButton(true);
     };
 
+    if (savedStore) setSelectedStore(JSON.parse(savedStore)); // **戻ったときに店舗情報を復元**
+
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean, genres: string[]) => {
-    if (!lat || !lng) return;
+  const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean, genres: string[]): Promise<Store[]> => {
+    if (!lat || !lng) return [];
 
     const { data, error } = await supabase
       .from("stores")
@@ -86,7 +119,7 @@ export default function MapPage() {
 
     if (error) {
       console.error("🔥 Supabase Error:", error.message);
-      return;
+      return [];
     }
 
     if (data) {
@@ -114,30 +147,108 @@ export default function MapPage() {
           return withinDistance && matchesOpen && matchesGenre;
         });
 
-      setLocations(filteredData);
+      return filteredData; // 🔹 検索結果を返すように変更
     }
+
+    return [];
   };
 
-  const handleSearchInThisArea = () => {
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres);
-    setShowSearchButton(false);
-    // 🔹 ここで zoom を 14 に変更
+  const handleStoreClick = (store: Store) => {
     if (mapRef.current) {
-      mapRef.current.setZoom(14);
+      const map = mapRef.current;
+      sessionStorage.setItem("mapCenter", JSON.stringify({ lat: store.lat, lng: store.lng })); // 修正
+      sessionStorage.setItem("mapZoom", JSON.stringify(map.getZoom()));
+      sessionStorage.setItem("selectedStore", JSON.stringify(store));
     }
+
+    router.push(`/stores/${store.id}?prev=/map&${queryParams}`);
+  };
+
+  const handleMarkerClick = (store: Store) => {
+    if (mapRef.current) {
+      const map = mapRef.current;
+      const startLat = map.getCenter()?.lat() || store.lat;
+      const startLng = map.getCenter()?.lng() || store.lng;
+      const endLat = store.lat;
+      const endLng = store.lng;
+
+      let step = 0;
+      const steps = 30;
+      const duration = 300;
+      const intervalTime = duration / steps;
+
+      const animatePan = () => {
+        step++;
+        const progress = step / steps;
+        const easeProgress = progress < 0.5
+          ? 2 * progress * progress
+          : -1 + (4 - 2 * progress) * progress;
+
+        const newLat = startLat + (endLat - startLat) * easeProgress;
+        const newLng = startLng + (endLng - startLng) * easeProgress;
+        map.panTo({ lat: newLat, lng: newLng });
+
+        if (step < steps) {
+          requestAnimationFrame(animatePan);
+        } else {
+          sessionStorage.setItem("mapCenter", JSON.stringify({ lat: endLat, lng: endLng }));
+          sessionStorage.setItem("mapZoom", JSON.stringify(map.getZoom()));
+          sessionStorage.setItem("selectedStore", JSON.stringify(store));
+          setSelectedStore(store);
+        }
+      };
+
+      requestAnimationFrame(animatePan);
+    }
+  };
+  const handleSearchInThisArea = async () => {
+    if (mapRef.current) {
+      const newCenter = mapRef.current.getCenter();
+      const newZoom = mapRef.current.getZoom() || 13;
+
+      if (!newCenter) return;
+
+      // 🔹 検索処理を実行（修正: newCenter の lat, lng を使用）
+      const results = await fetchNearbyStores(newCenter.lat(), newCenter.lng(), showOnlyOpen, selectedGenres);
+
+      // 🔹 セッションストレージに保存
+      sessionStorage.setItem("mapCenter", JSON.stringify({ lat: newCenter.lat(), lng: newCenter.lng() }));
+      sessionStorage.setItem("mapZoom", JSON.stringify(newZoom));
+      sessionStorage.setItem("filters", JSON.stringify({ showOnlyOpen, selectedGenres }));
+      sessionStorage.setItem("locations", JSON.stringify(results)); // 🔹 検索結果を保存
+
+      // 🔹 状態更新（修正: newCenter を適用）
+      setMapCenter({ lat: newCenter.lat(), lng: newCenter.lng() });
+      setZoomLevel(newZoom);
+      setLocations(results); // 🔹 検索結果を更新
+    }
+
+    setShowSearchButton(false);
   };
 
   const handleFilterChange = () => {
-    setShowOnlyOpen((prev) => !prev);
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng, !showOnlyOpen, selectedGenres);
+    const newShowOnlyOpen = !showOnlyOpen;
+    setShowOnlyOpen(newShowOnlyOpen);
+    sessionStorage.setItem("filters", JSON.stringify({ showOnlyOpen: newShowOnlyOpen, selectedGenres }));
+
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, newShowOnlyOpen, selectedGenres).then((results) => {
+      setLocations(results);
+      sessionStorage.setItem("locations", JSON.stringify(results)); // 🔹 検索結果を保存
+    });
   };
 
   const handleGenreChange = (genre: string) => {
     const newGenres = selectedGenres.includes(genre)
       ? selectedGenres.filter((g) => g !== genre)
       : [...selectedGenres, genre];
+
     setSelectedGenres(newGenres);
-    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, newGenres);
+    sessionStorage.setItem("filters", JSON.stringify({ showOnlyOpen, selectedGenres: newGenres }));
+
+    fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, newGenres).then((results) => {
+      setLocations(results);
+      sessionStorage.setItem("locations", JSON.stringify(results)); // 🔹 検索結果を保存
+    });
   };
 
   return (
@@ -168,6 +279,7 @@ export default function MapPage() {
         }}
         onZoomChanged={() => {
           if (mapRef.current) {
+            setZoomLevel(mapRef.current.getZoom() || 13);
             setShowSearchButton(true);
           }
         }}
@@ -176,12 +288,12 @@ export default function MapPage() {
           <Circle center={currentLocation} radius={50} options={{ strokeColor: "#007bff", fillColor: "#007bff", fillOpacity: 0.35 }} />
         )}
 
-        {locations.map((location) => (
+        {locations.map((store) => ( // ✅ store を map のコールバック関数の引数として受け取る
           <Marker
-            key={location.id}
-            position={{ lat: location.lat, lng: location.lng }}
-            label={{ text: location.name, color: "black", fontSize: "12px", fontWeight: "bold" }}
-            onClick={() => setSelectedStore(location)}
+            key={store.id}
+            position={{ lat: store.lat, lng: store.lng }}
+            label={{ text: store.name, color: "black", fontSize: "12px", fontWeight: "bold" }}
+            onClick={() => handleMarkerClick(store)}
           />
         ))}
       </GoogleMap>
@@ -212,10 +324,26 @@ export default function MapPage() {
 
       {/* ✅ 店舗情報の表示 */}
       {selectedStore && (
-        <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", backgroundColor: "white", padding: "16px", textAlign: "center", color: "black", fontSize: "16px", cursor: "pointer" }} onClick={() => router.push(`/stores/${selectedStore.id}?prev=/map&${queryParams}`)}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            width: "100%",
+            backgroundColor: "white",
+            padding: "16px",
+            textAlign: "center",
+            color: "black",
+            fontSize: "16px",
+            cursor: "pointer"
+          }}
+          onClick={() => router.push(`/stores/${selectedStore.id}?prev=/map&${queryParams}`)}
+        >
           <h2>{selectedStore.name}</h2>
           <p>🎵 {selectedStore.genre} | 📍 {selectedStore.area}</p>
-          <p style={{ fontWeight: "bold", color: selectedStore.isOpen ? "green" : "red" }}>{selectedStore.isOpen ? "営業中" : "営業時間外"}</p>
+          <p style={{ fontWeight: "bold", color: selectedStore.isOpen ? "green" : "red" }}>
+            {selectedStore.isOpen ? "営業中" : "営業時間外"}
+          </p>
           <p>{selectedStore.isOpen ? selectedStore.displayText : selectedStore.nextOpening}</p>
         </div>
       )}

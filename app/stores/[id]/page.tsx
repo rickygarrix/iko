@@ -30,6 +30,10 @@ export default function StoreDetail() {
   const { id } = useParams();
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showOnlyOpen, setShowOnlyOpen] = useState(false);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [locations, setLocations] = useState<Store[]>([]);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
   // 🔹 「前のページ」の情報を取得
   const previousPage = searchParams.get("prev") || "";
@@ -58,13 +62,79 @@ export default function StoreDetail() {
   if (loading) return <p className="text-center text-white">ロード中...</p>;
   if (!store) return <p className="text-center text-white">店舗が見つかりませんでした。</p>;
 
-  // 🔹 「戻る」ボタンの処理
+  // ✅ `fetchNearbyStores` を `StoreDetail.tsx` に追加
+  const fetchNearbyStores = async (
+    lat: number,
+    lng: number,
+    filterOpen: boolean,
+    genres: string[]
+  ): Promise<Store[]> => {
+    if (!lat || !lng) return [];
+
+    const { data, error } = await supabase
+      .from("stores")
+      .select("id, name, latitude, longitude, genre, area, image_url, opening_hours, entry_fee, regular_holiday, capacity, payment_methods, address, phone, discription, access");
+
+    if (error) {
+      console.error("🔥 Supabase Error:", error.message);
+      return [];
+    }
+
+    if (data) {
+      return data.map((store) => ({
+        id: store.id,
+        name: store.name,
+        lat: Number(store.latitude),
+        lng: Number(store.longitude),
+        genre: store.genre,
+        area: store.area,
+        image_url: store.image_url || "/default-image.jpg",
+        opening_hours: store.opening_hours || "営業時間情報なし",
+        isOpen: store.opening_hours ? true : false,
+        displayText: "営業中",
+        nextOpening: "不明",
+        entry_fee: store.entry_fee || "不明",
+        regular_holiday: store.regular_holiday || "なし",
+        capacity: store.capacity || "不明",
+        payment_methods: store.payment_methods || [],
+        address: store.address || "未登録",
+        phone: store.phone || "未登録",
+        discription: store.discription || "説明なし",
+        access: store.access || "アクセス情報なし",
+      }));
+    }
+
+    return [];
+  };
+
   const handleBack = () => {
     if (previousPage === "/map" || previousPage === "/search") {
-      // 🔹 `/map` や `/search` から来た場合は、クエリパラメータを保持して戻る
-      router.push(`${previousPage}?${queryParams}`);
+      // 🔹 sessionStorage からデータを取得
+      const savedCenter = sessionStorage.getItem("mapCenter");
+      const savedZoom = sessionStorage.getItem("mapZoom");
+      const savedFilters = sessionStorage.getItem("filters");
+      const savedLocations = sessionStorage.getItem("locations");
+
+      // 🔹 セッションストレージのデータを適用
+      if (savedCenter) setMapCenter(JSON.parse(savedCenter));
+
+      if (savedFilters) {
+        const filters = JSON.parse(savedFilters);
+        setShowOnlyOpen(filters.showOnlyOpen);
+        setSelectedGenres(filters.selectedGenres);
+      }
+
+      if (savedLocations) {
+        setLocations(JSON.parse(savedLocations));
+      } else if (mapCenter) {
+        fetchNearbyStores(mapCenter.lat, mapCenter.lng, showOnlyOpen, selectedGenres).then((results: Store[]) => {
+          setLocations(results);
+          sessionStorage.setItem("locations", JSON.stringify(results));
+        });
+      }
+
+      router.push(`/map?${queryParams}`);
     } else {
-      // 🔹 それ以外の場合は通常の `router.back()` を実行
       router.back();
     }
   };
@@ -124,33 +194,9 @@ export default function StoreDetail() {
           <p className="text-gray-400">👥 {store.capacity}人</p>
           <p className="text-gray-400">📍 {store.address}</p>
           <p className="text-gray-400">📞 {store.phone}</p>
-
-          {/* ✅ 追加: 店舗の説明 */}
-          <p className="mt-2 text-gray-300">🏠 店舗の説明:</p>
-          <p className="text-gray-400">{store.discription}</p>
-
-          {/* ✅ 追加: 最寄駅からの行き方 */}
-          <p className="mt-2 text-gray-300">🚉 アクセス:</p>
-          <p className="text-gray-400">{store.access}</p>
-
-          {/* 休みの欄 */}
           <p className="text-gray-400">🚫 休み: {store.regular_holiday || "なし"}</p>
-
-          {/* 営業時間 */}
           <p className="mt-2 text-gray-300">⏰ 営業時間:</p>
           <pre className="text-gray-400 whitespace-pre-wrap">{store.opening_hours}</pre>
-
-          {/* 支払い方法 */}
-          <p className="mt-2 text-gray-400">
-            💳 支払い方法: {store.payment_methods.join(", ")}
-          </p>
-
-          {/* Instagramリンク */}
-          {store.instagram && (
-            <p className="mt-2">
-              📷 <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">Instagram</a>
-            </p>
-          )}
         </div>
       </div>
     </div>
