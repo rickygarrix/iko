@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -11,7 +12,7 @@ const containerStyle = {
   height: "85vh",
 };
 
-const SEARCH_RADIUS = 5;
+const SEARCH_RADIUS = 2;
 const GENRES = ["Jazz", "House", "Techno", "EDM"];
 
 type Store = {
