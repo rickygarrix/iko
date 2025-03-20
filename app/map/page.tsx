@@ -55,33 +55,42 @@ export default function MapPage() {
   const handleReturnToCurrentLocation = () => {
     if (currentLocation && mapRef.current) {
       mapRef.current.panTo(currentLocation);
-      setZoomLevel(14); // 🔹 ズームレベルを適切な大きさに変更
-      mapRef.current.setZoom(14);
+      setZoomLevel(12); // 🔹 ズームレベルを適切な大きさに変更
+      mapRef.current.setZoom(13);
     }
   };
 
   useEffect(() => {
-
     const savedCenter = sessionStorage.getItem("mapCenter");
     const savedZoom = sessionStorage.getItem("mapZoom");
     const savedFilters = sessionStorage.getItem("filters");
     const savedLocations = sessionStorage.getItem("locations");
     const savedStore = sessionStorage.getItem("selectedStore"); // **選択した店舗情報を取得**
 
-    if (savedCenter) setMapCenter(JSON.parse(savedCenter));
-    if (savedZoom !== null) setZoomLevel(JSON.parse(savedZoom));
+    // ✅ 無限ループを防ぐために現在の `mapCenter` と `savedCenter` を比較
+    if (savedCenter) {
+      const parsedCenter = JSON.parse(savedCenter);
+      if (parsedCenter.lat !== mapCenter.lat || parsedCenter.lng !== mapCenter.lng) {
+        setMapCenter(parsedCenter);
+      }
+    }
+
+    // ✅ 無限ループを防ぐために現在の `zoomLevel` と `savedZoom` を比較
+    if (savedZoom !== null) {
+      const parsedZoom = JSON.parse(savedZoom);
+      if (parsedZoom !== zoomLevel) {
+        setZoomLevel(parsedZoom);
+      }
+    }
 
     if (savedFilters) {
-      const { showOnlyOpen, selectedGenres } = JSON.parse(savedFilters);
-      setShowOnlyOpen(showOnlyOpen);
-      setSelectedGenres(selectedGenres);
+      const { showOnlyOpen: storedShowOnlyOpen, selectedGenres: storedSelectedGenres } = JSON.parse(savedFilters);
+      if (storedShowOnlyOpen !== showOnlyOpen) setShowOnlyOpen(storedShowOnlyOpen);
+      if (JSON.stringify(storedSelectedGenres) !== JSON.stringify(selectedGenres)) {
+        setSelectedGenres(storedSelectedGenres);
+      }
     }
 
-    if (savedLocations) {
-      setLocations(JSON.parse(savedLocations));
-    }
-
-    // 🔹 locations の保存データがある場合は復元、なければ検索を実行
     if (savedLocations) {
       setLocations(JSON.parse(savedLocations));
     } else {
@@ -96,7 +105,12 @@ export default function MapPage() {
         (position) => {
           const { latitude, longitude } = position.coords;
           setCurrentLocation({ lat: latitude, lng: longitude });
-          setMapCenter({ lat: latitude, lng: longitude });
+
+          // ✅ 無限ループ防止: `mapCenter` の値が変わった時のみ更新
+          if (latitude !== mapCenter.lat || longitude !== mapCenter.lng) {
+            setMapCenter({ lat: latitude, lng: longitude });
+            sessionStorage.setItem("mapCenter", JSON.stringify({ lat: latitude, lng: longitude }));
+          }
         },
         (error) => console.error("📍 現在地取得エラー:", error)
       );
@@ -110,8 +124,7 @@ export default function MapPage() {
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
+  }, [showOnlyOpen, selectedGenres]); // **依存配列に `mapCenter` を含めない**
   const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean, genres: string[]): Promise<Store[]> => {
     if (!lat || !lng) return [];
 
@@ -165,11 +178,8 @@ export default function MapPage() {
       const endLat = store.lat;
       const endLng = store.lng;
 
-      const duration = 300; // アニメーション全体の時間 (ミリ秒)
-      const intervalTime = 10; // 各ステップの間隔 (ミリ秒)
-      const steps = Math.floor(duration / intervalTime); // 総ステップ数
-
       let step = 0;
+      const steps = 30;
 
       const animatePan = () => {
         step++;
@@ -185,10 +195,14 @@ export default function MapPage() {
         if (step < steps) {
           requestAnimationFrame(animatePan);
         } else {
-          // 🔹 アニメーションが完了したら、店舗情報を表示
-          sessionStorage.setItem("mapCenter", JSON.stringify({ lat: endLat, lng: endLng }));
+          const currentCenter = { lat: endLat, lng: endLng };
+
+          // ✅ 地図の位置をセッションストレージに保存
+          sessionStorage.setItem("mapCenter", JSON.stringify(currentCenter));
           sessionStorage.setItem("mapZoom", JSON.stringify(map.getZoom()));
           sessionStorage.setItem("selectedStore", JSON.stringify(store));
+
+          // ✅ 店舗情報をセット
           setSelectedStore(store);
         }
       };

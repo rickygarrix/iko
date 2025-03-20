@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import AnimatedText from "@/components/AnimatedText";
 import RecommendedStores from "@/components/RecommendedStores";
+import SearchBar from "@/components/SearchBar";
+
 
 export default function Home() {
   const router = useRouter();
@@ -12,6 +14,8 @@ export default function Home() {
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
+
+
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -45,7 +49,7 @@ export default function Home() {
           📍 地図から探す
         </button>
       </div>
-      <>
+      <> <SearchBar />
         <AnimatedText />
         <RecommendedStores />
       </>
