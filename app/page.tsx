@@ -87,46 +87,63 @@ export default function Home() {
   };
 
   const checkIfOpen = (opening_hours: string) => {
-    const nowRaw = dayjs().locale("ja"); // ✅ 現在の時刻を取得
+    const nowRaw = dayjs().locale("ja");
     let now = nowRaw;
 
-    // ✅ 朝6時より前なら前日扱い
-    if (nowRaw.hour() < 6) {
+    // ✅ 6時より前なら前日扱い
+    let isEarlyMorning = nowRaw.hour() < 6;
+    if (isEarlyMorning) {
         now = nowRaw.subtract(1, "day");
     }
 
-    let today = convertToJapaneseDay(now.format("dddd"));  // ✅ "金曜" に変換
+    let today = convertToJapaneseDay(now.format("dddd"));
     let tomorrow = convertToJapaneseDay(now.add(1, "day").format("dddd"));
-    const currentTime = nowRaw.format("HH:mm"); // 現在の正確な時刻を取得
+    const currentTime = nowRaw.format("HH:mm");
 
     console.log(`📆 現在の曜日: '${today}', 時刻: ${currentTime}`);
     console.log(`🔍 Supabase から取得した営業時間のデータ:`, opening_hours);
 
-    // ✅ 営業時間マップを作成
     const hoursMap: { [key: string]: { open: string; close: string }[] } = {};
     opening_hours.split("\n").forEach((line) => {
         const match = line.match(/^(.+?曜)\s*(.+)$/);
-        if (match) {
+        if (match && match[1] && match[2]) {
             const day = match[1].trim();
-            let hoursList = match[2].trim().split(", ");
+            let hoursText = match[2].trim();
 
-            hoursMap[day] = hoursList.map((hours) => {
-                const [openTime, closeTime] = hours.split("〜").map((t) => t.trim());
-                return { open: openTime, close: closeTime };
-            });
+            if (hoursText === "休み") {
+                hoursMap[day] = []; // 休業日は空配列にする
+            } else {
+                let hoursList = hoursText.split(", ");
+                hoursMap[day] = hoursList.map((hours) => {
+                    const [openTime, closeTime] = hours.split("〜").map((t) => t.trim());
+                    return { open: openTime, close: closeTime };
+                });
+            }
         }
     });
 
     console.log("🗺 営業時間マップのキー:", Object.keys(hoursMap));
-
     console.log("🔍 検索対象:", today);
 
     const foundKey = Object.keys(hoursMap).find((key) => key.startsWith(today));
 
-    if (!foundKey) {
-        console.error(`⚠️ '${today}' のデータが見つかりません`);
-        return { isOpen: false, nextOpening: "情報なし" };
-    }
+    if (!foundKey || !hoursMap.hasOwnProperty(foundKey) || !Array.isArray(hoursMap[foundKey]) || hoursMap[foundKey]?.length === 0) {
+      console.warn(`⚠️ '${today}' は休業日`);  // ❌ `console.error()` を `console.warn()` に変更
+
+      const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
+
+      // ✅ `nextDayKey` の存在チェックをより厳密にする
+      if (!nextDayKey || !hoursMap.hasOwnProperty(nextDayKey) || !Array.isArray(hoursMap[nextDayKey])) {
+          return { isOpen: false, nextOpening: "営業情報なし" };
+      }
+
+      // ✅ 休業日の翌日が営業日の場合、0:00〜5:59 の間は「次の営業」を表示
+      if (nowRaw.hour() >= 0 && nowRaw.hour() < 6 && hoursMap[nextDayKey].length > 0) {
+          return { isOpen: false, nextOpening: `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から` };
+      }
+
+      return { isOpen: false, nextOpening: "本日休業" };
+  }
 
     const todayHours = hoursMap[foundKey] || [];
     console.log(`📆 今日(${today}) の営業時間:`, todayHours);
@@ -147,7 +164,6 @@ export default function Home() {
         let open = now.set("hour", openHour).set("minute", openMinute);
         let close = now.set("hour", closeHour).set("minute", closeMinute);
 
-        // ✅ 24時以降の営業時間を「翌日」にする処理
         if (closeHour >= 24) {
             closeHour -= 24;
             close = now.add(1, "day").set("hour", closeHour).set("minute", closeMinute);
@@ -164,13 +180,14 @@ export default function Home() {
 
     if (!isOpen) {
         const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
-        if (nextDayKey) {
+        if (nextDayKey && hoursMap[nextDayKey].length > 0) {
             nextOpening = `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`;
         }
     }
 
     return { isOpen, nextOpening };
 };
+
 
 // ✅ **曜日の変換関数**
 const convertToJapaneseDay = (day: string) => {
