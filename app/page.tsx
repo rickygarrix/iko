@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import AnimatedText from "@/components/AnimatedText";
 import RecommendedStores from "@/components/RecommendedStores";
-import SearchBar from "@/components/SearchBar";
 
 
 export default function Home() {
@@ -49,7 +48,7 @@ export default function Home() {
           📍 地図から探す
         </button>
       </div>
-      <> <SearchBar />
+      <>
         <AnimatedText />
         <RecommendedStores />
       </>
