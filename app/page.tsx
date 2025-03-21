@@ -32,7 +32,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#FAFAF5] text-gray-800 px-4 md:px-6 py-6 space-y-12">
-      {/* 検索フィルター */}
+
+      {/* 🔹 ヘッダー的キャッチコピー */}
+      <div className="text-center space-y-2">
+        <p className="text-sm text-gray-500">今夜の音を見つけよう</p>
+        <h1 className="text-3xl font-bold text-gray-900">オトナビ</h1>
+      </div>
+
+      {/* 🔍 検索フィルター */}
       <div id="search-filter">
         <SearchFilter
           selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
@@ -43,10 +50,10 @@ export default function Home() {
         />
       </div>
 
-      {/* 今月のおすすめ */}
+      {/* 🌟 今月のおすすめ */}
       <RecommendedStores />
 
-      {/* オトナビとは */}
+      {/* ℹ️ オトナビとは */}
       <AboutSection />
     </div>
   );

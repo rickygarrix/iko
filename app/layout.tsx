@@ -27,16 +27,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
-        {/* Google Maps のプロバイダーを追加 */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-[#FAFAF5]`}>
         <GoogleMapsProvider>
-          {/* ヘッダーを追加 */}
           <Header />
 
-          {/* メインコンテンツ */}
-          <main className="flex-grow">{children}</main>
+          {/* 👇 全幅で表示 */}
+          <main className="flex-grow w-full">
+            {children}
+          </main>
 
-          {/* フッターを追加 */}
           <Footer />
         </GoogleMapsProvider>
       </body>

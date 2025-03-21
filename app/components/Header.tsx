@@ -6,7 +6,7 @@ import { FaSearch, FaMapMarkerAlt } from "react-icons/fa";
 export default function Header() {
   return (
     <header className="bg-white text-black p-4 shadow-md">
-      <div className="flex items-center justify-between max-w-4xl mx-auto">
+      <div className="flex items-center justify-between max-w-md mx-auto">
         {/* 🔹 ロゴ */}
         <Link href="/" passHref>
           <h1 className="text-2xl font-bold cursor-pointer">オトナビ</h1>

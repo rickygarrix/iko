@@ -4,8 +4,8 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
+import { checkIfOpen } from "@/lib/utils"; // ← 営業時間判定関数
 
-// 店舗の型（discription → description に修正）
 type Store = {
   id: string;
   name: string;
@@ -22,7 +22,8 @@ type Store = {
   image_url?: string;
   description: string;
   access: string;
-  map?: string;
+  map_embed?: string;
+  map_link?: string;
 };
 
 export default function StoreDetail() {
@@ -77,17 +78,14 @@ export default function StoreDetail() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#FAFAF5] text-gray-800 p-6">
-      {/* 戻るボタン */}
-      <button
-        onClick={handleBack}
-        className="text-sm text-blue-500 underline mb-4 hover:text-blue-700"
-      >
-        ← 戻る
-      </button>
+  const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
+  return (
+    <div className="min-h-screen bg-[#FDFBF7] text-gray-800 ">
+      <div className="max-w-3xl mx-auto bg-[#FDFBF7] shadow-md rounded-lg overflow-hidden">
+
+
+
         {/* 店舗画像 */}
         {store.image_url && (
           <Image
@@ -104,52 +102,129 @@ export default function StoreDetail() {
           <h1 className="text-2xl font-bold mb-1">{store.name}</h1>
           <p className="text-sm text-gray-600 mb-4">{store.description}</p>
 
-          {/* ジャンル・キャパ・営業時間・エリアなど */}
-          <div className="mb-4 space-y-1 text-sm">
+          {/* ジャンル・料金・営業中かどうか */}
+          <div className="mb-6 text-sm space-y-2">
             <p><strong>ジャンル:</strong> {store.genre}</p>
-            <p><strong>エリア:</strong> {store.address}</p>
-            <p><strong>キャパシティ:</strong> {store.capacity}人</p>
             <p><strong>入場料:</strong> {store.entry_fee}</p>
-            <p><strong>営業時間:</strong><br />
-              <span className="whitespace-pre-wrap">{store.opening_hours}</span>
+            <p className={isOpen ? "text-green-600 font-semibold" : "text-red-500 font-semibold"}>
+              {isOpen ? "営業中" : "営業時間外"}
             </p>
-            <p><strong>定休日:</strong> {store.regular_holiday || "なし"}</p>
-            <p><strong>電話番号:</strong> {store.phone}</p>
-            <p><strong>アクセス:</strong> {store.access}</p>
+            <p className="text-sm text-gray-700">
+              {isOpen ? `終了時間：${nextOpening}` : `次の営業：${nextOpening}から`}
+            </p>
           </div>
 
-          {/* 支払い方法 */}
-          <div className="mb-6">
+          {/* 支払い方法 表形式 */}
+          <div className="mb-8">
             <p className="font-semibold mb-2">■ 支払い方法</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-              {store.payment_methods.map((method, index) => (
-                <span key={index}>○ {method}</span>
-              ))}
+            <table className="w-full border border-gray-300 text-sm text-center">
+              <thead>
+                <tr>
+                  <th className="border px-4 py-2 bg-gray-50">現金</th>
+                  <th className="border px-4 py-2 bg-gray-50">クレジットカード</th>
+                  <th className="border px-4 py-2 bg-gray-50">電子マネー</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {["現金", "クレジットカード", "電子マネー"].map((method) => (
+                    <td key={method} className="border px-4 py-2">
+                      {store.payment_methods.includes(method) ? "◯" : ""}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          {/* 店舗情報 表形式 */}
+          <div className="my-10">
+            <div className="mb-10">
+              <p className="font-semibold my-4">■ 店舗情報</p>
+              <table className="w-full border border-gray-300 text-sm">
+                <tbody>
+                  <tr>
+                    <th className="border px-4 py-4 bg-gray-50 text-left w-32">店舗名</th>
+                    <td className="border px-4 py-4">{store.name}</td>
+                  </tr>
+                  <tr>
+                    <th className="border px-4 py-4 bg-gray-50 text-left">所在地</th>
+                    <td className="border px-4 py-4">{store.address}</td>
+                  </tr>
+                  <tr>
+                    <th className="border px-4 py-4 bg-gray-50 text-left">アクセス</th>
+                    <td className="border px-4 py-4">{store.access}</td>
+                  </tr>
+                  <tr>
+                    <th className="border px-4 py-4 bg-gray-50 text-left">営業時間</th>
+                    <td className="border px-4 py-4 whitespace-pre-wrap">{store.opening_hours}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="text-xs text-gray-500 mt-1">※日により変更する可能性があります。</p>
             </div>
           </div>
 
-          {/* ボタンエリア */}
-          <div className="space-y-2">
-            {store.map && (
-              <a
-                href={store.map}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300"
+          {/* Googleマップ埋め込み */}
+          {store.map_embed && (
+            <div className="my-6">
+              <iframe
+                src={store.map_embed}
+                width="100%"
+                height="300"
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                className="border-0 w-full h-64 rounded"
+              ></iframe>
+            </div>
+          )}
+
+          {/* 公式サイト */}
+          {store.website && (
+            <a
+              href={store.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center bg-black text-white py-2 rounded hover:bg-gray-800"
+            >
+              公式サイト →
+            </a>
+          )}
+
+          {/* 戻るボタン（左寄せ） */}
+          <div className="mt-6">
+            <button
+              onClick={handleBack}
+              className="text-base text-blue-600 underline hover:text-blue-800 font-medium"
+            >
+              ← 戻る
+            </button>
+          </div>
+
+          {/* パンくずリスト（左寄せ、余白調整） */}
+          <div className="mt-4 text-sm text-gray-800">
+            <nav className="flex gap-2">
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="hover:underline"
               >
-                Googleマップで開く
-              </a>
-            )}
-            {store.website && (
-              <a
-                href={store.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center bg-black text-white py-2 rounded hover:bg-gray-800"
+                トップに戻る
+              </button>
+              <span>/</span>
+              <button
+                onClick={() => router.push("/search")}
+                className="hover:underline"
               >
-                公式サイト →
-              </a>
-            )}
+                条件検索
+              </button>
+              <span>/</span>
+              <button
+                onClick={() => router.push("/map")}
+                className="hover:underline"
+              >
+                地図から探す
+              </button>
+            </nav>
           </div>
         </div>
       </div>

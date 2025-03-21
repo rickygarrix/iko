@@ -4,7 +4,6 @@ import Link from "next/link";
 import { checkIfOpen } from "@/lib/utils";
 import Image from "next/image";
 
-// 型定義（必要なら description を追加）
 type Store = {
   id: string;
   name: string;
@@ -37,42 +36,56 @@ export default function RecommendedStores() {
 
   return (
     <div className="my-10">
-      <h2 className="text-xl font-bold text-gray-800 mb-1">今月のおすすめ</h2>
-      <p className="text-sm text-blue-500 mb-6">recommend</p>
+      <h2 className="text-xl font-bold text-center text-gray-800 mb-1">今月のおすすめ</h2>
+      <p className="text-sm text-blue-500 text-center mb-6">recommend</p>
 
-      <div className="space-y-6">
-        {recommendedStores.map((store) => {
-          const { isOpen } = checkIfOpen(store.opening_hours);
+      <div>
+        {recommendedStores.map((store, index) => {
+          const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
+
           return (
-            <Link key={store.id} href={`/stores/${store.id}`} passHref>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition p-4">
-                <h3 className="text-lg font-bold text-gray-800 mb-1">{store.name}</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  {store.description ?? "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
-                </p>
+            <div key={store.id}>
+              <Link href={`/stores/${store.id}`} passHref>
+                <div className="bg-[#FDFBF7] p-4 transition cursor-pointer">
+                  {/* 上部：店舗名 & 説明文 */}
+                  <h3 className="text-lg font-bold text-gray-800 mb-1">{store.name}</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    {store.description ?? "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
+                  </p>
 
-                {/* 横並び：画像 + 情報（画像左、情報右） */}
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                  {/* 画像 */}
-                  <Image
-                    src={store.image_url ?? "/default-image.jpg"}
-                    alt={store.name}
-                    width={160}
-                    height={120}
-                    className="w-full md:w-48 h-36 object-cover rounded"
-                  />
+                  {/* 下部：画像 + 詳細（横並び） */}
+                  <div className="flex flex-row gap-4 items-start">
+                    {/* 左：画像 */}
+                    <Image
+                      src={store.image_url ?? "/default-image.jpg"}
+                      alt={store.name}
+                      width={160}
+                      height={120}
+                      className="object-cover w-40 h-32"
+                    />
 
-                  {/* テキスト情報 */}
-                  <div className="text-sm text-gray-700 space-y-1">
-                    <p>{store.area}エリア</p>
-                    <p>{store.genre}</p>
-                    <p className={isOpen ? "text-green-600" : "text-red-500"}>
-                      {isOpen ? "営業中" : "営業時間外"}
-                    </p>
+                    {/* 右：情報 */}
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p>{store.area} エリア</p>
+                      <p>{store.genre}</p>
+                      <p className={isOpen ? "text-green-600" : "text-red-500"}>
+                        {isOpen ? "営業中" : "営業時間外"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {isOpen
+                          ? `${nextOpening}`
+                          : `${nextOpening}`}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+
+              {/* 区切り線（最後以外） */}
+              {index !== recommendedStores.length - 1 && (
+                <hr className="my-4 border-t border-gray-300" />
+              )}
+            </div>
           );
         })}
       </div>

@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { FaSearch } from "react-icons/fa"; // ← ファイル上部に追加！
 
 const GENRES = ["House", "Jazz", "Techno", "EDM"];
 const AREAS = ["新宿", "渋谷", "六本木", "池袋", "銀座", "表参道"];
@@ -25,7 +26,7 @@ export default function SearchFilter({
   handleSearch
 }: SearchFilterProps) {
   return (
-    <div className="mb-6 p-6 bg-[#FAFAF5] rounded-md shadow-sm border border-gray-200 max-w-xl mx-auto">
+    <div className="mb-6 p-6 bg-[#FAFAF5] rounded-md shadow-sm max-w-xl mx-auto">
       <h2 className="text-xl font-bold text-center mb-1 text-gray-800 tracking-wide">
         条件検索
       </h2>
@@ -47,7 +48,7 @@ export default function SearchFilter({
       {/* 🔹 ジャンル */}
       <div className="mb-4">
         <p className="font-semibold mb-2 text-gray-800">ジャンル</p>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {GENRES.map((genre) => (
             <label key={genre} className="inline-flex items-center text-gray-700">
               <input
@@ -71,7 +72,7 @@ export default function SearchFilter({
       {/* 🔹 エリア */}
       <div className="mb-4">
         <p className="font-semibold mb-2 text-gray-800">エリア</p>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {AREAS.map((area) => (
             <label key={area} className="inline-flex items-center text-gray-700">
               <input
@@ -95,7 +96,7 @@ export default function SearchFilter({
       {/* 🔹 支払い方法 */}
       <div className="mb-4">
         <p className="font-semibold mb-2 text-gray-800">支払い方法</p>
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {PAYMENTS.map((payment) => (
             <label key={payment} className="inline-flex items-center text-gray-700">
               <input
@@ -116,17 +117,9 @@ export default function SearchFilter({
         </div>
       </div>
 
-      {/* 🔹 ボタンエリア */}
+
       <div className="flex justify-center mt-6 gap-4">
-        <button
-          onClick={(event) => {
-            event.preventDefault();
-            handleSearch();
-          }}
-          className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition"
-        >
-          🔍 検索
-        </button>
+        {/* リセットボタン */}
         <button
           onClick={() => {
             setSelectedGenres([]);
@@ -134,9 +127,21 @@ export default function SearchFilter({
             setSelectedPayments([]);
             setShowOnlyOpen(false);
           }}
-          className="bg-white text-black border border-gray-300 px-6 py-2 rounded-full hover:bg-gray-100 transition"
+          className="bg-white text-black border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-100 transition text-sm w-24"
         >
           リセット
+        </button>
+
+        {/* 検索ボタン（大きめサイズ） */}
+        <button
+          onClick={(event) => {
+            event.preventDefault();
+            handleSearch();
+          }}
+          className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition flex items-center justify-center gap-2 text-sm w-56"
+        >
+          <FaSearch className="text-base" />
+          検索
         </button>
       </div>
     </div>

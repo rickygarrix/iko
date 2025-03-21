@@ -76,71 +76,69 @@ export default function SearchResults({
       ) : (
         <div>
           {/* 件数表示 */}
-          <p className="text-lg font-semibold mb-6 text-gray-700">
+          <p className="text-lg font-semibold mb-6 text-center text-gray-700">
             検索結果 <span className="text-blue-500">{stores.length}</span> 件
           </p>
 
           {/* 検索結果リスト */}
-          <div className="space-y-6">
-            {stores.map((store) => {
+          <div>
+            {stores.map((store, index) => {
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
               return (
-                <div
-                  key={store.id}
-                  className="flex flex-col md:flex-row items-start bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition"
-                  onClick={() =>
-                    router.push(`/stores/${store.id}?prev=/search&${queryParams}`)
-                  }
-                >
-                  {/* 店舗画像 */}
-                  <Image
-                    src={store.image_url ?? "/default-image.jpg"}
-                    alt={store.name}
-                    width={160}
-                    height={120}
-                    className="w-full md:w-48 h-36 object-cover"
-                  />
+                <div key={store.id}>
+                  {/* 店舗情報カード */}
+                  <div
+                    className="bg-[#FDFBF7] p-4 transition cursor-pointer"
+                    onClick={() =>
+                      router.push(`/stores/${store.id}?prev=/search&${queryParams}`)
+                    }
+                  >
+                    {/* 店名 & 説明 */}
+                    <h2 className="text-base font-bold text-gray-800 mb-1">{store.name}</h2>
+                    <p className="text-sm text-gray-600 mb-3">{store.description}</p>
 
-                  {/* 情報エリア */}
-                  <div className="p-4 flex-1 text-left">
-                    {/* 店舗名 */}
-                    <h2 className="text-lg font-bold text-gray-800 mb-1">
-                      {store.name}
-                    </h2>
-
-                    {/* 説明 */}
-                    <p className="text-sm text-gray-600 mb-3">
-                      {store.description ?? "説明がありません。"}
-                    </p>
-
-                    {/* 詳細情報 */}
-                    <div className="text-sm text-gray-700 space-y-1">
-                      <p>📍 {store.area} エリア</p>
-                      <p>🎵 {store.genre}</p>
-                      <p className={isOpen ? "text-green-600" : "text-red-500"}>
-                        {isOpen ? "営業中" : "営業時間外"}
-                      </p>
-                      {!isOpen && (
-                        <p className="text-gray-500 text-xs">
-                          次の営業: {nextOpening}
+                    {/* 画像 + 詳細 */}
+                    <div className="flex flex-row items-start gap-4">
+                      <Image
+                        src={store.image_url ?? "/default-image.jpg"}
+                        alt={store.name}
+                        width={160}
+                        height={120}
+                        className="object-cover w-40 h-32"
+                      />
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <p>{store.area} エリア</p>
+                        <p>{store.genre}</p>
+                        <p className={isOpen ? "text-green-600" : "text-red-500"}>
+                          {isOpen ? "営業中" : "営業時間外"}
                         </p>
-                      )}
+                        <p className="text-xs text-gray-500">
+                          {isOpen
+                            ? `${nextOpening}`
+                            : `${nextOpening} `}
+                        </p>
+                      </div>
                     </div>
                   </div>
+
+                  {/* 店舗間の仕切り線（最後の店舗以外） */}
+                  {index !== stores.length - 1 && (
+                    <hr className="my-4 border-t border-gray-300" />
+                  )}
                 </div>
               );
             })}
           </div>
 
           {/* パンくずリスト */}
-          <div className="bg-[#FAFAF5] py-4 px-6 text-sm text-gray-800">
+          <div className="bg-[#FAFAF5] py-4 px-6 text-sm text-gray-800 mt-8">
             <nav className="flex gap-2">
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className="hover:underline"
               >
-                トップ
+                トップに戻る
               </button>
               <span>/</span>
               <button
