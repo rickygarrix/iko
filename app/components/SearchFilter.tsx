@@ -34,15 +34,18 @@ export default function SearchFilter({
 
       {/* 🔹 営業中のみ */}
       <div className="mb-4">
-        <label className="inline-flex items-center text-gray-700">
-          <input
-            type="checkbox"
-            checked={showOnlyOpen}
-            onChange={() => setShowOnlyOpen(!showOnlyOpen)}
-            className="mr-2 w-4 h-4 accent-black"
-          />
-          営業中のみ表示
-        </label>
+        <p className="font-semibold mb-2 text-gray-800">営業時間</p>
+        <div className="mb-4">
+          <label className="inline-flex items-center text-gray-700">
+            <input
+              type="checkbox"
+              checked={showOnlyOpen}
+              onChange={() => setShowOnlyOpen(!showOnlyOpen)}
+              className="mr-2 w-4 h-4 accent-black"
+            />
+            営業中のみ表示
+          </label>
+        </div>
       </div>
 
       {/* 🔹 ジャンル */}

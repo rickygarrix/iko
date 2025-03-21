@@ -1,6 +1,6 @@
 export default function AboutSection() {
   return (
-    <section className="bg-indigo-700 text-white py-12 px-6 mt-12 rounded-lg shadow-md">
+    <section className="bg-[#4B5C9E] text-white py-12 px-6 mt-12 rounded-lg shadow-md">
       <h2 className="text-3xl font-bold mb-1 text-center text-center">オトナビ</h2>
       <p className="text-sm text-gray-200 text-center mb-6">What’s Otonavi?</p>
       <p className="text-sm leading-relaxed">
@@ -11,7 +11,7 @@ export default function AboutSection() {
       <div className="mt-4 text-center">
         <a
           href="/search"
-          className="inline-block bg-white text-indigo-700 font-semibold py-2 px-4 rounded hover:bg-gray-100 transition"
+          className="inline-block bg-black text-white font-semibold py-2 px-4 rounded hover:bg-gray-100 transition"
         >
           行きたいお店を見つけよう →
         </a>

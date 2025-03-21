@@ -120,9 +120,9 @@ export default function StoreDetail() {
             <table className="w-full border border-gray-300 text-sm text-center">
               <thead>
                 <tr>
-                  <th className="border px-4 py-2 bg-gray-50">現金</th>
-                  <th className="border px-4 py-2 bg-gray-50">クレジットカード</th>
-                  <th className="border px-4 py-2 bg-gray-50">電子マネー</th>
+                  <th className="border px-4 py-2 bg-[#FDFBF7]">現金</th>
+                  <th className="border px-4 py-2 bg-[#FDFBF7]">クレジットカード</th>
+                  <th className="border px-4 py-2 bg-[#FDFBF7]">電子マネー</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,6 +136,7 @@ export default function StoreDetail() {
               </tbody>
             </table>
           </div>
+
           {/* 店舗情報 表形式 */}
           <div className="my-10">
             <div className="mb-10">
@@ -143,19 +144,19 @@ export default function StoreDetail() {
               <table className="w-full border border-gray-300 text-sm">
                 <tbody>
                   <tr>
-                    <th className="border px-4 py-4 bg-gray-50 text-left w-32">店舗名</th>
+                    <th className="border px-4 py-4 bg-[#FDFBF7] text-left w-32">店舗名</th>
                     <td className="border px-4 py-4">{store.name}</td>
                   </tr>
                   <tr>
-                    <th className="border px-4 py-4 bg-gray-50 text-left">所在地</th>
+                    <th className="border px-4 py-4 bg-[#FDFBF7] text-left">所在地</th>
                     <td className="border px-4 py-4">{store.address}</td>
                   </tr>
                   <tr>
-                    <th className="border px-4 py-4 bg-gray-50 text-left">アクセス</th>
+                    <th className="border px-4 py-4 bg-[#FDFBF7] text-left">アクセス</th>
                     <td className="border px-4 py-4">{store.access}</td>
                   </tr>
                   <tr>
-                    <th className="border px-4 py-4 bg-gray-50 text-left">営業時間</th>
+                    <th className="border px-4 py-4 bg-[#FDFBF7] text-left">営業時間</th>
                     <td className="border px-4 py-4 whitespace-pre-wrap">{store.opening_hours}</td>
                   </tr>
                 </tbody>
@@ -163,7 +164,6 @@ export default function StoreDetail() {
               <p className="text-xs text-gray-500 mt-1">※日により変更する可能性があります。</p>
             </div>
           </div>
-
           {/* Googleマップ埋め込み */}
           {store.map_embed && (
             <div className="my-6">
