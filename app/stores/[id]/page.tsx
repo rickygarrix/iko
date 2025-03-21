@@ -4,7 +4,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import { checkIfOpen } from "@/lib/utils"; // ← 営業時間判定関数
+import { checkIfOpen } from "@/lib/utils";
 
 type Store = {
   id: string;

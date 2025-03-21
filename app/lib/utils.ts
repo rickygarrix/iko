@@ -42,7 +42,7 @@ export const checkIfOpen = (opening_hours: string) => {
       let hoursText = match[2].trim();
 
       if (hoursText === "休み") {
-        hoursMap[day] = []; // 休業日は空配列にする
+        hoursMap[day] = [];
       } else {
         let hoursList = hoursText.split(", ");
         hoursMap[day] = hoursList.map((hours) => {
@@ -59,11 +59,11 @@ export const checkIfOpen = (opening_hours: string) => {
   const foundKey = Object.keys(hoursMap).find((key) => key.startsWith(today));
 
   if (!foundKey || !hoursMap.hasOwnProperty(foundKey) || !Array.isArray(hoursMap[foundKey]) || hoursMap[foundKey]?.length === 0) {
-    console.warn(`⚠️ '${today}' は休業日`);  // ❌ `console.error()` を `console.warn()` に変更
+    console.warn(`⚠️ '${today}' は休業日`);
 
     const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
 
-    // ✅ `nextDayKey` の存在チェックをより厳密にする
+
     if (!nextDayKey || !hoursMap.hasOwnProperty(nextDayKey) || !Array.isArray(hoursMap[nextDayKey])) {
       return { isOpen: false, nextOpening: "営業情報なし" };
     }
@@ -109,7 +109,7 @@ export const checkIfOpen = (opening_hours: string) => {
 
     // ✅ **深夜営業終了後 6時未満なら、営業時間外のみ表示**
     if (currentHour < 6) {
-      return { isOpen: false, nextOpening: "" }; // 次の営業情報は出さない
+      return { isOpen: false, nextOpening: "" };
     }
 
     let futureHours = todayHours.filter(period =>

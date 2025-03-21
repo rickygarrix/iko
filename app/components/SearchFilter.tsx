@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { FaSearch } from "react-icons/fa"; // ← ファイル上部に追加！
+import { FaSearch } from "react-icons/fa";
 
 const GENRES = ["House", "Jazz", "Techno", "EDM"];
 const AREAS = ["新宿", "渋谷", "六本木", "池袋", "銀座", "表参道"];

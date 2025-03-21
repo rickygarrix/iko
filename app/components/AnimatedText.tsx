@@ -1,4 +1,4 @@
-"use client"; // ✅ 追加 (ファイル最上部に)
+"use client";
 
 import { useState, useEffect } from "react";
 

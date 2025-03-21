@@ -271,11 +271,11 @@ export default function MapPage() {
 
         options={{
           gestureHandling: "greedy",
-          fullscreenControl: false, // フルスクリーンボタンを無効化
-          disableDefaultUI: true, // すべてのデフォルトUIを非表示
-          mapTypeControl: false, // 地図の種類変更ボタンを無効化
-          streetViewControl: false, // ストリートビュー（ペグマン）を無効化
-          zoomControl: false, // ズームコントロールは有効化
+          fullscreenControl: false,
+          disableDefaultUI: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          zoomControl: false,
         }}
         onLoad={(map) => {
           mapRef.current = map;
@@ -301,7 +301,7 @@ export default function MapPage() {
           <Circle center={currentLocation} radius={50} options={{ strokeColor: "#007bff", fillColor: "#007bff", fillOpacity: 0.35 }} />
         )}
 
-        {locations.map((store) => ( // ✅ store を map のコールバック関数の引数として受け取る
+        {locations.map((store) => (
           <Marker
             key={store.id}
             position={{ lat: store.lat, lng: store.lng }}
