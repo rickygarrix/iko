@@ -17,14 +17,13 @@ const SEARCH_RADIUS = 5; // 5km
 export default function MapView() {
   const router = useRouter();
   const [locations, setLocations] = useState<
-    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; opening_hours?: string }[]
+    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean }[]
   >([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<
-    { id: string; name: string; genre: string; area: string; image_url?: string; opening_hours?: string } | null
-  >(null);
+  const [selectedStore, setSelectedStore] = useState<{ id: string; name: string; genre: string; area: string; image_url?: string; opening_hours?: string; isOpen: boolean } | null>(null);
+  const [showOnlyOpen, setShowOnlyOpen] = useState(false); // ✅ 営業中の店舗のみ表示の状態
   const mapRef = useRef<google.maps.Map | null>(null);
 
   useEffect(() => {
@@ -52,17 +51,28 @@ export default function MapView() {
 
     if (data) {
       const filteredData = data
-        .map((store) => ({
-          id: store.id,
-          name: store.name,
-          lat: Number(store.latitude),
-          lng: Number(store.longitude),
-          genre: store.genre,
-          area: store.area,
-          image_url: store.image_url || "/default-image.jpg",
-          opening_hours: store.opening_hours || "営業時間情報なし",
-        }))
-        .filter((store) => getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS);
+        .map((store) => {
+          const { displayText, isOpen } = parseOpeningHours(store.opening_hours);
+
+          <p style={{ fontSize: "14px", fontWeight: "bold", color: isOpen ? "green" : "red" }}>
+            {displayText}
+          </p>
+          return {
+            id: store.id,
+            name: store.name,
+            lat: Number(store.latitude),
+            lng: Number(store.longitude),
+            genre: store.genre,
+            area: store.area,
+            image_url: store.image_url || "/default-image.jpg",
+            opening_hours: store.opening_hours || "営業時間情報なし",
+            isOpen, // ✅ 営業中かどうかの判定を追加
+          };
+        })
+        .filter((store) =>
+          getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS &&
+          (!showOnlyOpen || store.isOpen) // ✅ チェックが入っている場合は営業中の店舗のみ表示
+        );
 
       setLocations(filteredData);
     }
@@ -133,11 +143,38 @@ export default function MapView() {
         ))}
       </GoogleMap>
 
+      {/* ✅ 検索ボタンとチェックボックスの追加 */}
       {showSearchButton && (
-        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)" }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            backgroundColor: "#FFA500",
+            padding: "10px",
+            borderRadius: "10px",
+            boxShadow: "0px 2px 10px rgba(0, 0, 0, 0.2)",
+          }}
+        >
           <button onClick={handleSearchInThisArea} className="bg-orange-500 text-white p-2 rounded shadow-lg">
             🔍 ここで検索する
           </button>
+          <label style={{ display: "flex", alignItems: "center", color: "white" }}>
+            <input
+              type="checkbox"
+              checked={showOnlyOpen}
+              onChange={(e) => {
+                setShowOnlyOpen(e.target.checked);
+                fetchNearbyStores(mapCenter.lat, mapCenter.lng); // ✅ フィルタ更新
+              }}
+              style={{ marginRight: "5px" }}
+            />
+            営業中のみ表示
+          </label>
         </div>
       )}
 
