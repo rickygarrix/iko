@@ -3,26 +3,28 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-white p-4 text-center">
-      {/* ✅ 左寄せ（オトナビ・オトナビとは？・利用規約・プライバシーポリシー） */}
-      <div className="flex space-x-6 items-center md:items-start">
-        <Link href="/" passHref>
-          <h1 className="text-xl font-bold cursor-pointer hover:text-blue-400 transition">オトナビ</h1>
+    <footer className="bg-black text-white py-8 text-center">
+      {/* サイト名 */}
+      <h1 className="text-xl font-bold mb-4">オトナビ</h1>
+
+      {/* リンク一覧 */}
+      <div className="flex justify-center gap-8 mb-4 flex-wrap text-sm">
+        <Link href="/search">
+          <p className="hover:text-blue-400 transition cursor-pointer">条件検索</p>
         </Link>
-        <Link href="/terms" passHref>
-          <p className="text-sm cursor-pointer hover:text-blue-400 transition">利用規約</p>
+        <Link href="/map">
+          <p className="hover:text-blue-400 transition cursor-pointer">地図検索</p>
         </Link>
-        <Link href="/privacy" passHref>
-          <p className="text-sm cursor-pointer hover:text-blue-400 transition">プライバシーポリシー</p>
+        <Link href="/privacy">
+          <p className="hover:text-blue-400 transition cursor-pointer">プライバシーポリシー</p>
+        </Link>
+        <Link href="/terms">
+          <p className="hover:text-blue-400 transition cursor-pointer">利用規約</p>
         </Link>
       </div>
 
-      {/* ✅ 横中央寄せ（コピーライト） */}
-      <div className="w-full md:w-auto text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
-        <p className="text-sm text-gray-400">
-          &copy; オトナビ
-        </p>
-      </div>
+      {/* コピーライト */}
+      <p className="text-xs text-gray-400">&copy; オトナビ</p>
     </footer>
   );
 }

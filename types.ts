@@ -7,4 +7,5 @@ export type Store = {
   payment_methods: string[];
   opening_hours: string;
   image_url?: string | null;
+  description?: string;
 };

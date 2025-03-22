@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 
+// 店舗の型（discription → description に修正）
 type Store = {
   id: string;
   name: string;
@@ -19,7 +20,7 @@ type Store = {
   phone: string;
   website?: string;
   image_url?: string;
-  discription: string;
+  description: string;
   access: string;
   map?: string;
 };
@@ -32,9 +33,8 @@ export default function StoreDetail() {
   const [loading, setLoading] = useState(true);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
-  // 🔹 「前のページ」の情報を取得
   const previousPage = searchParams.get("prev") || "";
-  const queryParams = searchParams.toString(); // すべてのクエリパラメータを保持
+  const queryParams = searchParams.toString();
 
   useEffect(() => {
     const fetchStore = async () => {
@@ -55,21 +55,19 @@ export default function StoreDetail() {
 
     fetchStore();
 
-    // 🔹 sessionStorage から保存された地図の位置を取得
     const savedCenter = sessionStorage.getItem("mapCenter");
     if (savedCenter) {
       const parsedCenter = JSON.parse(savedCenter);
       setMapCenter(parsedCenter);
-      sessionStorage.setItem("mapCenter", JSON.stringify(parsedCenter)); // **地図の状態を更新**
+      sessionStorage.setItem("mapCenter", JSON.stringify(parsedCenter));
     }
   }, [id]);
 
-  if (loading) return <p className="text-center text-white">ロード中...</p>;
-  if (!store) return <p className="text-center text-white">店舗が見つかりませんでした。</p>;
+  if (loading) return <p className="text-center text-gray-600">ロード中...</p>;
+  if (!store) return <p className="text-center text-red-500">店舗が見つかりませんでした。</p>;
 
   const handleBack = () => {
     if (previousPage === "/map") {
-      // 🔹 戻る際に sessionStorage に mapCenter を再保存
       if (mapCenter) {
         sessionStorage.setItem("mapCenter", JSON.stringify(mapCenter));
       }
@@ -80,63 +78,79 @@ export default function StoreDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      {/* 🔹 戻るボタン */}
+    <div className="min-h-screen bg-[#FAFAF5] text-gray-800 p-6">
+      {/* 戻るボタン */}
       <button
         onClick={handleBack}
-        className="bg-gray-700 text-white px-4 py-2 rounded-md mb-4 hover:bg-gray-600 transition"
+        className="text-sm text-blue-500 underline mb-4 hover:text-blue-700"
       >
         ← 戻る
       </button>
 
-      {/* 🔹 店舗情報エリア */}
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col md:flex-row gap-6">
-        {/* 画像とリンクを縦に配置 */}
-        <div className="flex flex-col items-center space-y-4">
-          {/* 🔹 店舗画像 */}
-          {store.image_url && (
-            <Image
-              src={store.image_url}
-              alt={store.name}
-              width={320}
-              height={320}
-              className="object-cover rounded-lg"
-            />
-          )}
+      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
+        {/* 店舗画像 */}
+        {store.image_url && (
+          <Image
+            src={store.image_url}
+            alt={store.name}
+            width={800}
+            height={400}
+            className="w-full h-64 object-cover"
+          />
+        )}
 
-          {/* 🔹 Googleマップリンク */}
-          <a
-            href={store.map}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-gray-700 text-white px-4 py-2 rounded-lg w-full text-center hover:bg-gray-600 transition"
-          >
-            Googleマップで開く
-          </a>
+        <div className="p-6">
+          {/* 店舗名・紹介文 */}
+          <h1 className="text-2xl font-bold mb-1">{store.name}</h1>
+          <p className="text-sm text-gray-600 mb-4">{store.description}</p>
 
-          {/* 🔹 公式サイトリンク */}
-          {store.website && (
-            <a
-              href={store.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg w-full text-center hover:bg-blue-400 transition"
-            >
-              公式サイト →
-            </a>
-          )}
-        </div>
+          {/* ジャンル・キャパ・営業時間・エリアなど */}
+          <div className="mb-4 space-y-1 text-sm">
+            <p><strong>ジャンル:</strong> {store.genre}</p>
+            <p><strong>エリア:</strong> {store.address}</p>
+            <p><strong>キャパシティ:</strong> {store.capacity}人</p>
+            <p><strong>入場料:</strong> {store.entry_fee}</p>
+            <p><strong>営業時間:</strong><br />
+              <span className="whitespace-pre-wrap">{store.opening_hours}</span>
+            </p>
+            <p><strong>定休日:</strong> {store.regular_holiday || "なし"}</p>
+            <p><strong>電話番号:</strong> {store.phone}</p>
+            <p><strong>アクセス:</strong> {store.access}</p>
+          </div>
 
-        {/* 🔹 店舗詳細 */}
-        <div className="w-full sm:w-1/2">
-          <h1 className="text-2xl font-bold">{store.name}</h1>
-          <p className="text-gray-400">🎵 ジャンル: {store.genre}</p>
-          <p className="text-gray-400">👥 {store.capacity}人</p>
-          <p className="text-gray-400">📍 {store.address}</p>
-          <p className="text-gray-400">📞 {store.phone}</p>
-          <p className="text-gray-400">🚫 休み: {store.regular_holiday || "なし"}</p>
-          <p className="mt-2 text-gray-300">⏰ 営業時間:</p>
-          <pre className="text-gray-400 whitespace-pre-wrap">{store.opening_hours}</pre>
+          {/* 支払い方法 */}
+          <div className="mb-6">
+            <p className="font-semibold mb-2">■ 支払い方法</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+              {store.payment_methods.map((method, index) => (
+                <span key={index}>○ {method}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* ボタンエリア */}
+          <div className="space-y-2">
+            {store.map && (
+              <a
+                href={store.map}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300"
+              >
+                Googleマップで開く
+              </a>
+            )}
+            {store.website && (
+              <a
+                href={store.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center bg-black text-white py-2 rounded hover:bg-gray-800"
+              >
+                公式サイト →
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>

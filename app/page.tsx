@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
-import AnimatedText from "@/components/AnimatedText";
+import AboutSection from "@/components/AboutSection";
 import RecommendedStores from "@/components/RecommendedStores";
 
 
@@ -31,28 +31,23 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <SearchFilter
-        selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
-        selectedAreas={selectedAreas} setSelectedAreas={setSelectedAreas}
-        selectedPayments={selectedPayments} setSelectedPayments={setSelectedPayments}
-        showOnlyOpen={showOnlyOpen} setShowOnlyOpen={setShowOnlyOpen}
-        handleSearch={handleSearch}
-      />
-      <div className="mt-4 text-center">
-        {/* 🔹 地図を表示するボタン */}
-        <button
-          onClick={() => router.push("/map")}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          📍 地図から探す
-        </button>
+    <div className="min-h-screen bg-[#FAFAF5] text-gray-800 px-4 md:px-6 py-6 space-y-12">
+      {/* 検索フィルター */}
+      <div id="search-filter">
+        <SearchFilter
+          selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
+          selectedAreas={selectedAreas} setSelectedAreas={setSelectedAreas}
+          selectedPayments={selectedPayments} setSelectedPayments={setSelectedPayments}
+          showOnlyOpen={showOnlyOpen} setShowOnlyOpen={setShowOnlyOpen}
+          handleSearch={handleSearch}
+        />
       </div>
-      <>
-        <AnimatedText />
-        <RecommendedStores />
-      </>
 
+      {/* 今月のおすすめ */}
+      <RecommendedStores />
+
+      {/* オトナビとは */}
+      <AboutSection />
     </div>
   );
 }

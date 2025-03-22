@@ -25,109 +25,120 @@ export default function SearchFilter({
   handleSearch
 }: SearchFilterProps) {
   return (
-    <div className="mb-6 p-4 bg-gray-800 rounded">
-      <h2 className="text-lg font-semibold mb-2">検索フィルター</h2>
+    <div className="mb-6 p-6 bg-[#FAFAF5] rounded-md shadow-sm border border-gray-200 max-w-xl mx-auto">
+      <h2 className="text-xl font-bold text-center mb-1 text-gray-800 tracking-wide">
+        条件検索
+      </h2>
+      <p className="text-sm text-center text-blue-500 mb-6">Search</p>
 
       {/* 🔹 営業中のみ */}
-      <label className="mt-4 block">
-        <input
-          type="checkbox"
-          checked={showOnlyOpen}
-          onChange={() => setShowOnlyOpen(!showOnlyOpen)}
-          className="mr-2"
-        />
-        営業中のみ表示
-      </label>
+      <div className="mb-4">
+        <label className="inline-flex items-center text-gray-700">
+          <input
+            type="checkbox"
+            checked={showOnlyOpen}
+            onChange={() => setShowOnlyOpen(!showOnlyOpen)}
+            className="mr-2 w-4 h-4 accent-black"
+          />
+          営業中のみ表示
+        </label>
+      </div>
 
       {/* 🔹 ジャンル */}
-      <div className="mt-4">
-        <p className="font-semibold mb-2">ジャンル</p>
-        {GENRES.map((genre) => (
-          <label key={genre} className="mr-4">
-            <input
-              type="checkbox"
-              className="mr-2"
-              checked={selectedGenres.includes(genre)}
-              onChange={() =>
-                setSelectedGenres(
-                  selectedGenres.includes(genre)
-                    ? selectedGenres.filter((g) => g !== genre)
-                    : [...selectedGenres, genre]
-                )
-              }
-            />
-            {genre}
-          </label>
-        ))}
+      <div className="mb-4">
+        <p className="font-semibold mb-2 text-gray-800">ジャンル</p>
+        <div className="flex flex-wrap gap-3">
+          {GENRES.map((genre) => (
+            <label key={genre} className="inline-flex items-center text-gray-700">
+              <input
+                type="checkbox"
+                className="mr-2 w-4 h-4 accent-black"
+                checked={selectedGenres.includes(genre)}
+                onChange={() =>
+                  setSelectedGenres(
+                    selectedGenres.includes(genre)
+                      ? selectedGenres.filter((g) => g !== genre)
+                      : [...selectedGenres, genre]
+                  )
+                }
+              />
+              {genre}
+            </label>
+          ))}
+        </div>
       </div>
 
       {/* 🔹 エリア */}
-      <div className="mt-4">
-        <p className="font-semibold mb-2">エリア</p>
-        {AREAS.map((area) => (
-          <label key={area} className="mr-4">
-            <input
-              type="checkbox"
-              className="mr-2"
-              checked={selectedAreas.includes(area)}
-              onChange={() =>
-                setSelectedAreas(
-                  selectedAreas.includes(area)
-                    ? selectedAreas.filter((a) => a !== area)
-                    : [...selectedAreas, area]
-                )
-              }
-            />
-            {area}
-          </label>
-        ))}
+      <div className="mb-4">
+        <p className="font-semibold mb-2 text-gray-800">エリア</p>
+        <div className="flex flex-wrap gap-3">
+          {AREAS.map((area) => (
+            <label key={area} className="inline-flex items-center text-gray-700">
+              <input
+                type="checkbox"
+                className="mr-2 w-4 h-4 accent-black"
+                checked={selectedAreas.includes(area)}
+                onChange={() =>
+                  setSelectedAreas(
+                    selectedAreas.includes(area)
+                      ? selectedAreas.filter((a) => a !== area)
+                      : [...selectedAreas, area]
+                  )
+                }
+              />
+              {area}
+            </label>
+          ))}
+        </div>
       </div>
 
       {/* 🔹 支払い方法 */}
-      <div className="mt-4">
-        <p className="font-semibold mb-2">支払い方法</p>
-        {PAYMENTS.map((payment) => (
-          <label key={payment} className="mr-4">
-            <input
-              type="checkbox"
-              className="mr-2"
-              checked={selectedPayments.includes(payment)}
-              onChange={() =>
-                setSelectedPayments(
-                  selectedPayments.includes(payment)
-                    ? selectedPayments.filter((p) => p !== payment)
-                    : [...selectedPayments, payment]
-                )
-              }
-            />
-            {payment}
-          </label>
-        ))}
+      <div className="mb-4">
+        <p className="font-semibold mb-2 text-gray-800">支払い方法</p>
+        <div className="flex flex-wrap gap-3">
+          {PAYMENTS.map((payment) => (
+            <label key={payment} className="inline-flex items-center text-gray-700">
+              <input
+                type="checkbox"
+                className="mr-2 w-4 h-4 accent-black"
+                checked={selectedPayments.includes(payment)}
+                onChange={() =>
+                  setSelectedPayments(
+                    selectedPayments.includes(payment)
+                      ? selectedPayments.filter((p) => p !== payment)
+                      : [...selectedPayments, payment]
+                  )
+                }
+              />
+              {payment}
+            </label>
+          ))}
+        </div>
       </div>
 
-      {/* 🔹 検索ボタン */}
-      <button
-        onClick={(event) => {
-          event.preventDefault();
-          handleSearch();
-        }}
-        className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-      >
-        検索
-      </button>
-
-      {/* 🔹 リセットボタン */}
-      <button
-        onClick={() => {
-          setSelectedGenres([]);
-          setSelectedAreas([]);
-          setSelectedPayments([]);
-          setShowOnlyOpen(false);
-        }}
-        className="bg-gray-500 text-white px-4 py-2 rounded mt-4 ml-4"
-      >
-        リセット
-      </button>
+      {/* 🔹 ボタンエリア */}
+      <div className="flex justify-center mt-6 gap-4">
+        <button
+          onClick={(event) => {
+            event.preventDefault();
+            handleSearch();
+          }}
+          className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition"
+        >
+          🔍 検索
+        </button>
+        <button
+          onClick={() => {
+            setSelectedGenres([]);
+            setSelectedAreas([]);
+            setSelectedPayments([]);
+            setShowOnlyOpen(false);
+          }}
+          className="bg-white text-black border border-gray-300 px-6 py-2 rounded-full hover:bg-gray-100 transition"
+        >
+          リセット
+        </button>
+      </div>
     </div>
   );
 }

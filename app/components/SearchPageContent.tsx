@@ -45,14 +45,21 @@ export default function SearchPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <SearchFilter
-        selectedGenres={selectedGenres} setSelectedGenres={setSelectedGenres}
-        selectedAreas={selectedAreas} setSelectedAreas={setSelectedAreas}
-        selectedPayments={selectedPayments} setSelectedPayments={setSelectedPayments}
-        showOnlyOpen={showOnlyOpen} setShowOnlyOpen={setShowOnlyOpen}
-        handleSearch={handleSearch}
-      />
+    <div className="min-h-screen bg-[#FAFAF5] text-gray-800 px-4 md:px-6 py-6 space-y-10">
+      <div id="search-filter">
+        <SearchFilter
+          selectedGenres={selectedGenres}
+          setSelectedGenres={setSelectedGenres}
+          selectedAreas={selectedAreas}
+          setSelectedAreas={setSelectedAreas}
+          selectedPayments={selectedPayments}
+          setSelectedPayments={setSelectedPayments}
+          showOnlyOpen={showOnlyOpen}
+          setShowOnlyOpen={setShowOnlyOpen}
+          handleSearch={handleSearch}
+        />
+      </div>
+
       {isSearchTriggered && (
         <SearchResults
           selectedGenres={selectedGenres}

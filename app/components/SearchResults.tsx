@@ -20,11 +20,11 @@ export default function SearchResults({
   selectedAreas,
   selectedPayments,
   showOnlyOpen,
-  isSearchTriggered
+  isSearchTriggered,
 }: SearchResultsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryParams = searchParams.toString(); // 🔹 現在のフィルター情報を保持
+  const queryParams = searchParams.toString();
 
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,14 +44,19 @@ export default function SearchResults({
 
     if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
     if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
-    if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
+    if (selectedPayments.length > 0)
+      query = query.overlaps("payment_methods", selectedPayments);
 
     const { data, error } = await query;
     if (error) {
       setError(error.message);
       setStores([]);
     } else {
-      setStores(showOnlyOpen ? data.filter(store => checkIfOpen(store.opening_hours).isOpen) : data || []);
+      setStores(
+        showOnlyOpen
+          ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen)
+          : data || []
+      );
     }
     setLoading(false);
   };
@@ -59,7 +64,9 @@ export default function SearchResults({
   return (
     <div className="mt-6">
       {!isSearchTriggered ? (
-        <p className="text-gray-400">🔍 検索条件を選んで「検索」ボタンを押してください</p>
+        <p className="text-gray-400">
+          🔍 検索条件を選んで「検索」ボタンを押してください
+        </p>
       ) : loading ? (
         <p className="mt-6">ロード中...</p>
       ) : error ? (
@@ -68,49 +75,81 @@ export default function SearchResults({
         <p className="text-gray-400 mt-6">該当する店舗がありません。</p>
       ) : (
         <div>
-          {/* 🔹 検索結果件数を表示 */}
-          <p className="text-lg font-semibold mb-4">
-            🔍 {stores.length} 件の店舗が見つかりました
+          {/* 件数表示 */}
+          <p className="text-lg font-semibold mb-6 text-gray-700">
+            検索結果 <span className="text-blue-500">{stores.length}</span> 件
           </p>
 
-          {/* 🔹 検索結果一覧 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 検索結果リスト */}
+          <div className="space-y-6">
             {stores.map((store) => {
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
               return (
-                // 🔹 どこをクリックしても遷移できるようにする
                 <div
                   key={store.id}
-                  className="p-4 bg-gray-800 rounded shadow flex cursor-pointer hover:bg-gray-700 transition"
-                  onClick={() => router.push(`/stores/${store.id}?prev=/search&${queryParams}`)}
+                  className="flex flex-col md:flex-row items-start bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition"
+                  onClick={() =>
+                    router.push(`/stores/${store.id}?prev=/search&${queryParams}`)
+                  }
                 >
+                  {/* 店舗画像 */}
                   <Image
                     src={store.image_url ?? "/default-image.jpg"}
                     alt={store.name}
-                    width={128}
-                    height={128}
-                    className="w-32 h-32 object-cover rounded"
+                    width={160}
+                    height={120}
+                    className="w-full md:w-48 h-36 object-cover"
                   />
-                  <div className="ml-4 flex flex-col justify-between">
-                    <h2 className="text-xl font-semibold">{store.name}</h2>
-                    <p className="text-gray-400">📍 {store.area} / 🎵 {store.genre}</p>
-                    <p className={isOpen ? "text-green-400" : "text-red-400"}>{isOpen ? "営業中" : "営業時間外"}</p>
-                    <p className="text-white">{nextOpening}</p>
+
+                  {/* 情報エリア */}
+                  <div className="p-4 flex-1 text-left">
+                    {/* 店舗名 */}
+                    <h2 className="text-lg font-bold text-gray-800 mb-1">
+                      {store.name}
+                    </h2>
+
+                    {/* 説明 */}
+                    <p className="text-sm text-gray-600 mb-3">
+                      {store.description ?? "説明がありません。"}
+                    </p>
+
+                    {/* 詳細情報 */}
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p>📍 {store.area} エリア</p>
+                      <p>🎵 {store.genre}</p>
+                      <p className={isOpen ? "text-green-600" : "text-red-500"}>
+                        {isOpen ? "営業中" : "営業時間外"}
+                      </p>
+                      {!isOpen && (
+                        <p className="text-gray-500 text-xs">
+                          次の営業: {nextOpening}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* 🔹 トップに戻るボタン */}
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              ↑ トップに戻る
-            </button>
+          {/* パンくずリスト */}
+          <div className="bg-[#FAFAF5] py-4 px-6 text-sm text-gray-800">
+            <nav className="flex gap-2">
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="hover:underline"
+              >
+                トップ
+              </button>
+              <span>/</span>
+              <button
+                onClick={() => router.push("/map")}
+                className="hover:underline"
+              >
+                地図から探す
+              </button>
+            </nav>
           </div>
         </div>
       )}

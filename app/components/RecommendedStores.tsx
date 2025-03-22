@@ -4,6 +4,7 @@ import Link from "next/link";
 import { checkIfOpen } from "@/lib/utils";
 import Image from "next/image";
 
+// 型定義（必要なら description を追加）
 type Store = {
   id: string;
   name: string;
@@ -13,6 +14,7 @@ type Store = {
   image_url?: string | null;
   capacity: string;
   payment_methods: string[];
+  description?: string;
 };
 
 export default function RecommendedStores() {
@@ -34,26 +36,40 @@ export default function RecommendedStores() {
   }, []);
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold mt-6">今月のおすすめのハコ</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+    <div className="my-10">
+      <h2 className="text-xl font-bold text-gray-800 mb-1">今月のおすすめ</h2>
+      <p className="text-sm text-blue-500 mb-6">recommend</p>
+
+      <div className="space-y-6">
         {recommendedStores.map((store) => {
-          const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
+          const { isOpen } = checkIfOpen(store.opening_hours);
           return (
             <Link key={store.id} href={`/stores/${store.id}`} passHref>
-              <div className="p-4 bg-gray-800 rounded shadow flex">
-                <Image
-                  src={store.image_url ?? "/default-image.jpg"}
-                  alt={store.name}
-                  width={128}
-                  height={128}
-                  className="object-cover rounded"
-                />
-                <div className="ml-4 flex flex-col justify-between">
-                  <h1 className="text-xl font-semibold">{store.name}</h1>
-                  <p className="text-gray-400">📍: {store.area} / 🎵{store.genre}</p>
-                  <p className={isOpen ? "text-green-400" : "text-red-400"}>🕗 {isOpen ? "営業中" : "営業時間外"}</p>
-                  <p className="text-white">{nextOpening}</p>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition p-4">
+                <h3 className="text-lg font-bold text-gray-800 mb-1">{store.name}</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  {store.description ?? "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
+                </p>
+
+                {/* 横並び：画像 + 情報（画像左、情報右） */}
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                  {/* 画像 */}
+                  <Image
+                    src={store.image_url ?? "/default-image.jpg"}
+                    alt={store.name}
+                    width={160}
+                    height={120}
+                    className="w-full md:w-48 h-36 object-cover rounded"
+                  />
+
+                  {/* テキスト情報 */}
+                  <div className="text-sm text-gray-700 space-y-1">
+                    <p>{store.area}エリア</p>
+                    <p>{store.genre}</p>
+                    <p className={isOpen ? "text-green-600" : "text-red-500"}>
+                      {isOpen ? "営業中" : "営業時間外"}
+                    </p>
+                  </div>
                 </div>
               </div>
             </Link>
