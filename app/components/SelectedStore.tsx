@@ -2,23 +2,14 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { parseOpeningHours } from "@/lib/parseOpeningHours"; // ✅ 営業時間判定を追加
 
-type Store = {
-  id: string;
-  name: string;
-  genre: string;
-  area: string;
-  image_url?: string;
-};
-
-interface SelectedStoreProps {
-  store: Store | null;
-}
-
-export default function SelectedStore({ store }: SelectedStoreProps) {
+export default function SelectedStore({ store }: { store: { id: string; name: string; genre: string; area: string; image_url?: string; opening_hours?: string } }) {
   const router = useRouter();
-
   if (!store) return null;
+
+  // ✅ 営業時間判定の適用
+  const { displayText, isOpen } = parseOpeningHours(store.opening_hours);
 
   return (
     <div
@@ -49,6 +40,14 @@ export default function SelectedStore({ store }: SelectedStoreProps) {
       <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{store.name}</h2>
       <p>🎵 ジャンル: {store.genre}</p>
       <p>📍 エリア: {store.area}</p>
+
+      {/* ✅ 営業時間情報の表示 */}
+      <p style={{ fontSize: "14px", color: "#555", marginTop: "8px" }}>
+        ⏰ {displayText}
+      </p>
+      <p style={{ fontSize: "14px", fontWeight: "bold", color: isOpen ? "green" : "red" }}>
+        {isOpen ? "営業中" : "営業時間外"}
+      </p>
     </div>
   );
 }

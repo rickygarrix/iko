@@ -5,6 +5,7 @@ import { GoogleMap, Marker, Circle } from "@react-google-maps/api";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { parseOpeningHours } from "@/lib/parseOpeningHours"; // ✅ 追加
 
 const containerStyle = {
   width: "100%",
@@ -16,13 +17,13 @@ const SEARCH_RADIUS = 5; // 5km
 export default function MapView() {
   const router = useRouter();
   const [locations, setLocations] = useState<
-    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string }[]
+    { id: string; lat: number; lng: number; name: string; genre: string; area: string; image_url?: string; opening_hours?: string }[]
   >([]);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 35.6895, lng: 139.6917 });
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [selectedStore, setSelectedStore] = useState<
-    { id: string; name: string; genre: string; area: string; image_url?: string } | null
+    { id: string; name: string; genre: string; area: string; image_url?: string; opening_hours?: string } | null
   >(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
@@ -42,7 +43,7 @@ export default function MapView() {
   const fetchNearbyStores = async (lat: number, lng: number) => {
     if (!lat || !lng) return;
 
-    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude, genre, area, image_url");
+    const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude, genre, area, image_url, opening_hours");
 
     if (error) {
       console.error("🔥 Supabase Error:", error.message);
@@ -59,6 +60,7 @@ export default function MapView() {
           genre: store.genre,
           area: store.area,
           image_url: store.image_url || "/default-image.jpg",
+          opening_hours: store.opening_hours || "営業時間情報なし",
         }))
         .filter((store) => getDistanceFromLatLonInKm(lat, lng, store.lat, store.lng) <= SEARCH_RADIUS);
 
@@ -168,6 +170,24 @@ export default function MapView() {
           <h2 style={{ fontSize: "18px", fontWeight: "bold" }}>{selectedStore.name}</h2>
           <p>🎵 ジャンル: {selectedStore.genre}</p>
           <p>📍 エリア: {selectedStore.area}</p>
+
+          {/* ✅ 営業時間の追加 */}
+          {selectedStore.opening_hours && (
+            (() => {
+              const { displayText, isOpen } = parseOpeningHours(selectedStore?.opening_hours);
+
+              <p style={{ fontSize: "14px", color: "#555", marginTop: "8px" }}>
+                ⏰ {displayText}
+              </p>
+              return (
+                <>
+                  <p style={{ fontSize: "14px", fontWeight: "bold", color: isOpen ? "green" : "red" }}>
+                    {isOpen ? "営業中" : "営業時間外"}
+                  </p>
+                </>
+              );
+            })()
+          )}
         </div>
       )}
     </div>
