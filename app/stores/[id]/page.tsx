@@ -93,7 +93,7 @@ export default function StoreDetail() {
             alt={store.name}
             width={800}
             height={400}
-            className="w-full h-64 object-cover"
+            className="w-full h-[120px] object-cover"
           />
         )}
 

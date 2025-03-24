@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
@@ -31,12 +32,20 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5] text-gray-800 px-4 md:px-6 py-6 space-y-12">
+    <div className="min-h-screen bg-[#F7F5EF] text-gray-800 pt-6 ">
 
       {/* 🔹 ヘッダー的キャッチコピー */}
-      <div className="text-center space-y-2">
-        <p className="text-sm text-gray-500">今夜の音を見つけよう</p>
-        <h1 className="text-3xl font-bold text-gray-900">オトナビ</h1>
+      <div className="text-center space-y-1">
+        <p className="text-sm text-[#1F1F21] leading-relaxed">今夜の音を見つけよう</p>
+        <div className="relative w-[121px] h-[40px] mx-auto">
+          <Image
+            src="header/logo.svg"
+            alt="オトナビ ロゴ"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
       </div>
 
       {/* 🔍 検索フィルター */}
@@ -54,7 +63,9 @@ export default function Home() {
       <RecommendedStores />
 
       {/* ℹ️ オトナビとは */}
-      <AboutSection />
+      <div className="px-0">
+        <AboutSection />
+      </div>
     </div>
   );
 }

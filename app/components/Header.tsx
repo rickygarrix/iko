@@ -1,27 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { FaSearch, FaMapMarkerAlt } from "react-icons/fa";
+import Image from "next/image";
 
 export default function Header() {
   return (
-    <header className="bg-white text-black p-4 shadow-md">
-      <div className="flex items-center justify-between max-w-md mx-auto">
-        {/* 🔹 ロゴ */}
+    <header className="bg-[#FEFCF6] text-black h-[48px] shadow-md">
+      <div className="flex items-center justify-between max-w-md mx-auto pl-4 pr-2 h-full">
+        {/* ロゴ */}
         <Link href="/" passHref>
-          <h1 className="text-2xl font-bold cursor-pointer">オトナビ</h1>
+          <div className="relative w-[61px] h-[20px]">
+            <Image
+              src="header/logo.svg"
+              alt="オトナビ ロゴ"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
         </Link>
 
-        {/* 🔹 アイコンナビゲーション */}
-        <div className="flex space-x-6">
-          <Link href="/search" passHref className="flex flex-col items-center text-sm">
-            <FaSearch className="text-xl cursor-pointer" />
-            <span>条件</span>
+        {/* アイコンナビゲーション */}
+        <div className="flex">
+          <Link href="/search" className="flex flex-col items-center w-[48px] h-[48px] justify-center">
+            <Image src="/header/search.svg" alt="検索" width={24} height={24} />
+            <span className="text-[8px]">条件</span>
           </Link>
 
-          <Link href="/map" passHref className="flex flex-col items-center text-sm">
-            <FaMapMarkerAlt className="text-xl cursor-pointer" />
-            <span>地図</span>
+          <Link href="/map" className="flex flex-col items-center w-[48px] h-[48px] justify-center">
+            <Image src="/header/pin.svg" alt="地図" width={24} height={24} />
+            <span className="text-[8px]">地図</span>
           </Link>
         </div>
       </div>

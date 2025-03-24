@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const containerStyle = {
   width: "100%",
-  height: "85vh",
+  height: "82vh",
 };
 
 const SEARCH_RADIUS = 5;

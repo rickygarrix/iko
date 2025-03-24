@@ -26,7 +26,7 @@ export default function SearchFilter({
   handleSearch
 }: SearchFilterProps) {
   return (
-    <div className="mb-6 p-6 bg-[#FAFAF5] rounded-md shadow-sm max-w-xl mx-auto">
+    <div className="mb-6 p-6 bg-[#F7F5EF] rounded-md shadow-sm max-w-xl mx-auto">
       <h2 className="text-xl font-bold text-center mb-1 text-gray-800 tracking-wide">
         条件検索
       </h2>
