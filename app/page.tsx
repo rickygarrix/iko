@@ -60,7 +60,9 @@ export default function Home() {
       </div>
 
       {/* 🌟 今月のおすすめ */}
-      <RecommendedStores />
+      <div className="overflow-hidden">
+        <RecommendedStores />
+      </div>
 
       {/* ℹ️ オトナビとは */}
       <div className="px-0">

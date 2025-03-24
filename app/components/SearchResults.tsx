@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
-import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type SearchResultsProps = {
@@ -62,7 +62,7 @@ export default function SearchResults({
   };
 
   return (
-    <div className="mt-6">
+    <div className="mt-6 bg-[#FEFCF6]">
       {!isSearchTriggered ? (
         <p className="text-gray-400">
           🔍 検索条件を選んで「検索」ボタンを押してください
@@ -86,45 +86,47 @@ export default function SearchResults({
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
               return (
-                <div key={store.id}>
-                  {/* 店舗情報カード */}
-                  <div
-                    className="bg-[#FDFBF7] p-4 transition cursor-pointer"
-                    onClick={() =>
-                      router.push(`/stores/${store.id}?prev=/search&${queryParams}`)
-                    }
-                  >
-                    {/* 店名 & 説明 */}
-                    <h2 className="text-base font-bold text-gray-800 mb-1">{store.name}</h2>
-                    <p className="text-sm text-gray-600 mb-3">{store.description}</p>
+                <div key={store.id} className="bg-[#FEFCF6] p-2 rounded-xl">
+                  <Link href={`/stores/${store.id}?prev=/search&${queryParams}`} passHref>
+                    <div className="cursor-pointer space-y-3">
+                      {/* 店名 */}
+                      <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">
+                        {store.name}
+                      </h3>
 
-                    {/* 画像 + 詳細 */}
-                    <div className="flex flex-row items-start gap-4">
-                      <Image
-                        src={store.image_url ?? "/default-image.jpg"}
-                        alt={store.name}
-                        width={160}
-                        height={120}
-                        className="object-cover w-40 h-32"
-                      />
-                      <div className="text-sm text-gray-700 space-y-1">
-                        <p>{store.area} エリア</p>
-                        <p>{store.genre}</p>
-                        <p className={isOpen ? "text-green-600" : "text-red-500"}>
-                          {isOpen ? "営業中" : "営業時間外"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {isOpen
-                            ? `${nextOpening}`
-                            : `${nextOpening} `}
-                        </p>
+                      {/* 説明文 */}
+                      <p className="text-[12px] text-[#000000] leading-relaxed text-left">
+                        {store.description ?? "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
+                      </p>
+
+                      {/* 下段：画像と情報 */}
+                      <div className="flex gap-4 items-center">
+                        {/* 画像 */}
+                        <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden">
+                          <img
+                            src={store.image_url ?? "/default-image.jpg"}
+                            alt={store.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        {/* テキスト情報 */}
+                        <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
+                          <p>{store.area} / {store.genre}</p>
+                          <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
+                            {isOpen ? "営業中" : "営業時間外"}
+                          </p>
+                          <p className="text-xs text-[#1F1F21]">
+                            {nextOpening}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
-                  {/* 店舗間の仕切り線（最後の店舗以外） */}
+                  {/* 区切り線 */}
                   {index !== stores.length - 1 && (
-                    <hr className="my-4 border-t border-gray-300" />
+                    <hr className="mt-6 border-t border-gray-300 w-full" />
                   )}
                 </div>
               );
@@ -132,7 +134,7 @@ export default function SearchResults({
           </div>
 
           {/* パンくずリスト */}
-          <div className="bg-[#FAFAF5] py-4 px-6 text-sm text-gray-800 mt-8">
+          <div className="bg-[#FEFCF6]  px-4 text-sm text-gray-800 mt-8">
             <nav className="flex gap-2">
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

@@ -6,7 +6,7 @@ import SearchPageContent from "@/components/SearchPageContent";
 export default function Search() {
   return (
 
-    <Suspense fallback={<p className="text-gray-400 text-center mt-6">🔍 読み込み中...</p>}>
+    <Suspense fallback={<p className="text-gray-400 text-center text-[#FEFCF6] mt-6">🔍 読み込み中...</p>}>
       <SearchPageContent />
     </Suspense>
   );
