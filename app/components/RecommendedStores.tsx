@@ -34,16 +34,16 @@ export default function RecommendedStores() {
   }, []);
 
   return (
-    <div className="my-10 px-4 py-6 bg-[#FEFCF6]">
-      <h2 className="text-xl font-bold text-center text-gray-800 py-[6px] leading-tight">今月のおすすめ</h2>
-      <p className="text-sm text-[#4B5C9E] text-center leading-tight mb-4">recommend</p>
+    <div className=" px-4 bg-[#FEFCF6]">
+      <h2 className="text-xl font-bold p-8 text-center text-gray-800 py-[20px] pb-[4px]  leading-tight">今月のおすすめ</h2>
+      <p className="text-sm text-[#4B5C9E] text-center leading-tight mb-12">recommend</p>
 
       <div>
         {recommendedStores.map((store, index) => {
           const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
           return (
-            <div key={store.id} className="bg-[#FEFCF6] p-2 rounded-xl">
+            <div key={store.id} className="bg-[#FEFCF6] pb-6 rounded-xl" >
               <Link href={`/stores/${store.id}`} passHref>
                 <div className="cursor-pointer space-y-3">
                   {/* 店名 */}
@@ -86,6 +86,8 @@ export default function RecommendedStores() {
                 <hr className="mt-6 border-t border-gray-300 w-screen -mx-4" />
               )}
             </div>
+
+
           );
         })}
       </div>

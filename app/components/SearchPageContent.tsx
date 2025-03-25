@@ -45,7 +45,7 @@ export default function SearchPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF5] text-gray-800 px-4 md:px-6 py-6 space-y-10">
+    <div className="bg-[#FEFCF6] text-gray-800 pb-0">
       <div id="search-filter">
         <SearchFilter
           selectedGenres={selectedGenres}

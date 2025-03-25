@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function AboutSection() {
   return (
-    <section className="w-full bg-[#4B5C9E] text-white py-10 px-6 mt-12 shadow-md">
+    <section className="w-full bg-[#4B5C9E] text-white py-10 px-6 shadow-md">
       {/* ロゴ */}
       <div className="flex justify-center mb-2">
         <div className="relative w-[121px] h-[40px]">
