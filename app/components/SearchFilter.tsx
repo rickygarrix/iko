@@ -25,11 +25,13 @@ export default function SearchFilter({
   handleSearch
 }: SearchFilterProps) {
   return (
-    <div className=" p-6 px-4 bg-[#F7F5EF] rounded-md shadow-sm max-w-xl mx-auto">
-      <h2 className="text-xl font-bold text-center mb-1 text-gray-800 tracking-wide">
-        条件検索
-      </h2>
-      <p className="text-sm text-center text-[#4B5C9E] mb-2">Search</p>
+    <div className="bg-[#F7F5EF] px-6 py-8 rounded-md shadow-sm text-[#1F1F21] text-[14px] leading-[20px] font-normal space-y-8 mx-auto">
+
+      {/* タイトル */}
+      <div className="text-center space-y-1">
+        <h2 className="text-[18px] font-bold leading-[26px]">条件検索</h2>
+        <p className="text-sm text-[#4B5C9E]">Search</p>
+      </div>
 
       {/* 営業時間 */}
       <div>
@@ -44,23 +46,21 @@ export default function SearchFilter({
               className="peer appearance-none w-[20px] h-[20px] border border-[#1F1F21] rounded-full mr-2
                   checked:border-[#1F1F21] checked:bg-[#4B5C9E] relative"
             />
-            <span className="absolute left-[6px] top-[8px] w-[8px] h-[8px] rounded-full bg-[#FEFCF6] peer-checked:block hidden"></span>
+            <span className="absolute left-[6px] top-[6px] w-[8px] h-[8px] rounded-full bg-[#FEFCF6] peer-checked:block hidden"></span>
             営業時間内のみ
           </label>
         </div>
       </div>
 
       {/* ジャンル */}
-      <div>
-        <p className="text-[16px] font-bold leading-[24px] mb-2">ジャンル</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+      <div className="space-y-2">
+        <p className="text-[16px] font-bold leading-[24px]">ジャンル</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           {GENRES.map((genre) => (
             <label key={genre} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                className="appearance-none check-icon w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21]
-                           bg-[#FEFCF6] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
-                           checked:bg-check-icon bg-center bg-no-repeat"
+                className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-[#FEFCF6] checked:bg-[#4B5C9E] checked:border-[#1F1F21] checked:bg-check-icon bg-center bg-no-repeat"
                 checked={selectedGenres.includes(genre)}
                 onChange={() =>
                   setSelectedGenres(
@@ -77,16 +77,14 @@ export default function SearchFilter({
       </div>
 
       {/* エリア */}
-      <div>
-        <p className="text-[16px] font-bold leading-[24px] mb-2">エリア</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+      <div className="space-y-2">
+        <p className="text-[16px] font-bold leading-[24px]">エリア</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           {AREAS.map((area) => (
             <label key={area} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                className="appearance-none check-icon w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21]
-                           bg-[#FEFCF6] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
-                           checked:bg-check-icon bg-center bg-no-repeat"
+                className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-[#FEFCF6] checked:bg-[#4B5C9E] checked:border-[#1F1F21] checked:bg-check-icon bg-center bg-no-repeat"
                 checked={selectedAreas.includes(area)}
                 onChange={() =>
                   setSelectedAreas(
@@ -102,17 +100,15 @@ export default function SearchFilter({
         </div>
       </div>
 
-      {/* 支払い方法 */}
-      <div>
-        <p className="text-[16px] font-bold leading-[24px] mb-2">支払い</p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+      {/* 支払い */}
+      <div className="space-y-2">
+        <p className="text-[16px] font-bold leading-[24px]">支払い</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           {PAYMENTS.map((payment) => (
             <label key={payment} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                className="appearance-none check-icon w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21]
-                           bg-[#FEFCF6] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
-                           checked:bg-check-icon bg-center bg-no-repeat"
+                className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-[#FEFCF6] checked:bg-[#4B5C9E] checked:border-[#1F1F21] checked:bg-check-icon bg-center bg-no-repeat"
                 checked={selectedPayments.includes(payment)}
                 onChange={() =>
                   setSelectedPayments(
@@ -129,7 +125,7 @@ export default function SearchFilter({
       </div>
 
       {/* ボタン */}
-      <div className="flex justify-center mt-4 gap-4">
+      <div className="flex justify-center gap-4 pt-2">
         <button
           onClick={() => {
             setSelectedGenres([]);
@@ -137,8 +133,7 @@ export default function SearchFilter({
             setSelectedPayments([]);
             setShowOnlyOpen(false);
           }}
-          className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21]
-                     text-[14px] font-normal hover:bg-gray-100 transition"
+          className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21] text-[14px] font-normal hover:bg-gray-100 transition"
         >
           リセット
         </button>
@@ -148,8 +143,7 @@ export default function SearchFilter({
             event.preventDefault();
             handleSearch();
           }}
-          className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21]
-                     px-4 flex items-center justify-center gap-2 text-[14px] font-normal"
+          className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21] px-4 flex items-center justify-center gap-2 text-[14px] font-normal"
         >
           <img
             src="/icons/search.svg"

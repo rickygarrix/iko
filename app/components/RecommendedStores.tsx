@@ -59,14 +59,13 @@ export default function RecommendedStores() {
                   {/* 下段：画像と情報 */}
                   <div className="flex gap-4 items-center">
                     {/* 画像 */}
-                    <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden">
+                    <div className="w-[160px] h-[90px] rounded-[8px] border-[2px] border-[#1F1F21] overflow-hidden">
                       <img
                         src={store.image_url ?? "/default-image.jpg"}
                         alt={store.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
-
                     {/* テキスト情報 */}
                     <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
                       <p>{store.area} / {store.genre}</p>

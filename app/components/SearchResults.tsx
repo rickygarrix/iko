@@ -68,7 +68,7 @@ export default function SearchResults({
           🔍 検索条件を選んで「検索」ボタンを押してください
         </p>
       ) : loading ? (
-        <p className="mt-6  mb-4 text-center">ロード中...</p>
+        <p className="mt-6  mb-4  text-center">ロード中...</p>
       ) : error ? (
         <p className="mt-6 text-red-500 text-center mb-4 px-4">⚠️ エラーが発生しました: {error}</p>
       ) : stores.length === 0 ? (
