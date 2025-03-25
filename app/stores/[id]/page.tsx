@@ -88,11 +88,11 @@ export default function StoreDetail() {
 
         {/* Googleマップ埋め込み */}
         {store.map_embed && (
-          <div className="my-6">
+          <div className="mb-4">
             <iframe
               src={store.map_embed}
               width={800}
-              height={400}
+              height={500}
               loading="lazy"
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
@@ -143,7 +143,7 @@ export default function StoreDetail() {
         </div>
 
         {/* 支払い方法 表形式 */}
-        <div className="mb-8 p-4">
+        <div className="mb-8 pl-4 pr-4">
           <p className="font-bold text-base mb-2 flex items-center gap-2">
             <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
             支払い方法
@@ -181,7 +181,7 @@ export default function StoreDetail() {
         </div>
 
         {/* 店舗情報 表形式 */}
-        <div className="my-10 p-4">
+        <div className="my-10 pl-4 pr-4 pt-0">
           <div className="mb-0">
             <p className="font-bold text-base mb-2 flex items-center gap-2">
               <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
@@ -228,6 +228,7 @@ export default function StoreDetail() {
             </table>
           </div>
         </div>
+
         {/* 公式サイト */}
         <div className="px-4">
           {store.website && (
@@ -235,7 +236,8 @@ export default function StoreDetail() {
               href={store.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full text-center bg-black px-4 text-white py-2 rounded hover:bg-gray-800"
+              className="block w-full max-w-[358px] h-[48px] bg-black text-white rounded-lg hover:bg-gray-800
+                 flex items-center justify-center mx-auto"
             >
               公式サイト →
             </a>
@@ -253,7 +255,7 @@ export default function StoreDetail() {
         </div>
 
         {/* パンくずリスト（左寄せ、余白調整） */}
-        <div className="mt-4 text-sm px-4 pb-4 text-gray-800">
+        <div className="mt-4 text-sm px-4 pb-4  pt-4 bg-[#F7F5EF] text-gray-800">
           <nav className="flex gap-2">
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

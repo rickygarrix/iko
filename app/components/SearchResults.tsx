@@ -106,7 +106,7 @@ export default function SearchResults({
                       {/* 下段：画像と情報 */}
                       <div className="flex gap-4 items-center">
                         {/* 画像 */}
-                        <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden">
+                        <div className="w-[160px] h-[90px]  border-black rounded-[8px] overflow-hidden">
                           <img
                             src={store.image_url ?? "/default-image.jpg"}
                             alt={store.name}
@@ -139,7 +139,7 @@ export default function SearchResults({
           </div>
 
           {/* パンくずリスト */}
-          <div className="bg-[#FEFCF6] px-4 py-4 text-sm text-gray-800 mt-8">
+          <div className="bg-[#F7F5EF] px-4 py-4 text-sm text-gray-800 mt-8">
 
 
             <nav className="flex gap-2">
