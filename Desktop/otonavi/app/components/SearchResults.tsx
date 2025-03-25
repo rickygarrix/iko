@@ -64,16 +64,18 @@ export default function SearchResults({
   return (
     <div className="w-full mt-6 bg-[#FEFCF6]">
       {!isSearchTriggered ? (
-        <p className="text-gray-400">
+        <p className="text-gray-400 text-center px-4">
           🔍 検索条件を選んで「検索」ボタンを押してください
         </p>
       ) : loading ? (
-        <p className="mt-6">ロード中...</p>
+        <p className="mt-6  mb-4 text-center">ロード中...</p>
       ) : error ? (
-        <p className="mt-6 text-red-500">⚠️ エラーが発生しました: {error}</p>
+        <p className="mt-6 text-red-500 text-center mb-4 px-4">⚠️ エラーが発生しました: {error}</p>
       ) : stores.length === 0 ? (
-        <p className="text-gray-400 mt-6">該当する店舗がありません。</p>
+        <p className="text-gray-400 mt-6 text-center mb-4 px-4">該当する店舗がありません。</p>
       ) : (
+        // ...検索結果表示
+
         <div>
           {/* 件数表示 */}
           <p className="text-lg font-semibold mb-6 text-center py-[20px] text-gray-700">
@@ -86,7 +88,11 @@ export default function SearchResults({
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
               return (
+<<<<<<< HEAD:Desktop/otonavi/app/components/SearchResults.tsx
                 <div key={store.id} className="bg-[#FEFCF6] rounded-xl">
+=======
+                <div key={store.id} className="bg-[#FEFCF6] pl-4 pr-4 rounded-xl">
+>>>>>>> 2361a8c (SearchFilter,Reccomend):app/components/SearchResults.tsx
                   <Link href={`/stores/${store.id}?prev=/search&${queryParams}`} passHref>
                     <div className="cursor-pointer space-y-3 pt-4">
                       {/* 店名 */}
@@ -135,7 +141,11 @@ export default function SearchResults({
           </div>
 
           {/* パンくずリスト */}
+<<<<<<< HEAD:Desktop/otonavi/app/components/SearchResults.tsx
           <div className="bg-[#FEFCF6] text-sm text-gray-800 mt-8">
+=======
+          <div className="bg-[#FEFCF6] text-sm text-gray-800 pb-6 pl-4 mt-8">
+>>>>>>> 2361a8c (SearchFilter,Reccomend):app/components/SearchResults.tsx
             <nav className="flex gap-2">
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
