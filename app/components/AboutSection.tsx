@@ -38,7 +38,7 @@ export default function AboutSection() {
       <div className="mt-6 text-center">
         <a
           href="/search"
-          className="inline-block bg-black text-white text-[14px] w-[310px] font-medium py-3 px-6 rounded-lg hover:bg-gray-700 transition"
+          className="inline-block bg-[#1F1F21] text-[#FEFCF6] text-[14px] w-[310px] font-medium py-3 px-6 rounded-lg hover:bg-gray-700 transition"
         >
           行きたいお店を見つけよう →
         </a>

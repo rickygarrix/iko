@@ -126,7 +126,7 @@ export default function StoreDetail() {
               {/* アイコンと営業時間 */}
               <div className=" flex  pt-1 items-center gap-1">
                 <img src="/icons/time.svg" alt="time icon" className="w-4 h-4" />
-                <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
+                <p className={`font-[#1F1F21] ${isOpen ? "text-green-600" : "text-red-500"}`}>
                   {isOpen ? "営業中" : "営業時間外"}
                 </p>
               </div>
@@ -144,7 +144,7 @@ export default function StoreDetail() {
 
         {/* 支払い方法 表形式 */}
         <div className="mb-8 pl-4 pr-4">
-          <p className="font-bold text-base mb-2 flex items-center gap-2">
+          <p className="font-[#1F1F21] text-base mb-2 flex items-center gap-2">
             <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
             支払い方法
           </p>
@@ -183,7 +183,7 @@ export default function StoreDetail() {
         {/* 店舗情報 表形式 */}
         <div className="my-10 pl-4 pr-4 pt-0">
           <div className="mb-0">
-            <p className="font-bold text-base mb-2 flex items-center gap-2">
+            <p className="font-[#1F1F21] text-base mb-2 flex items-center gap-2">
               <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
               店舗情報
             </p>

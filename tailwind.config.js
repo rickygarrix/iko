@@ -10,6 +10,9 @@ module.exports = {
       backgroundImage: {
         'check-icon': "url('/icons/check.svg')", // ✅ チェックアイコンのパス（public/icons/ に配置）
       },
+      fontFamily: {
+        zen: ['var(--font-zen-kaku)', 'sans-serif'], // ✅ Zen Kaku Gothic New を追加
+      },
     },
   },
   plugins: [],

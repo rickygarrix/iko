@@ -78,7 +78,7 @@ export default function SearchResults({
 
         <div>
           {/* 件数表示 */}
-          <p className="text-lg font-semibold mb-6 text-center py-[20px] text-gray-700">
+          <p className="text-lg font-bold mb-6 text-center py-[20px] text-gray-700">
             検索結果 <span className="text-[#4B5C9E]">{stores.length}</span> 件
           </p>
 
@@ -117,7 +117,7 @@ export default function SearchResults({
                         {/* テキスト情報 */}
                         <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
                           <p>{store.area} / {store.genre}</p>
-                          <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
+                          <p className={`font-[#1F1F21] ${isOpen ? "text-green-600" : "text-red-500"}`}>
                             {isOpen ? "営業中" : "営業時間外"}
                           </p>
                           <p className="text-xs text-[#1F1F21]">
