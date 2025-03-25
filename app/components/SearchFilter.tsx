@@ -25,20 +25,11 @@ export default function SearchFilter({
   handleSearch
 }: SearchFilterProps) {
   return (
-<<<<<<< HEAD:Desktop/otonavi/app/components/SearchFilter.tsx
-    <div className=" p-6 bg-[#F7F5EF] rounded-md shadow-sm max-w-xl mx-auto">
+    <div className=" p-6 px-4 bg-[#F7F5EF] rounded-md shadow-sm max-w-xl mx-auto">
       <h2 className="text-xl font-bold text-center mb-1 text-gray-800 tracking-wide">
         条件検索
       </h2>
       <p className="text-sm text-center text-[#4B5C9E] mb-2">Search</p>
-=======
-    <div className="p-6 bg-[#F7F5EF] rounded-md shadow-sm w-full mx-auto text-[#1F1F21] text-[14px] leading-[20px] font-normal space-y-6">
->>>>>>> 2361a8c (SearchFilter,Reccomend):app/components/SearchFilter.tsx
-
-      <div className="text-center">
-        <h2 className="text-[18px] font-bold leading-[26px] mb-1">条件検索</h2>
-        <p className="text-sm text-[#4B5C9E]">Search</p>
-      </div>
 
       {/* 営業時間 */}
       <div>
@@ -53,7 +44,7 @@ export default function SearchFilter({
               className="peer appearance-none w-[20px] h-[20px] border border-[#1F1F21] rounded-full mr-2
                   checked:border-[#1F1F21] checked:bg-[#4B5C9E] relative"
             />
-            <span className="absolute left-[6px] top-[6px] w-[8px] h-[8px] rounded-full bg-[#FEFCF6] peer-checked:block hidden"></span>
+            <span className="absolute left-[6px] top-[8px] w-[8px] h-[8px] rounded-full bg-[#FEFCF6] peer-checked:block hidden"></span>
             営業時間内のみ
           </label>
         </div>

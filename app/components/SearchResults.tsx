@@ -88,11 +88,9 @@ export default function SearchResults({
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
               return (
-<<<<<<< HEAD:Desktop/otonavi/app/components/SearchResults.tsx
-                <div key={store.id} className="bg-[#FEFCF6] rounded-xl">
-=======
-                <div key={store.id} className="bg-[#FEFCF6] pl-4 pr-4 rounded-xl">
->>>>>>> 2361a8c (SearchFilter,Reccomend):app/components/SearchResults.tsx
+
+                <div key={store.id} className="bg-[#FEFCF6] px-4 rounded-xl">
+
                   <Link href={`/stores/${store.id}?prev=/search&${queryParams}`} passHref>
                     <div className="cursor-pointer space-y-3 pt-4">
                       {/* 店名 */}
@@ -141,11 +139,9 @@ export default function SearchResults({
           </div>
 
           {/* パンくずリスト */}
-<<<<<<< HEAD:Desktop/otonavi/app/components/SearchResults.tsx
-          <div className="bg-[#FEFCF6] text-sm text-gray-800 mt-8">
-=======
-          <div className="bg-[#FEFCF6] text-sm text-gray-800 pb-6 pl-4 mt-8">
->>>>>>> 2361a8c (SearchFilter,Reccomend):app/components/SearchResults.tsx
+          <div className="bg-[#FEFCF6] px-4 py-4 text-sm text-gray-800 mt-8">
+
+
             <nav className="flex gap-2">
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -163,7 +159,8 @@ export default function SearchResults({
             </nav>
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }

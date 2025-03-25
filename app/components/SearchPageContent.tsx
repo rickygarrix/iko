@@ -45,11 +45,7 @@ export default function SearchPageContent() {
   };
 
   return (
-<<<<<<< HEAD:Desktop/otonavi/app/components/SearchPageContent.tsx
-    <div className="min-h-screen bg-[#FEFCF6] text-gray-800 px-4 py-6 space-y-10">
-=======
-    <div className="bg-[#FEFCF6] text-gray-800 pb-0">
->>>>>>> 2361a8c (SearchFilter,Reccomend):app/components/SearchPageContent.tsx
+    <div className=" bg-[#FEFCF6] text-gray-800 space-y-10">
       <div id="search-filter">
         <SearchFilter
           selectedGenres={selectedGenres}
