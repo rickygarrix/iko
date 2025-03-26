@@ -132,7 +132,7 @@ export default function StoreDetail() {
               </div>
 
               <div className="px-5 pt-1 items-center gap-1">
-                <p className="text-xs text-[#1F1F21]">
+                <p className="text-[#1F1F21]">
                   {nextOpening}
                 </p>
               </div>
