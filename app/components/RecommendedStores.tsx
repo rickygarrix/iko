@@ -32,7 +32,7 @@ export default function RecommendedStores() {
 
   return (
     <div className="w-full bg-white flex justify-center pt-8">
-      <div className="w-full max-w-[1400px] flex flex-col justify-start items-center gap-2">
+      <div className="w-full max-w-[600px] flex flex-col mx-auto gap-2">
         {/* 見出し */}
         <div className="w-full px-4 flex flex-col justify-start items-center gap-1">
           <div className="text-center text-zinc-900 text-lg font-bold font-['Zen_Kaku_Gothic_New'] leading-relaxed tracking-widest">

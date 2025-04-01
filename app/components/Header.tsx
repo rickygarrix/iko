@@ -19,7 +19,7 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
       {/* 中央寄せコンテナ */}
-      <div className="w-full max-w-[1400px] px-4 h-[48px] flex justify-between items-center">
+      <div className="w-full max-w-[600px] px-4 h-[48px] flex justify-between items-center">
         {/* ロゴエリア */}
         <Link href="/" passHref>
           <div className="w-20 h-6 relative">

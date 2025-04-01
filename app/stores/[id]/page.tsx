@@ -57,7 +57,7 @@ export default function StoreDetail() {
 
   return (
     <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px]">
-      <div className="mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
+      <div className="w-full max-w-[600px] mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
 
         {/* Googleマップ埋め込み */}
         {store.map_embed && (
