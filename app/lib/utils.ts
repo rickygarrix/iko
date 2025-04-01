@@ -99,7 +99,7 @@ export const checkIfOpen = (opening_hours: string) => {
 
     if (nowRaw.isBetween(open, close, null, "[)")) {
       isOpen = true;
-      nextOpening = `本日 ${close.format("HH:mm")} まで営業`;
+      nextOpening = `${close.format("HH:mm")} まで営業`;
       break;
     }
   }

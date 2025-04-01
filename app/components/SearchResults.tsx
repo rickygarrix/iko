@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 type SearchResultsProps = {
   selectedGenres: string[];
@@ -22,7 +22,6 @@ export default function SearchResults({
   showOnlyOpen,
   isSearchTriggered,
 }: SearchResultsProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const queryParams = searchParams.toString();
 
@@ -62,35 +61,33 @@ export default function SearchResults({
   };
 
   return (
-    <div className="w-full mt-6 bg-[#FEFCF6]">
-      {!isSearchTriggered ? (
-        <p className="text-gray-400 text-center px-4">
-          🔍 検索条件を選んで「検索」ボタンを押してください
-        </p>
-      ) : loading ? (
-        <p className="mt-6  mb-4  text-center">ロード中...</p>
-      ) : error ? (
-        <p className="mt-6 text-red-500 text-center mb-4 px-4">⚠️ エラーが発生しました: {error}</p>
-      ) : stores.length === 0 ? (
-        <p className="text-gray-400 mt-6 text-center mb-4 px-4">該当する店舗がありません。</p>
-      ) : (
-        // ...検索結果表示
-
-        <div>
-          {/* 件数表示 */}
-          <p className="text-lg font-bold mb-6 text-center py-[20px] text-gray-700">
-            検索結果 <span className="text-[#4B5C9E]">{stores.length}</span> 件
+    <div className="w-full bg-[#FEFCF6] pb-8">
+      <div className="mx-auto w-full max-w-[600px] px-4">
+        {!isSearchTriggered ? (
+          <p className="text-gray-400 text-center px-4 pt-6">
+            🔍 検索条件を選んで「検索」ボタンを押してください
           </p>
-
-          {/* 検索結果リスト */}
+        ) : loading ? (
+          <p className="mt-6 mb-4 text-center">ロード中...</p>
+        ) : error ? (
+          <p className="mt-6 text-red-500 text-center mb-4 px-4">
+            ⚠️ エラーが発生しました: {error}
+          </p>
+        ) : stores.length === 0 ? (
+          <p className="text-gray-400 mt-6 text-center mb-4 px-4">該当する店舗がありません。</p>
+        ) : (
           <div>
+            {/* 件数表示 */}
+            <p className="text-lg font-semibold mb-6 text-center py-5 text-gray-700">
+              検索結果 <span className="text-[#4B5C9E]">{stores.length}</span> 件
+            </p>
+
+            {/* リスト */}
             {stores.map((store, index) => {
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
               return (
-
-                <div key={store.id} className="bg-[#FEFCF6] px-4 rounded-xl">
-
+                <div key={store.id} className="bg-[#FEFCF6] rounded-xl">
                   <Link href={`/stores/${store.id}?prev=/search&${queryParams}`} passHref>
                     <div className="cursor-pointer space-y-3 pt-4">
                       {/* 店名 */}
@@ -100,13 +97,14 @@ export default function SearchResults({
 
                       {/* 説明文 */}
                       <p className="text-[12px] text-[#000000] leading-relaxed text-left">
-                        {store.description ?? "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
+                        {store.description ??
+                          "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
                       </p>
 
-                      {/* 下段：画像と情報 */}
+                      {/* 画像と情報 */}
                       <div className="flex gap-4 items-center">
                         {/* 画像 */}
-                        <div className="w-[160px] h-[90px]  border-black rounded-[8px] overflow-hidden">
+                        <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] ">
                           <img
                             src={store.image_url ?? "/default-image.jpg"}
                             alt={store.name}
@@ -116,13 +114,13 @@ export default function SearchResults({
 
                         {/* テキスト情報 */}
                         <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
-                          <p>{store.area} / {store.genre}</p>
-                          <p className={`font-[#1F1F21] ${isOpen ? "text-green-600" : "text-red-500"}`}>
+                          <p>
+                            {store.area} / {store.genre}
+                          </p>
+                          <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
                             {isOpen ? "営業中" : "営業時間外"}
                           </p>
-                          <p className="text-xs text-[#1F1F21]">
-                            {nextOpening}
-                          </p>
+                          <p className="text-xs text-[#1F1F21]">{nextOpening}</p>
                         </div>
                       </div>
                     </div>
@@ -130,37 +128,14 @@ export default function SearchResults({
 
                   {/* 区切り線（最後以外） */}
                   {index !== stores.length - 1 && (
-                    <hr className="mt-6 border-t border-gray-300 w-screen -mx-4" />
+                    <hr className="mt-6 border-t border-gray-300 w-full" />
                   )}
                 </div>
-
               );
             })}
           </div>
-
-          {/* パンくずリスト */}
-          <div className="bg-[#F7F5EF] px-4 py-4 text-sm text-gray-800 mt-8">
-
-
-            <nav className="flex gap-2">
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="hover:underline"
-              >
-                トップに戻る
-              </button>
-              <span>/</span>
-              <button
-                onClick={() => router.push("/map")}
-                className="hover:underline"
-              >
-                地図から探す
-              </button>
-            </nav>
-          </div>
-        </div>
-      )
-      }
-    </div >
+        )}
+      </div>
+    </div>
   );
 }

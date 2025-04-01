@@ -277,7 +277,7 @@ export default function MapPage() {
           streetViewControl: false,
           zoomControl: false,
         }}
-        onLoad={(map) => {
+        onLoad={(map: google.maps.Map) => {
           mapRef.current = map;
         }}
         onDragEnd={() => {

@@ -4,46 +4,57 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#1a1a1a] text-white py-2 pt-8">
-      <div className="max-w-md mx-auto text-center space-y-4">
-
-        {/* ロゴ（画像版） */}
+    <footer className="w-full bg-[#1F1F21] border-t border-b border-gray-800 flex justify-center">
+      {/* 中央寄せ・最大幅制限コンテナ */}
+      <div className="w-full max-w-[1400px] px-4 py-8 flex flex-col justify-start items-center gap-4">
+        {/* ロゴ */}
         <Link href="/" passHref>
-          <div className="flex justify-center items-center w-full mb-4">
-            <div className="relative w-[61px] h-[20px]">
-              <Image
-                src="/footer/logo.svg"
-                alt="オトナビ ロゴ"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
+          <div className="w-16 h-5 relative">
+            <Image
+              src="/footer/logo.svg"
+              alt="オトナビ ロゴ"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
         </Link>
 
-        {/* ナビゲーションリンク（2カラム） */}
-        <div className="flex flex-col items-center space-y-6 text-sm">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-            <Link href="/search">
-              <p className="hover:text-blue-400 transition cursor-pointer text-center">条件検索</p>
-            </Link>
-            <Link href="/map">
-              <p className="hover:text-blue-400 transition cursor-pointer text-center">地図検索</p>
-            </Link>
-            <Link href="/terms">
-              <p className="hover:text-blue-400 transition cursor-pointer text-center">利用規約</p>
-            </Link>
-            <Link href="/privacy">
-              <p className="hover:text-blue-400 transition cursor-pointer text-center">プライバシーポリシー</p>
-            </Link>
-          </div>
+        {/* ナビゲーションリンク（条件検索・地図検索） */}
+        <div className="w-full flex justify-center items-start">
+          <Link href="/search" className="px-4 py-2">
+            <div className="text-white text-sm font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-tight">
+              条件検索
+            </div>
+          </Link>
+
+          <Link href="/map" className="px-4 py-2">
+            <div className="text-white text-sm font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-tight">
+              地図検索
+            </div>
+          </Link>
+        </div>
+
+        {/* 利用規約・プライバシーポリシー */}
+        <div className="w-full flex justify-center items-start">
+          <Link href="/terms" className="px-4 py-2">
+            <div className="text-white text-xs font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-none">
+              利用規約
+            </div>
+          </Link>
+
+          <Link href="/privacy" className="px-4 py-2">
+            <div className="text-white text-xs font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-none">
+              プライバシーポリシー
+            </div>
+          </Link>
+        </div>
+
+        {/* コピーライト */}
+        <div className="text-white text-xs font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-none">
+          ©︎ オトナビ
         </div>
       </div>
-
-      {/* コピーライト */}
-      <p className="text-xs text-center py-2 text-gray-400">&copy; オトナビ</p>
-
-    </footer >
+    </footer>
   );
 }

@@ -3,92 +3,92 @@ import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { checkIfOpen } from "@/lib/utils";
 
-type Store = {
+interface Store {
   id: string;
   name: string;
   genre: string;
   area: string;
   opening_hours: string;
   image_url?: string | null;
-  capacity: string;
-  payment_methods: string[];
   description?: string;
-};
+}
 
 export default function RecommendedStores() {
-  const [recommendedStores, setRecommendedStores] = useState<Store[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
 
   useEffect(() => {
-    const fetchRecommendedStores = async () => {
+    const fetchStores = async () => {
       const { data, error } = await supabase.from("stores").select("*").limit(3);
 
       if (error) {
         console.error("🔥 Supabase Error:", error.message);
-        setRecommendedStores([]);
       } else {
-        setRecommendedStores(data || []);
+        setStores(data || []);
       }
     };
 
-    fetchRecommendedStores();
+    fetchStores();
   }, []);
 
   return (
-    <div className=" px-4 bg-[#FEFCF6]">
-      <h2 className="text-xl font-bold p-8 text-center text-gray-800 py-[20px] pb-[4px]  leading-tight">今月のおすすめ</h2>
-      <p className="text-sm text-[#4B5C9E] text-center leading-tight mb-12">recommend</p>
+    <div className="w-full bg-white flex justify-center pt-8">
+      <div className="w-full max-w-[1400px] flex flex-col justify-start items-center gap-2">
+        {/* 見出し */}
+        <div className="w-full px-4 flex flex-col justify-start items-center gap-1">
+          <div className="text-center text-zinc-900 text-lg font-bold font-['Zen_Kaku_Gothic_New'] leading-relaxed tracking-widest">
+            今月のおすすめ
+          </div>
+          <div className="text-center text-slate-500 text-xs font-bold font-['Zen_Kaku_Gothic_New'] leading-none tracking-wide">
+            Recommend
+          </div>
+        </div>
 
-      <div>
-        {recommendedStores.map((store, index) => {
-          const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
+        {/* リスト */}
+        <div className="w-full flex flex-col justify-start items-center gap-px">
+          {stores.map((store) => {
+            const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
-          return (
-            <div key={store.id} className="bg-[#FEFCF6] pb-6 rounded-xl" >
-              <Link href={`/stores/${store.id}`} passHref>
-                <div className="cursor-pointer space-y-3">
-                  {/* 店名 */}
-                  <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">
+            return (
+              <Link
+                href={`/stores/${store.id}`}
+                key={store.id}
+                className="w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0"
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="text-zinc-900 text-base font-semibold font-['Hiragino_Kaku_Gothic_ProN'] leading-normal">
                     {store.name}
-                  </h3>
+                  </div>
+                  <div className="text-zinc-900 text-xs font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-none">
+                    {store.description || "店舗の詳細情報がありません。"}
+                  </div>
+                </div>
 
-                  {/* 説明文 */}
-                  <p className="text-[12px] text-[#000000] leading-relaxed text-left">
-                    {store.description ?? "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
-                  </p>
+                <div className="flex gap-4 items-center">
+                  <img
+                    className="w-40 h-24 rounded-lg border-2 border-zinc-900 object-cover"
+                    src={store.image_url || "/default-image.jpg"}
+                    alt={store.name}
+                  />
 
-                  {/* 下段：画像と情報 */}
-                  <div className="flex gap-4 items-center">
-                    {/* 画像 */}
-                    <div className="w-[160px] h-[90px] rounded-[8px] border-[#1F1F21] overflow-hidden">
-                      <img
-                        src={store.image_url ?? "/default-image.jpg"}
-                        alt={store.name}
-                        className="w-full h-full object-cover"
-                      />
+                  <div className="flex flex-col gap-1 flex-1">
+                    <div className="text-zinc-900 text-sm font-light">
+                      {store.area} / {store.genre}
                     </div>
-                    {/* テキスト情報 */}
-                    <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
-                      <p>{store.area} / {store.genre}</p>
-                      <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
+
+                    <div className="text-sm font-light">
+                      <span className={`${isOpen ? "text-green-700" : "text-rose-700"}`}>
                         {isOpen ? "営業中" : "営業時間外"}
-                      </p>
-                      <p className="text-xs text-[#1F1F21]">
-                        {nextOpening}
-                      </p>
+                      </span>
+                    </div>
+                    <div className="text-sm font-light text-zinc-700">
+                      {nextOpening}
                     </div>
                   </div>
                 </div>
               </Link>
-
-              {/* 区切り線（最後以外） */}
-              {index !== recommendedStores.length - 1 && (
-                <hr className="mt-6 border-t border-gray-300 w-screen -mx-4" />
-              )}
-            </div>
-
-
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
