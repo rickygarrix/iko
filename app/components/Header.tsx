@@ -48,15 +48,15 @@ export default function Header() {
             </span>
           </button>
 
-          {/* 地図ボタン（通常遷移） */}
-          <Link href="/map" className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1">
+          {/* 地図ボタン（非活性化） */}
+          <div className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1 opacity-50 cursor-not-allowed">
             <div className="w-6 h-6 relative">
               <Image src="/header/pin.svg" alt="地図" fill className="object-contain" />
             </div>
             <span className="text-zinc-900 text-[10px] font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-none">
-              地図
+              開発中
             </span>
-          </Link>
+          </div>
         </div>
       </div>
     </header>

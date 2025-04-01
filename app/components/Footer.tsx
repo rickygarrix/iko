@@ -28,11 +28,11 @@ export default function Footer() {
             </div>
           </Link>
 
-          <Link href="/map" className="px-4 py-2">
+          <div className="px-4 py-2">
             <div className="text-white text-sm font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-tight">
-              地図検索
+              地図検索（開発中）
             </div>
-          </Link>
+          </div>
         </div>
 
         {/* 利用規約・プライバシーポリシー */}

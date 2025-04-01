@@ -65,7 +65,7 @@ export default function RecommendedStores() {
 
                 <div className="flex gap-4 items-center">
                   <img
-                    className="w-40 h-24 rounded-lg border-2 border-zinc-900 object-cover"
+                    className="w-40 h-24 rounded-lg outline outline-2 outline-zinc-900 object-cover"
                     src={store.image_url || "/default-image.jpg"}
                     alt={store.name}
                   />

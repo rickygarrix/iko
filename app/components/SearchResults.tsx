@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 type SearchResultsProps = {
   selectedGenres: string[];
@@ -24,6 +23,7 @@ export default function SearchResults({
 }: SearchResultsProps) {
   const searchParams = useSearchParams();
   const queryParams = searchParams.toString();
+  const router = useRouter();
 
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +32,13 @@ export default function SearchResults({
   useEffect(() => {
     if (isSearchTriggered) {
       handleSearch();
+    }
+
+    // 🔁 戻ってきたときにスクロール位置を復元
+    const savedY = sessionStorage.getItem("scrollY");
+    if (savedY) {
+      window.scrollTo({ top: parseInt(savedY, 10), behavior: "auto" });
+      sessionStorage.removeItem("scrollY"); // 一度だけ使う
     }
   }, [isSearchTriggered]);
 
@@ -57,7 +64,13 @@ export default function SearchResults({
           : data || []
       );
     }
+
     setLoading(false);
+  };
+
+  const handleStoreClick = (storeId: string) => {
+    sessionStorage.setItem("scrollY", window.scrollY.toString());
+    router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
   };
 
   return (
@@ -87,44 +100,46 @@ export default function SearchResults({
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
               return (
-                <div key={store.id} className="bg-[#FEFCF6] rounded-xl">
-                  <Link href={`/stores/${store.id}?prev=/search&${queryParams}`} passHref>
-                    <div className="cursor-pointer space-y-3 pt-4">
-                      {/* 店名 */}
-                      <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">
-                        {store.name}
-                      </h3>
+                <div
+                  key={store.id}
+                  className="bg-[#FEFCF6] rounded-xl cursor-pointer"
+                  onClick={() => handleStoreClick(store.id)}
+                >
+                  <div className="space-y-3 pt-4">
+                    {/* 店名 */}
+                    <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">
+                      {store.name}
+                    </h3>
 
-                      {/* 説明文 */}
-                      <p className="text-[12px] text-[#000000] leading-relaxed text-left">
-                        {store.description ??
-                          "渋谷で40年の歴史を持つ老舗クラブ。最高音質の音響システムを導入している。"}
-                      </p>
+                    {/* 説明文 */}
+                    <p className="text-[12px] text-[#000000] leading-relaxed text-left">
+                      {store.description ??
+                        "渋谷で40年の歴史を持つ老舞クラブ。最高音質の音響システムを導入している。"}
+                    </p>
 
-                      {/* 画像と情報 */}
-                      <div className="flex gap-4 items-center">
-                        {/* 画像 */}
-                        <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] ">
-                          <img
-                            src={store.image_url ?? "/default-image.jpg"}
-                            alt={store.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                    {/* 画像と情報 */}
+                    <div className="flex gap-4 items-center">
+                      {/* 画像 */}
+                      <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] ">
+                        <img
+                          src={store.image_url ?? "/default-image.jpg"}
+                          alt={store.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
 
-                        {/* テキスト情報 */}
-                        <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
-                          <p>
-                            {store.area} / {store.genre}
-                          </p>
-                          <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
-                            {isOpen ? "営業中" : "営業時間外"}
-                          </p>
-                          <p className="text-xs text-[#1F1F21]">{nextOpening}</p>
-                        </div>
+                      {/* テキスト情報 */}
+                      <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
+                        <p>
+                          {store.area} / {store.genre}
+                        </p>
+                        <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
+                          {isOpen ? "営業中" : "営業時間外"}
+                        </p>
+                        <p className="text-xs text-[#1F1F21]">{nextOpening}</p>
                       </div>
                     </div>
-                  </Link>
+                  </div>
 
                   {/* 区切り線（最後以外） */}
                   {index !== stores.length - 1 && (

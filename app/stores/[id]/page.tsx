@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import React from "react";
@@ -29,6 +29,7 @@ type Store = {
 
 export default function StoreDetail() {
   const { id } = useParams();
+  const router = useRouter();
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,6 +53,19 @@ export default function StoreDetail() {
     fetchStore();
   }, [id]);
 
+  const handleBack = () => {
+    const scrollY = sessionStorage.getItem("scrollY");
+    router.back();
+
+    if (scrollY) {
+      // スクロール復元処理を少し遅延させる
+      setTimeout(() => {
+        window.scrollTo({ top: Number(scrollY), behavior: "auto" });
+        sessionStorage.removeItem("scrollY");
+      }, 300); // 300ms 後に復元
+    }
+  };
+
   if (loading) return <p className="text-center mt-6 text-gray-600">ロード中...</p>;
   if (!store) return <p className="text-center mt-6 text-red-500">店舗が見つかりませんでした。</p>;
 
@@ -74,10 +88,20 @@ export default function StoreDetail() {
           </div>
         )}
 
+        {/* ← 戻るボタン */}
+        <div className="px-4 pt-4">
+          <button
+            onClick={handleBack}
+            className="text-sm text-[#4B5C9E] underline hover:text-[#324293]"
+          >
+            ← 戻る
+          </button>
+        </div>
+
+        {/* 店舗名・説明 */}
         <div className="p-4">
           <h1 className="text-2xl font-bold mb-1">{store.name}</h1>
           <p className="text-xs text-[#4B5C9E] font-bold mb-2">{store.name_read}</p>
-
           <p className="text-sm text-[#1F1F21] pt-4 leading-relaxed mb-4 whitespace-pre-line">
             {store.description}
           </p>
@@ -85,7 +109,7 @@ export default function StoreDetail() {
 
         {/* 支払い方法 */}
         <div className="mb-8 px-4">
-          <p className="font-[#1F1F21] text-base mb-2 flex items-center gap-2">
+          <p className="text-base mb-2 flex items-center gap-2 font-[#1F1F21]">
             <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
             支払い方法
           </p>
@@ -120,30 +144,30 @@ export default function StoreDetail() {
 
         {/* 店舗情報 */}
         <div className="my-10 px-4 pt-0">
-          <p className="font-[#1F1F21] text-base mb-2 flex items-center gap-2">
+          <p className="text-base mb-2 flex items-center gap-2 font-[#1F1F21]">
             <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
             店舗情報
           </p>
           <table className="w-full border border-[#E7E7EF] text-sm table-fixed">
             <tbody>
               <tr>
-                <th className="border bg-[#FDFBF7] px-4 py-4 text-left align-middle font-normal w-[90px]">店舗名</th>
+                <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal w-[90px]">店舗名</th>
                 <td className="border px-4 py-4">{store.name}</td>
               </tr>
               <tr>
-                <th className="border bg-[#FDFBF7] px-4 py-4 text-left align-middle font-normal">ジャンル</th>
+                <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">ジャンル</th>
                 <td className="border px-4 py-4">{store.genre}</td>
               </tr>
               <tr>
-                <th className="border bg-[#FDFBF7] px-4 py-4 text-left align-middle font-normal">所在地</th>
+                <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">所在地</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">{store.address}</td>
               </tr>
               <tr>
-                <th className="border bg-[#FDFBF7] px-4 py-4 text-left align-middle font-normal">アクセス</th>
+                <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">アクセス</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">{store.access}</td>
               </tr>
               <tr>
-                <th className="border bg-[#FDFBF7] px-4 py-4 text-left align-middle font-normal">営業時間</th>
+                <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">営業時間</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">
                   {store.opening_hours}
                   <p className="text-[10px] text-gray-500 mt-1">
@@ -162,8 +186,7 @@ export default function StoreDetail() {
               href={store.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full max-w-[358px] h-[48px] bg-black text-white rounded-lg hover:bg-gray-800
-                flex items-center justify-center mx-auto"
+              className="block w-full max-w-[358px] h-[48px] bg-black text-white rounded-lg hover:bg-gray-800 flex items-center justify-center mx-auto"
             >
               公式サイト →
             </a>
