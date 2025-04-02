@@ -1,7 +1,9 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import Link from "next/link";
 import { checkIfOpen } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface Store {
   id: string;
@@ -15,6 +17,8 @@ interface Store {
 
 export default function RecommendedStores() {
   const [stores, setStores] = useState<Store[]>([]);
+  const [restoreY, setRestoreY] = useState<number | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -29,6 +33,30 @@ export default function RecommendedStores() {
 
     fetchStores();
   }, []);
+
+  // ✅ scrollY を sessionStorage から復元
+  useEffect(() => {
+    const saved = sessionStorage.getItem("recommendedScrollY");
+    if (saved) {
+      setRestoreY(parseInt(saved, 10));
+      sessionStorage.removeItem("recommendedScrollY");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (restoreY !== null && stores.length > 0) {
+      console.log("🔁 scrollY 復元:", restoreY);
+      window.scrollTo({ top: restoreY, behavior: "auto" });
+      setRestoreY(null);
+    }
+  }, [restoreY, stores]);
+
+  const handleClick = (storeId: string) => {
+    const currentY = window.scrollY;
+    console.log("💾 scrollY 保存:", currentY);
+    sessionStorage.setItem("recommendedScrollY", currentY.toString());
+    router.push(`/stores/${storeId}`);
+  };
 
   return (
     <div className="w-full bg-white flex justify-center pt-8">
@@ -49,10 +77,10 @@ export default function RecommendedStores() {
             const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
             return (
-              <Link
-                href={`/stores/${store.id}`}
+              <div
                 key={store.id}
-                className="w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0"
+                onClick={() => handleClick(store.id)}
+                className="w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer"
               >
                 <div className="flex flex-col gap-2">
                   <div className="text-zinc-900 text-base font-semibold font-['Hiragino_Kaku_Gothic_ProN'] leading-normal">
@@ -85,7 +113,7 @@ export default function RecommendedStores() {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

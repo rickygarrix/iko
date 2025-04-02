@@ -77,7 +77,7 @@ export default function StoreDetail() {
         )}
 
         {/* ← 戻るボタン */}
-        <div className="px-4 pt-4">
+        <div className="px-4 pt-4 hidden">
           <button
             onClick={() => router.back()}
             className="text-sm text-[#4B5C9E] underline hover:text-[#324293]"

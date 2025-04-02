@@ -28,7 +28,7 @@ export default function SearchResults({
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [restoreY, setRestoreY] = useState<number | null>(null); // ✅ scrollY復元用
+  const [restoreY, setRestoreY] = useState<number | null>(null);
 
   // 検索処理
   const handleSearch = async () => {
@@ -69,16 +69,20 @@ export default function SearchResults({
     const savedY = sessionStorage.getItem("scrollY");
     if (savedY) {
       setRestoreY(parseInt(savedY, 10));
-      sessionStorage.removeItem("scrollY");
     }
   }, []);
 
-  // ✅ 検索結果が出たあとに scrollY を復元
+  // ✅ 検索結果が出たあとに scrollY を復元（確実に描画後）
   useEffect(() => {
     if (stores.length > 0 && restoreY !== null) {
-      console.log("🔁 scrollY 復元:", restoreY);
-      window.scrollTo({ top: restoreY, behavior: "auto" });
-      setRestoreY(null); // 一度だけ復元
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          console.log("🔁 scrollY 復元:", restoreY);
+          window.scrollTo({ top: restoreY, behavior: "auto" });
+          sessionStorage.removeItem("scrollY");
+          setRestoreY(null);
+        }, 0);
+      });
     }
   }, [stores, restoreY]);
 
