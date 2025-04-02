@@ -29,6 +29,7 @@ export default function SearchResults({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restoreY, setRestoreY] = useState<number | null>(null);
+  const [storesReady, setStoresReady] = useState(false); // ✅ 描画制御用
 
   // 検索処理
   const handleSearch = async () => {
@@ -64,7 +65,7 @@ export default function SearchResults({
     }
   }, [isSearchTriggered]);
 
-  // ✅ 戻ってきたときに scrollY を取得
+  // ✅ scrollY を取得して一時保存
   useEffect(() => {
     const savedY = sessionStorage.getItem("scrollY");
     if (savedY) {
@@ -72,17 +73,15 @@ export default function SearchResults({
     }
   }, []);
 
-  // ✅ 検索結果が出たあとに scrollY を復元（確実に描画後）
+  // ✅ scrollY を復元してから描画開始
   useEffect(() => {
-    if (stores.length > 0 && restoreY !== null) {
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          console.log("🔁 scrollY 復元:", restoreY);
-          window.scrollTo({ top: restoreY, behavior: "auto" });
-          sessionStorage.removeItem("scrollY");
-          setRestoreY(null);
-        }, 0);
-      });
+    if (stores.length > 0) {
+      if (restoreY !== null) {
+        window.scrollTo({ top: restoreY, behavior: "auto" });
+        sessionStorage.removeItem("scrollY");
+        setRestoreY(null);
+      }
+      setStoresReady(true);
     }
   }, [stores, restoreY]);
 
@@ -97,7 +96,9 @@ export default function SearchResults({
   return (
     <div className="w-full bg-[#FEFCF6] pb-8">
       <div className="mx-auto w-full max-w-[600px] px-4">
-        {!isSearchTriggered ? (
+        {!storesReady ? (
+          <div style={{ height: "100vh" }} /> // ✅ チラ見え防止用スペース
+        ) : !isSearchTriggered ? (
           <p className="text-gray-400 text-center px-4 pt-6">
             🔍 検索条件を選んで「検索」ボタンを押してください
           </p>
