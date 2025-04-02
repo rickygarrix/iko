@@ -1,59 +1,87 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // ロゴクリックでホーム遷移（スクロール制御付き）
+  const handleHomeClick = useCallback(() => {
+    if (pathname !== "/") {
+      router.push("/");
+
+      // 遷移後に scrollTo 実行（遅延して確実にトップへ）
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }, 50);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [pathname, router]);
+
+  // 条件ボタン（検索ページ）クリック
   const handleSearchClick = () => {
     if (pathname === "/search") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       router.push("/search");
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }, 50);
     }
   };
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
-      {/* 中央寄せコンテナ */}
       <div className="w-full max-w-[600px] px-4 h-[48px] flex justify-between items-center">
-        {/* ロゴエリア */}
-        <Link href="/" passHref>
-          <div className="w-20 h-6 relative">
-            <Image
-              src="/header/logo.svg"
-              alt="オトナビ ロゴ"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
-        </Link>
+        {/* ✅ ロゴクリック（aタグではなくdivで実装） */}
+        <div
+          onClick={handleHomeClick}
+          className="w-20 h-6 relative cursor-pointer"
+        >
+          <Image
+            src="/header/logo.svg"
+            alt="オトナビ ロゴ"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
 
-        {/* ナビゲーションエリア */}
+        {/* ナビゲーション */}
         <div className="flex justify-start items-center">
-          {/* 条件ボタン（動的に動作） */}
+          {/* ✅ 条件ボタン */}
           <button
             onClick={handleSearchClick}
             className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1"
           >
-            <div className="w-6 h-6 relative ">
-              <Image src="/header/search.svg" alt="検索" fill className="object-contain" />
+            <div className="w-6 h-6 relative">
+              <Image
+                src="/header/search.svg"
+                alt="検索"
+                fill
+                className="object-contain"
+              />
             </div>
-            <span className="text-zinc-900 text-[10px] font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-none">
+            <span className="text-zinc-900 text-[10px] font-light leading-none">
               条件
             </span>
           </button>
 
-          {/* 地図ボタン（非活性化） */}
+          {/* 地図（開発中） */}
           <div className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1 opacity-50 cursor-not-allowed">
             <div className="w-6 h-6 relative">
-              <Image src="/header/pin.svg" alt="地図" fill className="object-contain" />
+              <Image
+                src="/header/pin.svg"
+                alt="地図"
+                fill
+                className="object-contain"
+              />
             </div>
-            <span className="text-zinc-900 text-[10px] font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-none">
+            <span className="text-zinc-900 text-[10px] font-light leading-none">
               開発中
             </span>
           </div>

@@ -35,6 +35,8 @@ export default function StoreDetail() {
 
   useEffect(() => {
     const fetchStore = async () => {
+      if (!id || typeof id !== "string") return;
+
       const { data, error } = await supabase
         .from("stores")
         .select("*")
@@ -53,26 +55,12 @@ export default function StoreDetail() {
     fetchStore();
   }, [id]);
 
-  const handleBack = () => {
-    const scrollY = sessionStorage.getItem("scrollY");
-    router.back();
-
-    if (scrollY) {
-      // スクロール復元処理を少し遅延させる
-      setTimeout(() => {
-        window.scrollTo({ top: Number(scrollY), behavior: "auto" });
-        sessionStorage.removeItem("scrollY");
-      }, 300); // 300ms 後に復元
-    }
-  };
-
   if (loading) return <p className="text-center mt-6 text-gray-600">ロード中...</p>;
   if (!store) return <p className="text-center mt-6 text-red-500">店舗が見つかりませんでした。</p>;
 
   return (
     <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px]">
       <div className="w-full max-w-[600px] mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
-
         {/* Googleマップ埋め込み */}
         {store.map_embed && (
           <div className="mb-4">
@@ -84,14 +72,14 @@ export default function StoreDetail() {
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
               className="w-full h-[120px] object-cover"
-            ></iframe>
+            />
           </div>
         )}
 
         {/* ← 戻るボタン */}
         <div className="px-4 pt-4">
           <button
-            onClick={handleBack}
+            onClick={() => router.back()}
             className="text-sm text-[#4B5C9E] underline hover:text-[#324293]"
           >
             ← 戻る
@@ -115,29 +103,28 @@ export default function StoreDetail() {
           </p>
           <table className="w-full border border-[#E7E7EF] text-sm text-left text-black">
             <tbody>
-              {["現金", "クレジットカード", "電子マネー", "コード決済", "交通系IC", "その他"].reduce(
-                (rows, key, idx) => {
+              {["現金", "クレジットカード", "電子マネー", "コード決済", "交通系IC", "その他"]
+                .reduce((rows, key, idx) => {
                   if (idx % 2 === 0) rows.push([key]);
                   else rows[rows.length - 1].push(key);
                   return rows;
-                },
-                [] as string[][]
-              ).map((row, i) => (
-                <tr key={i}>
-                  {row.map((method, j) => (
-                    <React.Fragment key={j}>
-                      <td className="border border-[#E7E7EF] px-3 py-2 w-[40%]">{method}</td>
-                      <td className="border border-[#E7E7EF] px-3 py-2 w-[10%] text-center align-middle">
-                        {method === "その他"
-                          ? "ー"
-                          : store.payment_methods.includes(method)
-                            ? "◯"
-                            : "ー"}
-                      </td>
-                    </React.Fragment>
-                  ))}
-                </tr>
-              ))}
+                }, [] as string[][])
+                .map((row, i) => (
+                  <tr key={i}>
+                    {row.map((method, j) => (
+                      <React.Fragment key={j}>
+                        <td className="border border-[#E7E7EF] px-3 py-2 w-[40%]">{method}</td>
+                        <td className="border border-[#E7E7EF] px-3 py-2 w-[10%] text-center">
+                          {method === "その他"
+                            ? "ー"
+                            : store.payment_methods.includes(method)
+                              ? "◯"
+                              : "ー"}
+                        </td>
+                      </React.Fragment>
+                    ))}
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>

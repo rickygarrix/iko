@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Zen_Kaku_Gothic_New } from "next/font/google";
+import { Geist, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import "./globals.css";
 import GoogleMapsProvider from "@/components/GoogleMapsProvider";
+import ScrollRestoration from "@/components/ScrollRestoration"; // ✅ スクロール復元コンポーネント
 
-// 既存フォント
+// フォント設定
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,10 +17,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// ✅ 追加フォント：Zen Kaku Gothic New
 const zenKaku = Zen_Kaku_Gothic_New({
   subsets: ["latin"],
-  weight: ["400", "700"], // 必要に応じて
+  weight: ["400", "700"],
   variable: "--font-zen-kaku",
   display: "swap",
 });
@@ -37,6 +36,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${zenKaku.variable} antialiased flex flex-col min-h-screen bg-[#FAFAF5]`}
       >
@@ -44,6 +46,8 @@ export default function RootLayout({
           <Header />
 
           <main className="flex-grow w-full">
+            {/* ✅ 検索画面などでのスクロール復元 */}
+            <ScrollRestoration />
             {children}
           </main>
 

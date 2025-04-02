@@ -28,20 +28,9 @@ export default function SearchResults({
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restoreY, setRestoreY] = useState<number | null>(null); // ✅ scrollY復元用
 
-  useEffect(() => {
-    if (isSearchTriggered) {
-      handleSearch();
-    }
-
-    // 🔁 戻ってきたときにスクロール位置を復元
-    const savedY = sessionStorage.getItem("scrollY");
-    if (savedY) {
-      window.scrollTo({ top: parseInt(savedY, 10), behavior: "auto" });
-      sessionStorage.removeItem("scrollY"); // 一度だけ使う
-    }
-  }, [isSearchTriggered]);
-
+  // 検索処理
   const handleSearch = async () => {
     setLoading(true);
     setError(null);
@@ -68,8 +57,36 @@ export default function SearchResults({
     setLoading(false);
   };
 
+  // 検索ボタン押されたら検索
+  useEffect(() => {
+    if (isSearchTriggered) {
+      handleSearch();
+    }
+  }, [isSearchTriggered]);
+
+  // ✅ 戻ってきたときに scrollY を取得
+  useEffect(() => {
+    const savedY = sessionStorage.getItem("scrollY");
+    if (savedY) {
+      setRestoreY(parseInt(savedY, 10));
+      sessionStorage.removeItem("scrollY");
+    }
+  }, []);
+
+  // ✅ 検索結果が出たあとに scrollY を復元
+  useEffect(() => {
+    if (stores.length > 0 && restoreY !== null) {
+      console.log("🔁 scrollY 復元:", restoreY);
+      window.scrollTo({ top: restoreY, behavior: "auto" });
+      setRestoreY(null); // 一度だけ復元
+    }
+  }, [stores, restoreY]);
+
+  // ✅ 店舗クリック時に scrollY を保存して遷移
   const handleStoreClick = (storeId: string) => {
-    sessionStorage.setItem("scrollY", window.scrollY.toString());
+    const currentY = window.scrollY;
+    console.log("💾 scrollY 保存: ", currentY);
+    sessionStorage.setItem("scrollY", currentY.toString());
     router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
   };
 
@@ -87,18 +104,16 @@ export default function SearchResults({
             ⚠️ エラーが発生しました: {error}
           </p>
         ) : stores.length === 0 ? (
-          <p className="text-gray-400 mt-6 text-center mb-4 px-4">該当する店舗がありません。</p>
+          <p className="text-gray-400 mt-6 text-center mb-4 px-4">
+            該当する店舗がありません。
+          </p>
         ) : (
           <div>
-            {/* 件数表示 */}
             <p className="text-lg font-semibold mb-6 text-center py-5 text-gray-700">
               検索結果 <span className="text-[#4B5C9E]">{stores.length}</span> 件
             </p>
-
-            {/* リスト */}
             {stores.map((store, index) => {
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
-
               return (
                 <div
                   key={store.id}
@@ -106,33 +121,22 @@ export default function SearchResults({
                   onClick={() => handleStoreClick(store.id)}
                 >
                   <div className="space-y-3 pt-4">
-                    {/* 店名 */}
                     <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">
                       {store.name}
                     </h3>
-
-                    {/* 説明文 */}
                     <p className="text-[12px] text-[#000000] leading-relaxed text-left">
-                      {store.description ??
-                        "渋谷で40年の歴史を持つ老舞クラブ。最高音質の音響システムを導入している。"}
+                      {store.description ?? "店舗説明がありません。"}
                     </p>
-
-                    {/* 画像と情報 */}
                     <div className="flex gap-4 items-center">
-                      {/* 画像 */}
-                      <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] ">
+                      <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px]">
                         <img
                           src={store.image_url ?? "/default-image.jpg"}
                           alt={store.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
-
-                      {/* テキスト情報 */}
                       <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
-                        <p>
-                          {store.area} / {store.genre}
-                        </p>
+                        <p>{store.area} / {store.genre}</p>
                         <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
                           {isOpen ? "営業中" : "営業時間外"}
                         </p>
@@ -140,8 +144,6 @@ export default function SearchResults({
                       </div>
                     </div>
                   </div>
-
-                  {/* 区切り線（最後以外） */}
                   {index !== stores.length - 1 && (
                     <hr className="mt-6 border-t border-gray-300 w-full" />
                   )}
