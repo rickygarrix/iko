@@ -31,16 +31,25 @@ export default function SearchResults({
   const [error, setError] = useState<string | null>(null);
   const [storesReady, setStoresReady] = useState(false);
   const [restoreY, setRestoreY] = useState<number | null>(null);
+  const [isCacheUsed, setIsCacheUsed] = useState(false);
 
-  // 初回 mount時に scrollY を復元対象として記録
+  // 初回：スクロール位置とキャッシュ復元
   useEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
+    const cache = sessionStorage.getItem("searchCache");
+
     if (savedY && pathname === "/search") {
       setRestoreY(parseInt(savedY, 10));
     }
-  }, [pathname]);
 
-  // データ取得
+    if (cache && !isSearchTriggered) {
+      setStores(JSON.parse(cache));
+      setIsCacheUsed(true);
+      setStoresReady(true);
+    }
+  }, [pathname, isSearchTriggered]);
+
+  // 検索処理
   const handleSearch = async () => {
     setLoading(true);
     setError(null);
@@ -49,8 +58,7 @@ export default function SearchResults({
 
     if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
     if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
-    if (selectedPayments.length > 0)
-      query = query.overlaps("payment_methods", selectedPayments);
+    if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
 
     const { data, error } = await query;
 
@@ -58,10 +66,9 @@ export default function SearchResults({
       setError(error.message);
       setStores([]);
     } else {
-      const filtered = showOnlyOpen
-        ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen)
-        : data || [];
+      const filtered = showOnlyOpen ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen) : data || [];
       setStores(filtered);
+      sessionStorage.setItem("searchCache", JSON.stringify(filtered));
     }
 
     setLoading(false);
@@ -73,22 +80,24 @@ export default function SearchResults({
     }
   }, [isSearchTriggered]);
 
-  // 描画が完了して scrollY を復元できる状態になったかをチェック
+  // スクロール復元
   useEffect(() => {
     if (stores.length > 0) {
       if (restoreY !== null) {
-        let checkCount = 0;
+        let count = 0;
         const interval = setInterval(() => {
-          const height = document.body.scrollHeight;
-          if (height > restoreY || checkCount > 20) {
+          const h = document.body.scrollHeight;
+          if (h >= restoreY || count > 40) {
             clearInterval(interval);
-            window.scrollTo({ top: restoreY, behavior: "auto" });
-            sessionStorage.removeItem("searchScrollY");
-            setRestoreY(null);
-            setStoresReady(true);
+            requestAnimationFrame(() => {
+              window.scrollTo({ top: restoreY, behavior: "auto" });
+              sessionStorage.removeItem("searchScrollY");
+              setRestoreY(null);
+              setStoresReady(true);
+            });
           }
-          checkCount++;
-        }, 50);
+          count++;
+        }, 100);
       } else {
         setStoresReady(true);
       }
@@ -101,12 +110,12 @@ export default function SearchResults({
     router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
   };
 
+  if (!storesReady && !isCacheUsed) return <div style={{ height: "100vh" }} />;
+
   return (
     <div className="w-full bg-[#FEFCF6] pb-8">
       <div className="mx-auto w-full max-w-[600px] px-4">
-        {!storesReady ? (
-          <div style={{ height: "100vh" }} /> // チラ見え防止
-        ) : !isSearchTriggered ? (
+        {!isSearchTriggered && !isCacheUsed ? (
           <p className="text-gray-400 text-center px-4 pt-6">
             🔍 検索条件を選んで「検索」ボタンを押してください
           </p>
@@ -157,9 +166,7 @@ export default function SearchResults({
                       </div>
                     </div>
                   </div>
-                  {index !== stores.length - 1 && (
-                    <hr className="mt-6 border-t border-gray-300 w-full" />
-                  )}
+                  {index !== stores.length - 1 && <hr className="mt-6 border-t border-gray-300 w-full" />}
                 </div>
               );
             })}

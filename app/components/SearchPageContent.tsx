@@ -18,6 +18,7 @@ export default function SearchPageContent() {
   const [isSearchTriggered, setIsSearchTriggered] = useState<boolean>(false);
   const [previewCount, setPreviewCount] = useState<number>(0);
 
+  // 🔁 初期化 & 検索条件があればトリガー
   useEffect(() => {
     const genres = searchParams.get("genre")?.split(",") || [];
     const areas = searchParams.get("area")?.split(",") || [];
@@ -29,7 +30,15 @@ export default function SearchPageContent() {
     setSelectedPayments(payments);
     setShowOnlyOpen(open);
 
-    if (searchParams.toString() !== "") {
+    // ✅ searchParamsが存在する場合は検索をトリガー
+    const hasParams =
+      genres.length > 0 || areas.length > 0 || payments.length > 0 || open;
+
+    const cached = sessionStorage.getItem("searchCache");
+    if (!hasParams && cached) {
+      // 🔄 キャッシュ復元（リロード時）
+      setIsSearchTriggered(true);
+    } else if (hasParams) {
       setIsSearchTriggered(true);
     }
   }, [searchParams]);
@@ -66,7 +75,8 @@ export default function SearchPageContent() {
     const params = new URLSearchParams();
     if (selectedGenres.length > 0) params.set("genre", selectedGenres.join(","));
     if (selectedAreas.length > 0) params.set("area", selectedAreas.join(","));
-    if (selectedPayments.length > 0) params.set("payment", selectedPayments.join(","));
+    if (selectedPayments.length > 0)
+      params.set("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.set("open", "true");
 
     router.push(`/search?${params.toString()}`);
