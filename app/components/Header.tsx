@@ -8,36 +8,44 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // ロゴクリックでホーム遷移（スクロール制御付き）
+  // ホーム遷移＋スクロールトップ＋チラ見え防止
   const handleHomeClick = useCallback(() => {
     if (pathname !== "/") {
+      document.body.style.opacity = "0"; // チラ見え防止
+
       router.push("/");
 
-      // 遷移後に scrollTo 実行（遅延して確実にトップへ）
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "auto" });
-      }, 50);
+        document.body.style.opacity = "1"; // 表示復元
+      }, 200);
     } else {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [pathname, router]);
 
-  // 条件ボタン（検索ページ）クリック
-  const handleSearchClick = () => {
+  // 検索ページ遷移＋スクロールトップ
+  const handleSearchClick = useCallback(() => {
     if (pathname === "/search") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
+      document.body.style.opacity = "0"; // チラ見え防止
+
       router.push("/search");
+
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "auto" });
-      }, 50);
+        document.body.style.opacity = "1"; // 表示復元
+      }, 200);
     }
-  };
+  }, [pathname, router]);
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
       <div className="w-full max-w-[600px] px-4 h-[48px] flex justify-between items-center">
-        {/* ✅ ロゴクリック（aタグではなくdivで実装） */}
+        {/* オトナビロゴ */}
         <div
           onClick={handleHomeClick}
           className="w-20 h-6 relative cursor-pointer"
@@ -53,7 +61,7 @@ export default function Header() {
 
         {/* ナビゲーション */}
         <div className="flex justify-start items-center">
-          {/* ✅ 条件ボタン */}
+          {/* 条件ボタン */}
           <button
             onClick={handleSearchClick}
             className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1"
@@ -71,7 +79,7 @@ export default function Header() {
             </span>
           </button>
 
-          {/* 地図（開発中） */}
+          {/* 地図ボタン（開発中） */}
           <div className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1 opacity-50 cursor-not-allowed">
             <div className="w-6 h-6 relative">
               <Image

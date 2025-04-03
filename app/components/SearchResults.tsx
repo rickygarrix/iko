@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type SearchResultsProps = {
   selectedGenres: string[];
@@ -21,17 +21,26 @@ export default function SearchResults({
   showOnlyOpen,
   isSearchTriggered,
 }: SearchResultsProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryParams = searchParams.toString();
-  const router = useRouter();
 
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [storesReady, setStoresReady] = useState(false);
   const [restoreY, setRestoreY] = useState<number | null>(null);
-  const [storesReady, setStoresReady] = useState(false); // ✅ 描画制御用
 
-  // 検索処理
+  // 初回 mount時に scrollY を復元対象として記録
+  useEffect(() => {
+    const savedY = sessionStorage.getItem("searchScrollY");
+    if (savedY && pathname === "/search") {
+      setRestoreY(parseInt(savedY, 10));
+    }
+  }, [pathname]);
+
+  // データ取得
   const handleSearch = async () => {
     setLoading(true);
     setError(null);
@@ -44,52 +53,51 @@ export default function SearchResults({
       query = query.overlaps("payment_methods", selectedPayments);
 
     const { data, error } = await query;
+
     if (error) {
       setError(error.message);
       setStores([]);
     } else {
-      setStores(
-        showOnlyOpen
-          ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen)
-          : data || []
-      );
+      const filtered = showOnlyOpen
+        ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen)
+        : data || [];
+      setStores(filtered);
     }
 
     setLoading(false);
   };
 
-  // 検索ボタン押されたら検索
   useEffect(() => {
     if (isSearchTriggered) {
       handleSearch();
     }
   }, [isSearchTriggered]);
 
-  // ✅ scrollY を取得して一時保存
-  useEffect(() => {
-    const savedY = sessionStorage.getItem("scrollY");
-    if (savedY) {
-      setRestoreY(parseInt(savedY, 10));
-    }
-  }, []);
-
-  // ✅ scrollY を復元してから描画開始
+  // 描画が完了して scrollY を復元できる状態になったかをチェック
   useEffect(() => {
     if (stores.length > 0) {
       if (restoreY !== null) {
-        window.scrollTo({ top: restoreY, behavior: "auto" });
-        sessionStorage.removeItem("scrollY");
-        setRestoreY(null);
+        let checkCount = 0;
+        const interval = setInterval(() => {
+          const height = document.body.scrollHeight;
+          if (height > restoreY || checkCount > 20) {
+            clearInterval(interval);
+            window.scrollTo({ top: restoreY, behavior: "auto" });
+            sessionStorage.removeItem("searchScrollY");
+            setRestoreY(null);
+            setStoresReady(true);
+          }
+          checkCount++;
+        }, 50);
+      } else {
+        setStoresReady(true);
       }
-      setStoresReady(true);
     }
   }, [stores, restoreY]);
 
-  // ✅ 店舗クリック時に scrollY を保存して遷移
   const handleStoreClick = (storeId: string) => {
     const currentY = window.scrollY;
-    console.log("💾 scrollY 保存: ", currentY);
-    sessionStorage.setItem("scrollY", currentY.toString());
+    sessionStorage.setItem("searchScrollY", currentY.toString());
     router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
   };
 
@@ -97,7 +105,7 @@ export default function SearchResults({
     <div className="w-full bg-[#FEFCF6] pb-8">
       <div className="mx-auto w-full max-w-[600px] px-4">
         {!storesReady ? (
-          <div style={{ height: "100vh" }} /> // ✅ チラ見え防止用スペース
+          <div style={{ height: "100vh" }} /> // チラ見え防止
         ) : !isSearchTriggered ? (
           <p className="text-gray-400 text-center px-4 pt-6">
             🔍 検索条件を選んで「検索」ボタンを押してください
