@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import Skeleton from "@/components/Skeleton"; // 追加！
 import React from "react";
+import MapEmbed from "@/components/MapEmbed";
 
 type Store = {
   id: string;
@@ -76,16 +77,7 @@ export default function StoreDetail() {
         {/* Googleマップ埋め込み */}
         {store.map_embed && (
           <div className="mb-4">
-            <iframe
-              src={store.map_embed}
-              width="600"
-              height="100"
-              title={`${store.name}の地図`}
-              loading="lazy"
-              allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
-              className="w-full h-[100px] object-cover"
-            />
+            <MapEmbed src={store.map_embed} title={`${store.name}の地図`} />
           </div>
         )}
 
