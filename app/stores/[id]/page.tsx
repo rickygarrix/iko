@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
+import Skeleton from "@/components/Skeleton"; // 追加！
 import React from "react";
 
 type Store = {
@@ -27,29 +28,47 @@ type Store = {
   map_link?: string;
 };
 
-// 🔥 Supabaseから1件取得するfetcher関数
+// fetcher関数
 const fetchStore = async (id: string): Promise<Store> => {
   const { data, error } = await supabase.from("stores").select("*").eq("id", id).single();
-
   if (error || !data) {
     throw new Error(error?.message || "データが見つかりませんでした");
   }
-
   return data;
 };
 
 export default function StoreDetail() {
   const { id } = useParams();
-
   const { data: store, error, isLoading } = useSWR<Store>(
     id ? ["store", id] : null,
-    ([, id]) => fetchStore(id as string), // 引数で受け取る！
+    ([, id]) => fetchStore(id as string),
     { revalidateOnFocus: false }
   );
 
-  if (isLoading) return <p className="text-center mt-6 text-gray-600">ロード中...</p>;
-  if (error || !store) return <p className="text-center mt-6 text-red-500">店舗が見つかりませんでした。</p>;
+  // ローディング中：Skeleton
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px] flex justify-center">
+        <div className="w-full max-w-[600px] p-6 space-y-6">
+          <Skeleton width="100%" height={24} />
+          <Skeleton width="60%" height={16} />
+          <Skeleton width="100%" height={80} />
+          <Skeleton width="100%" height={200} />
+        </div>
+      </div>
+    );
+  }
 
+  // エラー時
+  if (error || !store) {
+    return (
+      <div className="min-h-screen bg-[#FEFCF6] text-center pt-[100px] text-red-500">
+        店舗が見つかりませんでした。
+      </div>
+    );
+  }
+
+  // 通常表示
   return (
     <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px]">
       <div className="w-full max-w-[600px] mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
@@ -59,13 +78,13 @@ export default function StoreDetail() {
           <div className="mb-4">
             <iframe
               src={store.map_embed}
-              width="800"
-              height="500"
+              width="600"
+              height="100"
               title={`${store.name}の地図`}
               loading="lazy"
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
-              className="w-full h-[120px] object-cover"
+              className="w-full h-[100px] object-cover"
             />
           </div>
         )}

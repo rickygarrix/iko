@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
+import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type SearchResultsProps = {
@@ -170,10 +171,13 @@ export default function SearchResults({
                 </p>
                 <div className="flex gap-4 items-center">
                   <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px]">
-                    <img
+                    <Image
                       src={store.image_url ?? "/default-image.jpg"}
                       alt={store.name}
-                      className="w-full h-full object-cover"
+                      width={160}
+                      height={90}
+                      className="w-full h-full object-cover rounded-[8px]"
+                      unoptimized // ← Supabase直リンクならこれ付けた方が安全
                     />
                   </div>
                   <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">

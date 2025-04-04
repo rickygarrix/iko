@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 const zenKaku = Zen_Kaku_Gothic_New({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: "400", // ← 配列じゃなくて単体に直した！
   variable: "--font-zen-kaku",
   display: "swap",
 });
@@ -44,13 +44,11 @@ export default function RootLayout({
       >
         <GoogleMapsProvider>
           <Header />
-
           <main className="flex-grow w-full">
             {/* ✅ 検索画面などでのスクロール復元 */}
             <ScrollRestoration />
             {children}
           </main>
-
           <Footer />
         </GoogleMapsProvider>
       </body>

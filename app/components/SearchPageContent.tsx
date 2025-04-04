@@ -21,13 +21,22 @@ export default function SearchPageContent() {
   const fetchPreviewCount = async (
     selectedGenres: string[],
     selectedAreas: string[],
-    selectedPayments: string[]
+    selectedPayments: string[],
+    showOnlyOpen: boolean
   ): Promise<number> => {
     let query = supabase.from("stores").select("*", { count: "exact", head: true });
 
     if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
     if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
     if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
+
+    if (showOnlyOpen) {
+      const now = new Date();
+      const nowTime = now.getHours() * 100 + now.getMinutes(); // 例: 14:30 → 1430
+      query = query
+        .lte("open_time", nowTime)  // open_time <= 現在時刻
+        .gte("close_time", nowTime); // close_time >= 現在時刻
+    }
 
     const { count, error } = await query;
 
@@ -39,9 +48,9 @@ export default function SearchPageContent() {
   };
 
   const { data: previewCount } = useSWR(
-    ["previewCount", selectedGenres, selectedAreas, selectedPayments],
-    ([, selectedGenres, selectedAreas, selectedPayments]) =>
-      fetchPreviewCount(selectedGenres, selectedAreas, selectedPayments),
+    ["previewCount", selectedGenres, selectedAreas, selectedPayments, showOnlyOpen],
+    ([, selectedGenres, selectedAreas, selectedPayments, showOnlyOpen]) =>
+      fetchPreviewCount(selectedGenres, selectedAreas, selectedPayments, showOnlyOpen),
     { revalidateOnFocus: false }
   );
 
@@ -57,19 +66,8 @@ export default function SearchPageContent() {
     setSelectedPayments(payments);
     setShowOnlyOpen(open);
 
-    // ✅ searchParamsが存在する場合は検索をトリガー
-    const hasParams =
-      genres.length > 0 || areas.length > 0 || payments.length > 0 || open;
-
-    const cached = sessionStorage.getItem("searchCache");
-    if (!hasParams && cached) {
-      // 🔄 キャッシュ復元（リロード時）
-      setIsSearchTriggered(true);
-    } else if (hasParams) {
-      setIsSearchTriggered(true);
-    }
+    setIsSearchTriggered(true);
   }, [searchParams]);
-
 
   // 🔥 検索ボタン押したとき
   const handleSearch = () => {
