@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import SearchResults from "@/components/SearchResults";
 import { supabase } from "@/lib/supabase";
-import { checkIfOpen } from "@/lib/utils";
+import useSWR from "swr";
 
 export default function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -16,9 +16,36 @@ export default function SearchPageContent() {
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [isSearchTriggered, setIsSearchTriggered] = useState<boolean>(false);
-  const [previewCount, setPreviewCount] = useState<number>(0);
 
-  // 🔁 初期化 & 検索条件があればトリガー
+  // 🔥 プレビュー件数取得
+  const fetchPreviewCount = async (
+    selectedGenres: string[],
+    selectedAreas: string[],
+    selectedPayments: string[]
+  ): Promise<number> => {
+    let query = supabase.from("stores").select("*", { count: "exact", head: true });
+
+    if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
+    if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
+    if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
+
+    const { count, error } = await query;
+
+    if (error || typeof count !== "number") {
+      throw new Error(error?.message || "カウント取得エラー");
+    }
+
+    return count;
+  };
+
+  const { data: previewCount } = useSWR(
+    ["previewCount", selectedGenres, selectedAreas, selectedPayments],
+    ([, selectedGenres, selectedAreas, selectedPayments]) =>
+      fetchPreviewCount(selectedGenres, selectedAreas, selectedPayments),
+    { revalidateOnFocus: false }
+  );
+
+  // 🔥 ページロード時のフィルター復元 or リセット
   useEffect(() => {
     const genres = searchParams.get("genre")?.split(",") || [];
     const areas = searchParams.get("area")?.split(",") || [];
@@ -43,40 +70,26 @@ export default function SearchPageContent() {
     }
   }, [searchParams]);
 
-  // プレビュー件数の取得
-  useEffect(() => {
-    const fetchPreviewCount = async () => {
-      let query = supabase.from("stores").select("*");
 
-      if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
-      if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
-      if (selectedPayments.length > 0)
-        query = query.overlaps("payment_methods", selectedPayments);
-
-      const { data, error } = await query;
-      if (!error && data) {
-        let filtered = data;
-        if (showOnlyOpen) {
-          filtered = filtered.filter((store) =>
-            checkIfOpen(store.opening_hours).isOpen
-          );
-        }
-        setPreviewCount(filtered.length);
-      }
-    };
-
-    fetchPreviewCount();
-  }, [selectedGenres, selectedAreas, selectedPayments, showOnlyOpen]);
-
+  // 🔥 検索ボタン押したとき
   const handleSearch = () => {
-    setIsSearchTriggered(false);
-    setTimeout(() => setIsSearchTriggered(true), 100);
+    // 1. フィルターをsessionStorageに保存
+    sessionStorage.setItem("filterGenres", JSON.stringify(selectedGenres));
+    sessionStorage.setItem("filterAreas", JSON.stringify(selectedAreas));
+    sessionStorage.setItem("filterPayments", JSON.stringify(selectedPayments));
+    sessionStorage.setItem("filterOpen", JSON.stringify(showOnlyOpen));
 
+    // 2. 通常の検索実行
+    setIsSearchTriggered(false);
+    setTimeout(() => {
+      setIsSearchTriggered(true);
+    }, 100);
+
+    // 3. URLクエリパラメータ更新
     const params = new URLSearchParams();
     if (selectedGenres.length > 0) params.set("genre", selectedGenres.join(","));
     if (selectedAreas.length > 0) params.set("area", selectedAreas.join(","));
-    if (selectedPayments.length > 0)
-      params.set("payment", selectedPayments.join(","));
+    if (selectedPayments.length > 0) params.set("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.set("open", "true");
 
     router.push(`/search?${params.toString()}`);
@@ -96,7 +109,7 @@ export default function SearchPageContent() {
             showOnlyOpen={showOnlyOpen}
             setShowOnlyOpen={setShowOnlyOpen}
             handleSearch={handleSearch}
-            previewCount={previewCount}
+            previewCount={previewCount ?? 0}
           />
         </div>
 

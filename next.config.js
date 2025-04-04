@@ -1,16 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    appDir: true,              // ✅ App Router 使用
-    scrollRestoration: true,  // ✅ スクロール位置の復元を Next.js に任せる（v13.4+）
+    appDir: true,              // ✅ 正しい
+    scrollRestoration: true,   // ✅ 正しい
   },
-  reactStrictMode: true,
+  reactStrictMode: true,       // ✅ 正しい
   images: {
     domains: [
       "blogger.googleusercontent.com",
-      "lh3.googleusercontent.com"
+      "lh3.googleusercontent.com",
     ],
   },
+  // optimizeFonts, optimizeCss は不要！（Next 13〜自動）
 };
 
 module.exports = nextConfig;

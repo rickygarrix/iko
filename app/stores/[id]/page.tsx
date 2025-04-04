@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import React from "react";
 
@@ -15,7 +15,7 @@ type Store = {
   opening_hours: string;
   regular_holiday: string;
   capacity: string;
-  instagram?: string | null;
+  instagram: string | null;
   payment_methods: string[];
   address: string;
   phone: string;
@@ -27,47 +27,41 @@ type Store = {
   map_link?: string;
 };
 
+// 🔥 Supabaseから1件取得するfetcher関数
+const fetchStore = async (id: string): Promise<Store> => {
+  const { data, error } = await supabase.from("stores").select("*").eq("id", id).single();
+
+  if (error || !data) {
+    throw new Error(error?.message || "データが見つかりませんでした");
+  }
+
+  return data;
+};
+
 export default function StoreDetail() {
   const { id } = useParams();
-  const router = useRouter();
-  const [store, setStore] = useState<Store | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStore = async () => {
-      if (!id || typeof id !== "string") return;
+  const { data: store, error, isLoading } = useSWR<Store>(
+    id ? ["store", id] : null,
+    ([, id]) => fetchStore(id as string), // 引数で受け取る！
+    { revalidateOnFocus: false }
+  );
 
-      const { data, error } = await supabase
-        .from("stores")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        console.error("🔥 Supabase Error:", error.message);
-        setStore(null);
-      } else {
-        setStore(data);
-      }
-      setLoading(false);
-    };
-
-    fetchStore();
-  }, [id]);
-
-  if (loading) return <p className="text-center mt-6 text-gray-600">ロード中...</p>;
-  if (!store) return <p className="text-center mt-6 text-red-500">店舗が見つかりませんでした。</p>;
+  if (isLoading) return <p className="text-center mt-6 text-gray-600">ロード中...</p>;
+  if (error || !store) return <p className="text-center mt-6 text-red-500">店舗が見つかりませんでした。</p>;
 
   return (
     <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px]">
       <div className="w-full max-w-[600px] mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
+
         {/* Googleマップ埋め込み */}
         {store.map_embed && (
           <div className="mb-4">
             <iframe
               src={store.map_embed}
-              width={800}
-              height={500}
+              width="800"
+              height="500"
+              title={`${store.name}の地図`}
               loading="lazy"
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
@@ -76,20 +70,12 @@ export default function StoreDetail() {
           </div>
         )}
 
-        {/* ← 戻るボタン */}
-        <div className="px-4 pt-4 hidden">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-[#4B5C9E] underline hover:text-[#324293]"
-          >
-            ← 戻る
-          </button>
-        </div>
-
         {/* 店舗名・説明 */}
         <div className="p-4">
           <h1 className="text-2xl font-bold mb-1">{store.name}</h1>
-          <p className="text-xs text-[#4B5C9E] font-bold mb-2">{store.name_read}</p>
+          {store.name_read && (
+            <p className="text-xs text-[#4B5C9E] font-bold mb-2">{store.name_read}</p>
+          )}
           <p className="text-sm text-[#1F1F21] pt-4 leading-relaxed mb-4 whitespace-pre-line">
             {store.description}
           </p>
@@ -154,6 +140,23 @@ export default function StoreDetail() {
                 <td className="border px-4 py-4 whitespace-pre-wrap">{store.access}</td>
               </tr>
               <tr>
+                <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">Instagram</th>
+                <td className="border px-4 py-4 whitespace-pre-wrap">
+                  {store.instagram ? (
+                    <a
+                      href={store.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline break-all"
+                    >
+                      {store.instagram}
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
+              </tr>
+              <tr>
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">営業時間</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">
                   {store.opening_hours}
@@ -166,7 +169,7 @@ export default function StoreDetail() {
           </table>
         </div>
 
-        {/* 公式サイト */}
+        {/* 公式サイトリンク */}
         {store.website && (
           <div className="px-4 pb-4">
             <a
