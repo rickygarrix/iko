@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import Image from "next/image"; // ← 追加！
 
 export default function MyPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -74,7 +75,18 @@ export default function MyPage() {
         {/* アイコン画像 */}
         <div>
           <p className="font-semibold mb-2">アイコン</p>
-          {avatarUrl && <img src={avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full mb-2" />}
+          {avatarUrl && (
+            <div className="relative w-24 h-24 mb-2">
+              <Image
+                src={avatarUrl}
+                alt="Avatar"
+                fill
+                className="rounded-full object-cover"
+                sizes="96px"
+                unoptimized // 🔹 Supabaseの画像だから最適化不要
+              />
+            </div>
+          )}
           <input type="file" accept="image/*" onChange={handleAvatarChange} />
         </div>
 

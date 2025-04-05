@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { Store } from "../../types";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion"; // ←追加！
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 type SearchResultsProps = {
   selectedGenres: string[];
@@ -17,7 +16,7 @@ type SearchResultsProps = {
   isSearchTriggered: boolean;
 };
 
-// --- データ取得 ---
+// Supabaseから店舗データを取得する関数
 const fetchStores = async (
   selectedGenres: string[],
   selectedAreas: string[],
@@ -31,11 +30,14 @@ const fetchStores = async (
   if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
 
   const { data, error } = await query;
+
   if (error) throw new Error(error.message);
 
-  return showOnlyOpen
+  const filtered = showOnlyOpen
     ? (data || []).filter((store) => checkIfOpen(store.opening_hours).isOpen)
-    : (data || []);
+    : data || [];
+
+  return filtered;
 };
 
 export default function SearchResults({
@@ -46,19 +48,54 @@ export default function SearchResults({
   isSearchTriggered,
 }: SearchResultsProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryParams = searchParams.toString();
 
-  const [isOverlayVisible, setIsOverlayVisible] = useState(false);
+  const [restoreY, setRestoreY] = useState<number | null>(null);
+  const [isOverlayVisible, setIsOverlayVisible] = useState(false); // 👈 オーバーレイ管理追加
 
+  // useSWRでデータ取得
   const { data: stores, error, isLoading } = useSWR<Store[]>(
     isSearchTriggered ? "search-stores" : null,
     () => fetchStores(selectedGenres, selectedAreas, selectedPayments, showOnlyOpen),
     { revalidateOnFocus: false }
   );
 
+  // スクロール位置復元
+  useEffect(() => {
+    const savedY = sessionStorage.getItem("searchScrollY");
+
+    if (savedY && pathname === "/search") {
+      setRestoreY(parseInt(savedY, 10));
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (stores && stores.length > 0 && restoreY !== null) {
+      let count = 0;
+      const interval = setInterval(() => {
+        const h = document.body.scrollHeight;
+        if (h >= restoreY || count > 40) {
+          clearInterval(interval);
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: restoreY, behavior: "auto" });
+            sessionStorage.removeItem("searchScrollY");
+            setRestoreY(null);
+          });
+        }
+        count++;
+      }, 100);
+    }
+  }, [stores, restoreY]);
+
   const handleStoreClick = (storeId: string) => {
+    const currentY = window.scrollY;
+    sessionStorage.setItem("searchScrollY", currentY.toString());
+
+    // 👇 ここだけ追加！
     setIsOverlayVisible(true);
+
     setTimeout(() => {
       router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
@@ -112,7 +149,7 @@ export default function SearchResults({
 
   return (
     <div className="relative w-full bg-[#FEFCF6] pb-8">
-      {/* オーバーレイ */}
+      {/* 👇 オーバーレイ表示 */}
       {isOverlayVisible && (
         <div className="fixed inset-0 z-[9999] bg-white/80"></div>
       )}
@@ -126,13 +163,10 @@ export default function SearchResults({
           const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
 
           return (
-            <motion.div
+            <div
               key={store.id}
+              className="bg-[#FEFCF6] rounded-xl cursor-pointer"
               onClick={() => handleStoreClick(store.id)}
-              className="bg-[#FEFCF6] rounded-xl cursor-pointer hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }} // ← フェードイン間隔ずらしてる✨
             >
               <div className="space-y-3 pt-4">
                 <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">
@@ -161,10 +195,8 @@ export default function SearchResults({
                   </div>
                 </div>
               </div>
-              {index !== stores.length - 1 && (
-                <hr className="mt-6 border-t border-gray-300 w-full" />
-              )}
-            </motion.div>
+              {index !== stores.length - 1 && <hr className="mt-6 border-t border-gray-300 w-full" />}
+            </div>
           );
         })}
       </div>

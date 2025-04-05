@@ -21,7 +21,7 @@ export default function AuthCallback() {
     };
 
     checkSession();
-  }, []);
+  }, [router]); // 👈 ここを [router] に変更！！
 
   return (
     <div className="min-h-screen flex items-center justify-center">

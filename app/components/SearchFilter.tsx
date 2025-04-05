@@ -1,5 +1,7 @@
 "use client";
+
 import { motion } from "framer-motion";
+import Image from "next/image"; // ←追加！
 
 const GENRES = ["House", "Jazz", "Techno", "EDM"];
 const AREAS = ["新宿", "渋谷", "六本木", "池袋", "銀座", "表参道"];
@@ -47,7 +49,7 @@ export default function SearchFilter({
           animate="visible"
           variants={{
             hidden: {},
-            visible: { transition: { staggerChildren: 0.2 } }, // 順番にフェードイン
+            visible: { transition: { staggerChildren: 0.2 } },
           }}
           className="space-y-8"
         >
@@ -142,7 +144,7 @@ export default function SearchFilter({
             </div>
           </motion.div>
 
-          {/* 支払い */}
+          {/* 支払い方法 */}
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 20 },
@@ -181,6 +183,7 @@ export default function SearchFilter({
           transition={{ delay: 1.2, duration: 0.8 }}
           className="flex justify-center gap-4 mt-12"
         >
+          {/* リセットボタン */}
           <button
             onClick={() => {
               setSelectedGenres([]);
@@ -194,6 +197,7 @@ export default function SearchFilter({
             リセット
           </button>
 
+          {/* 検索ボタン */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -203,11 +207,14 @@ export default function SearchFilter({
             className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21]
             px-4 flex items-center justify-center gap-2 text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
           >
-            <img
-              src="/icons/search.svg"
-              alt="検索アイコン"
-              className="w-[14px] h-[14px]"
-            />
+            <div className="relative w-[14px] h-[14px]">
+              <Image
+                src="/icons/search.svg"
+                alt="検索アイコン"
+                fill
+                className="object-contain"
+              />
+            </div>
             検索（{previewCount}件）
           </button>
         </motion.div>

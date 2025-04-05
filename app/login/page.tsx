@@ -11,7 +11,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback`, // ログイン後に戻るURLを指定
+        redirectTo: `${location.origin}/auth/callback`,
       },
     });
 
@@ -25,7 +25,7 @@ export default function LoginPage() {
         router.push("/");
       }
     });
-  }, []);
+  }, [router]); // 👈 ここを修正！！
 
   return (
     <div className="min-h-screen bg-[#FEFCF6] flex items-center justify-center">

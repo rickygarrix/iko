@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
-import { motion } from "framer-motion"; // ←追加！
+import { motion } from "framer-motion";
+import Image from "next/image"; // ← 追加！
 
 interface Store {
   id: string;
@@ -112,11 +113,16 @@ export default function RecommendedStores() {
                   </div>
 
                   <div className="flex gap-4 items-center">
-                    <img
-                      className="w-40 h-24 rounded-lg outline outline-2 outline-zinc-900 object-cover"
-                      src={store.image_url || "/default-image.jpg"}
-                      alt={store.name}
-                    />
+                    <div className="relative w-40 h-24 rounded-lg overflow-hidden outline outline-2 outline-zinc-900">
+                      <Image
+                        src={store.image_url || "/default-image.jpg"}
+                        alt={store.name}
+                        fill
+                        style={{ objectFit: "cover" }}
+                        sizes="160px"
+                        unoptimized
+                      />
+                    </div>
                     <div className="flex flex-col gap-1 flex-1">
                       <div className="text-zinc-900 text-sm font-light">
                         {store.area} / {store.genre}
