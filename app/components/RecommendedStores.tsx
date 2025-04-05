@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
+import { motion } from "framer-motion"; // ←追加！
 
 interface Store {
   id: string;
@@ -19,7 +20,7 @@ export default function RecommendedStores() {
   const [stores, setStores] = useState<Store[]>([]);
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [storesReady, setStoresReady] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // オーバーレイだけ
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -62,13 +63,13 @@ export default function RecommendedStores() {
       const currentY = window.scrollY;
       sessionStorage.setItem("recommendedScrollY", currentY.toString());
     }
-    setIsLoading(true); // オーバーレイON
+    setIsLoading(true);
     router.push(`/stores/${storeId}`);
   };
 
   return (
     <div className="w-full bg-white flex justify-center pt-8 relative">
-      {/* オーバーレイだけ（スピナーなし） */}
+      {/* オーバーレイ */}
       {isLoading && (
         <div className="fixed inset-0 z-[9999] bg-white/80" />
       )}
@@ -89,14 +90,17 @@ export default function RecommendedStores() {
           <div style={{ height: "100vh" }} />
         ) : (
           <div className="w-full flex flex-col justify-start items-center gap-px">
-            {stores.map((store) => {
+            {stores.map((store, index) => {
               const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
               return (
-                <div
+                <motion.div
                   key={store.id}
                   onClick={() => handleClick(store.id)}
                   className="w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer
                     hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
                 >
                   <div className="flex flex-col gap-2">
                     <div className="text-zinc-900 text-base font-semibold leading-normal">
@@ -127,7 +131,7 @@ export default function RecommendedStores() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>

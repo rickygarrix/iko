@@ -48,7 +48,7 @@ export default function Header() {
         {/* オトナビロゴ */}
         <div
           onClick={handleHomeClick}
-          className="w-20 h-6 relative cursor-pointer"
+          className="w-20 h-6 relative cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
         >
           <Image
             src="/header/logo.svg"
@@ -64,7 +64,8 @@ export default function Header() {
           {/* 条件ボタン */}
           <button
             onClick={handleSearchClick}
-            className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1"
+            className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1
+             transition-transform duration-200 hover:scale-105 active:scale-95"
           >
             <div className="w-6 h-6 relative">
               <Image

@@ -27,7 +27,11 @@ export default function AboutSection() {
         </div>
 
         {/* ボタン */}
-        <div className="w-full max-w-[600px] h-12 px-4 bg-zinc-900 rounded-lg border border-zinc-900 flex items-center justify-center">
+        <div
+          className="w-full max-w-[600px] h-12 px-4 bg-zinc-900 rounded-lg border border-zinc-900
+  flex items-center justify-center cursor-pointer
+  hover:scale-105 active:scale-95 transition-transform duration-200"
+        >
           <a href="/search" className="text-white text-sm font-medium">
             行きたいお店を見つけよう →
           </a>
