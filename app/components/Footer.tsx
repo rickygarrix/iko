@@ -20,7 +20,7 @@ export default function Footer() {
           </div>
         </Link>
 
-        {/* ナビゲーションリンク（条件検索・地図検索） */}
+
         <div className="w-full flex justify-center items-start">
           <Link href="/search" className="px-4 py-2">
             <div className="text-white text-sm font-light font-['Hiragino_Kaku_Gothic_ProN'] leading-tight">
