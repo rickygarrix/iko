@@ -19,10 +19,10 @@ export default function RecommendedStores() {
   const [stores, setStores] = useState<Store[]>([]);
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [storesReady, setStoresReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // オーバーレイだけ
   const router = useRouter();
   const pathname = usePathname();
 
-  // データ取得
   useEffect(() => {
     const fetchStores = async () => {
       const { data, error } = await supabase.from("stores").select("*").limit(3);
@@ -35,7 +35,6 @@ export default function RecommendedStores() {
     fetchStores();
   }, []);
 
-  // scrollY 復元（ホームでのみ発火）
   useEffect(() => {
     const saved = sessionStorage.getItem("recommendedScrollY");
     if (saved && pathname === "/") {
@@ -43,7 +42,6 @@ export default function RecommendedStores() {
     }
   }, [pathname]);
 
-  // scroll 復元 → 描画開始
   useEffect(() => {
     if (restoreY !== null && stores.length > 0) {
       requestAnimationFrame(() => {
@@ -60,16 +58,21 @@ export default function RecommendedStores() {
   }, [restoreY, stores]);
 
   const handleClick = (storeId: string) => {
-    // ホームページ上にいる場合だけ scrollY を保存
     if (pathname === "/") {
       const currentY = window.scrollY;
       sessionStorage.setItem("recommendedScrollY", currentY.toString());
     }
+    setIsLoading(true); // オーバーレイON
     router.push(`/stores/${storeId}`);
   };
 
   return (
-    <div className="w-full bg-white flex justify-center pt-8">
+    <div className="w-full bg-white flex justify-center pt-8 relative">
+      {/* オーバーレイだけ（スピナーなし） */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[9999] bg-white/80" />
+      )}
+
       <div className="w-full max-w-[600px] flex flex-col mx-auto gap-2">
         {/* 見出し */}
         <div className="w-full px-4 flex flex-col justify-start items-center gap-1">
@@ -83,7 +86,7 @@ export default function RecommendedStores() {
 
         {/* リスト */}
         {!storesReady ? (
-          <div style={{ height: "100vh" }} /> // チラ見え防止スペース
+          <div style={{ height: "100vh" }} />
         ) : (
           <div className="w-full flex flex-col justify-start items-center gap-px">
             {stores.map((store) => {
@@ -92,7 +95,8 @@ export default function RecommendedStores() {
                 <div
                   key={store.id}
                   onClick={() => handleClick(store.id)}
-                  className="w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer"
+                  className="w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer
+                    hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
                 >
                   <div className="flex flex-col gap-2">
                     <div className="text-zinc-900 text-base font-semibold leading-normal">

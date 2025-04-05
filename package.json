@@ -12,6 +12,7 @@
     "@react-google-maps/api": "^2.20.6",
     "@supabase/supabase-js": "^2.49.1",
     "dayjs": "^1.11.13",
+    "framer-motion": "^12.6.3",
     "next": "15.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

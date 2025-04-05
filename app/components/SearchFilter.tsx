@@ -29,6 +29,8 @@ export default function SearchFilter({
   return (
     <div className="w-full flex justify-center bg-[#F7F5EF] pt-[48px] pb-8">
       <div className="w-full max-w-[600px] px-6 text-[#1F1F21] text-[14px] leading-[20px] font-normal space-y-6">
+
+        {/* 見出し */}
         <div className="text-center">
           <h2 className="text-[18px] font-bold leading-[26px] mb-1">条件検索</h2>
           <p className="text-sm text-[#4B5C9E]">Search</p>
@@ -45,12 +47,11 @@ export default function SearchFilter({
                 checked={!showOnlyOpen}
                 onChange={() => setShowOnlyOpen(false)}
                 className="peer appearance-none w-[20px] h-[20px] border border-[#1F1F21] rounded-full
-                bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] relative"
+                  bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] relative"
               />
-              <span
-                className="pointer-events-none absolute left-[6px] top-[6px] w-[8px] h-[8px] rounded-full
+              <span className="pointer-events-none absolute left-[6px] top-[6px] w-[8px] h-[8px] rounded-full
                 bg-white peer-checked:block hidden"
-              ></span>
+              />
               営業時間外も含む
             </label>
 
@@ -61,12 +62,11 @@ export default function SearchFilter({
                 checked={showOnlyOpen}
                 onChange={() => setShowOnlyOpen(true)}
                 className="peer appearance-none w-[20px] h-[20px] border border-[#1F1F21] rounded-full
-                bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] relative"
+                  bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] relative"
               />
-              <span
-                className="pointer-events-none absolute left-[6px] top-[6px] w-[8px] h-[8px] rounded-full
+              <span className="pointer-events-none absolute left-[6px] top-[6px] w-[8px] h-[8px] rounded-full
                 bg-white peer-checked:block hidden"
-              ></span>
+              />
               営業時間内のみ
             </label>
           </div>
@@ -81,8 +81,8 @@ export default function SearchFilter({
                 <input
                   type="checkbox"
                   className="appearance-none check-icon w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21]
-                  bg-[#FFFFFF] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
-                  checked:bg-check-icon bg-center bg-no-repeat"
+                    bg-[#FFFFFF] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
+                    checked:bg-check-icon bg-center bg-no-repeat"
                   checked={selectedGenres.includes(genre)}
                   onChange={() =>
                     setSelectedGenres(
@@ -107,8 +107,8 @@ export default function SearchFilter({
                 <input
                   type="checkbox"
                   className="appearance-none check-icon w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21]
-                  bg-[#FFFFFF] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
-                  checked:bg-check-icon bg-center bg-no-repeat"
+                    bg-[#FFFFFF] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
+                    checked:bg-check-icon bg-center bg-no-repeat"
                   checked={selectedAreas.includes(area)}
                   onChange={() =>
                     setSelectedAreas(
@@ -133,8 +133,8 @@ export default function SearchFilter({
                 <input
                   type="checkbox"
                   className="appearance-none check-icon w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21]
-                  bg-[#FFFFFF] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
-                  checked:bg-check-icon bg-center bg-no-repeat"
+                    bg-[#FFFFFF] checked:bg-[#4B5C9E] checked:border-[#1F1F21]
+                    checked:bg-check-icon bg-center bg-no-repeat"
                   checked={selectedPayments.includes(payment)}
                   onChange={() =>
                     setSelectedPayments(
@@ -150,8 +150,10 @@ export default function SearchFilter({
           </div>
         </div>
 
-        {/* ボタン */}
+        {/* --- ボタンたち --- */}
         <div className="flex justify-center mt-4 gap-4">
+
+          {/* リセットボタン */}
           <button
             onClick={() => {
               setSelectedGenres([]);
@@ -160,18 +162,20 @@ export default function SearchFilter({
               setShowOnlyOpen(false);
             }}
             className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21]
-            text-[14px] font-normal hover:bg-gray-100 transition"
+              text-[14px] font-normal hover:bg-gray-100 transition"
           >
             リセット
           </button>
 
+          {/* 検索ボタン */}
           <button
             onClick={(event) => {
               event.preventDefault();
+              window.scrollTo({ top: 0, behavior: "auto" }); // ← ここを追加！！
               handleSearch();
             }}
             className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21]
-            px-4 flex items-center justify-center gap-2 text-[14px] font-normal"
+              px-4 flex items-center justify-center gap-2 text-[14px] font-normal"
           >
             <img
               src="/icons/search.svg"
@@ -180,7 +184,9 @@ export default function SearchFilter({
             />
             検索（{previewCount}件）
           </button>
+
         </div>
+
       </div>
     </div>
   );

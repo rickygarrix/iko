@@ -53,10 +53,11 @@ export default function SearchResults({
   const queryParams = searchParams.toString();
 
   const [restoreY, setRestoreY] = useState<number | null>(null);
+  const [isOverlayVisible, setIsOverlayVisible] = useState(false); // 👈 オーバーレイ管理追加
 
   // useSWRでデータ取得
   const { data: stores, error, isLoading } = useSWR<Store[]>(
-    isSearchTriggered ? "search-stores" : null, // フィルターではなく、検索ボタン押されたかだけで管理！
+    isSearchTriggered ? "search-stores" : null,
     () => fetchStores(selectedGenres, selectedAreas, selectedPayments, showOnlyOpen),
     { revalidateOnFocus: false }
   );
@@ -92,12 +93,14 @@ export default function SearchResults({
     const currentY = window.scrollY;
     sessionStorage.setItem("searchScrollY", currentY.toString());
 
+    // 👇 ここだけ追加！
+    setIsOverlayVisible(true);
+
     setTimeout(() => {
       router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
   };
 
-  // 検索ボタン押してないなら何も表示しない
   if (!isSearchTriggered) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
@@ -110,7 +113,6 @@ export default function SearchResults({
     );
   }
 
-  // ローディング中
   if (isLoading) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
@@ -121,7 +123,6 @@ export default function SearchResults({
     );
   }
 
-  // エラー発生時
   if (error) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
@@ -134,7 +135,6 @@ export default function SearchResults({
     );
   }
 
-  // データが存在しない場合
   if (!stores || stores.length === 0) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
@@ -147,15 +147,21 @@ export default function SearchResults({
     );
   }
 
-  // 通常表示
   return (
-    <div className="w-full bg-[#FEFCF6] pb-8">
+    <div className="relative w-full bg-[#FEFCF6] pb-8">
+      {/* 👇 オーバーレイ表示 */}
+      {isOverlayVisible && (
+        <div className="fixed inset-0 z-[9999] bg-white/80"></div>
+      )}
+
       <div className="mx-auto w-full max-w-[600px] px-4">
         <p className="text-lg font-semibold mb-6 text-center py-5 text-gray-700">
           検索結果 <span className="text-[#4B5C9E]">{stores.length}</span> 件
         </p>
+
         {stores.map((store: Store, index: number) => {
           const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
+
           return (
             <div
               key={store.id}
@@ -170,14 +176,14 @@ export default function SearchResults({
                   {store.description ?? "店舗説明がありません。"}
                 </p>
                 <div className="flex gap-4 items-center">
-                  <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px]">
+                  <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden">
                     <Image
                       src={store.image_url ?? "/default-image.jpg"}
                       alt={store.name}
                       width={160}
                       height={90}
-                      className="w-full h-full object-cover rounded-[8px]"
-                      unoptimized // ← Supabase直リンクならこれ付けた方が安全
+                      className="w-full h-full object-cover"
+                      unoptimized
                     />
                   </div>
                   <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
