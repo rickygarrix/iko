@@ -16,7 +16,6 @@ type SearchResultsProps = {
   isSearchTriggered: boolean;
 };
 
-// Supabaseから店舗データを取得する関数
 const fetchStores = async (
   selectedGenres: string[],
   selectedAreas: string[],
@@ -33,11 +32,9 @@ const fetchStores = async (
 
   if (error) throw new Error(error.message);
 
-  const filtered = showOnlyOpen
+  return showOnlyOpen
     ? (data || []).filter((store) => checkIfOpen(store.opening_hours).isOpen)
     : data || [];
-
-  return filtered;
 };
 
 export default function SearchResults({
@@ -53,19 +50,16 @@ export default function SearchResults({
   const queryParams = searchParams.toString();
 
   const [restoreY, setRestoreY] = useState<number | null>(null);
-  const [isOverlayVisible, setIsOverlayVisible] = useState(false); // 👈 オーバーレイ管理追加
+  const [isOverlayVisible, setIsOverlayVisible] = useState(false);
 
-  // useSWRでデータ取得
   const { data: stores, error, isLoading } = useSWR<Store[]>(
     isSearchTriggered ? "search-stores" : null,
     () => fetchStores(selectedGenres, selectedAreas, selectedPayments, showOnlyOpen),
     { revalidateOnFocus: false }
   );
 
-  // スクロール位置復元
   useEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
-
     if (savedY && pathname === "/search") {
       setRestoreY(parseInt(savedY, 10));
     }
@@ -92,10 +86,7 @@ export default function SearchResults({
   const handleStoreClick = (storeId: string) => {
     const currentY = window.scrollY;
     sessionStorage.setItem("searchScrollY", currentY.toString());
-
-    // 👇 ここだけ追加！
     setIsOverlayVisible(true);
-
     setTimeout(() => {
       router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
@@ -149,10 +140,7 @@ export default function SearchResults({
 
   return (
     <div className="relative w-full bg-[#FEFCF6] pb-8">
-      {/* 👇 オーバーレイ表示 */}
-      {isOverlayVisible && (
-        <div className="fixed inset-0 z-[9999] bg-white/80"></div>
-      )}
+      {isOverlayVisible && <div className="fixed inset-0 z-[9999] bg-white/80"></div>}
 
       <div className="mx-auto w-full max-w-[600px] px-4">
         <p className="text-lg font-semibold mb-6 text-center py-5 text-gray-700">
@@ -165,7 +153,7 @@ export default function SearchResults({
           return (
             <div
               key={store.id}
-              className="bg-[#FEFCF6] rounded-xl cursor-pointer"
+              className="bg-[#FEFCF6] rounded-xl cursor-pointer hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
               onClick={() => handleStoreClick(store.id)}
             >
               <div className="space-y-3 pt-4">

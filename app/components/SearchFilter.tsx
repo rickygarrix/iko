@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image"; // ←追加！
+import Image from "next/image";
 
 const GENRES = ["House", "Jazz", "Techno", "EDM"];
 const AREAS = ["新宿", "渋谷", "六本木", "池袋", "銀座", "表参道"];
@@ -43,7 +43,7 @@ export default function SearchFilter({
           <p className="text-sm text-[#4B5C9E]">Search</p>
         </motion.div>
 
-        {/* --- フィルター本体 --- */}
+        {/* --- フィルター --- */}
         <motion.div
           initial="hidden"
           animate="visible"
@@ -55,10 +55,7 @@ export default function SearchFilter({
         >
           {/* 営業時間 */}
           <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             transition={{ duration: 0.5 }}
           >
             <p className="text-[16px] font-bold leading-[24px] mb-2">営業時間</p>
@@ -84,10 +81,7 @@ export default function SearchFilter({
 
           {/* ジャンル */}
           <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             transition={{ duration: 0.5 }}
           >
             <p className="text-[16px] font-bold leading-[24px] mb-2">ジャンル</p>
@@ -104,8 +98,7 @@ export default function SearchFilter({
                           : [...selectedGenres, genre]
                       )
                     }
-                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white
-                    checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
+                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
                   />
                   {genre}
                 </label>
@@ -115,10 +108,7 @@ export default function SearchFilter({
 
           {/* エリア */}
           <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             transition={{ duration: 0.5 }}
           >
             <p className="text-[16px] font-bold leading-[24px] mb-2">エリア</p>
@@ -135,8 +125,7 @@ export default function SearchFilter({
                           : [...selectedAreas, area]
                       )
                     }
-                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white
-                    checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
+                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
                   />
                   {area}
                 </label>
@@ -146,10 +135,7 @@ export default function SearchFilter({
 
           {/* 支払い方法 */}
           <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 },
-            }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             transition={{ duration: 0.5 }}
           >
             <p className="text-[16px] font-bold leading-[24px] mb-2">支払い方法</p>
@@ -166,8 +152,7 @@ export default function SearchFilter({
                           : [...selectedPayments, payment]
                       )
                     }
-                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white
-                    checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
+                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
                   />
                   {payment}
                 </label>
@@ -176,14 +161,14 @@ export default function SearchFilter({
           </motion.div>
         </motion.div>
 
-        {/* --- ボタン --- */}
+        {/* --- ボタンエリア --- */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2, duration: 0.8 }}
           className="flex justify-center gap-4 mt-12"
         >
-          {/* リセットボタン */}
+          {/* リセット */}
           <button
             onClick={() => {
               setSelectedGenres([]);
@@ -197,7 +182,7 @@ export default function SearchFilter({
             リセット
           </button>
 
-          {/* 検索ボタン */}
+          {/* 検索 */}
           <button
             onClick={(e) => {
               e.preventDefault();

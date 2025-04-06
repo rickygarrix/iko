@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import SearchResults from "@/components/SearchResults";
 import { supabase } from "@/lib/supabase";
+import { checkIfOpen } from "@/lib/utils"; // これ追加！！
 import useSWR from "swr";
 
 export default function SearchPageContent() {
@@ -17,34 +18,32 @@ export default function SearchPageContent() {
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [isSearchTriggered, setIsSearchTriggered] = useState<boolean>(false);
 
-  // 🔥 プレビュー件数取得
+  // 🔥 プレビュー件数取得（営業中フィルターも対応）
   const fetchPreviewCount = async (
     selectedGenres: string[],
     selectedAreas: string[],
     selectedPayments: string[],
     showOnlyOpen: boolean
   ): Promise<number> => {
-    let query = supabase.from("stores").select("*", { count: "exact", head: true });
+    let query = supabase.from("stores").select("*"); // ✨ 全件取得！
 
     if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
     if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
     if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
 
-    if (showOnlyOpen) {
-      const now = new Date();
-      const nowTime = now.getHours() * 100 + now.getMinutes(); // 例: 14:30 → 1430
-      query = query
-        .lte("open_time", nowTime)  // open_time <= 現在時刻
-        .gte("close_time", nowTime); // close_time >= 現在時刻
+    const { data, error } = await query;
+
+    if (error || !data) {
+      console.error("🔥 Supabase Error:", error?.message);
+      return 0;
     }
 
-    const { count, error } = await query;
+    // ✨ 営業中フィルター（クライアント側判定）
+    const filtered = showOnlyOpen
+      ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen)
+      : data;
 
-    if (error || typeof count !== "number") {
-      throw new Error(error?.message || "カウント取得エラー");
-    }
-
-    return count;
+    return filtered.length;
   };
 
   const { data: previewCount } = useSWR(
@@ -71,19 +70,16 @@ export default function SearchPageContent() {
 
   // 🔥 検索ボタン押したとき
   const handleSearch = () => {
-    // 1. フィルターをsessionStorageに保存
     sessionStorage.setItem("filterGenres", JSON.stringify(selectedGenres));
     sessionStorage.setItem("filterAreas", JSON.stringify(selectedAreas));
     sessionStorage.setItem("filterPayments", JSON.stringify(selectedPayments));
     sessionStorage.setItem("filterOpen", JSON.stringify(showOnlyOpen));
 
-    // 2. 通常の検索実行
     setIsSearchTriggered(false);
     setTimeout(() => {
       setIsSearchTriggered(true);
     }, 100);
 
-    // 3. URLクエリパラメータ更新
     const params = new URLSearchParams();
     if (selectedGenres.length > 0) params.set("genre", selectedGenres.join(","));
     if (selectedAreas.length > 0) params.set("area", selectedAreas.join(","));
