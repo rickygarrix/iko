@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import Skeleton from "@/components/Skeleton"; // 追加！
 import React from "react";
 import MapEmbed from "@/components/MapEmbed";
+import InstagramSlider from "@/components/InstagramSlider"; //
 
 type Store = {
   id: string;
@@ -27,6 +28,9 @@ type Store = {
   access: string;
   map_embed?: string;
   map_link?: string;
+  store_instagrams?: string | null;
+  store_instagrams2?: string | null;
+  store_instagrams3?: string | null;
 };
 
 // fetcher関数
@@ -150,23 +154,7 @@ export default function StoreDetail() {
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">アクセス</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">{store.access}</td>
               </tr>
-              <tr>
-                <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">Instagram</th>
-                <td className="border px-4 py-4 whitespace-pre-wrap">
-                  {store.instagram ? (
-                    <a
-                      href={store.instagram}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline break-all"
-                    >
-                      {store.instagram}
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-              </tr>
+
               <tr>
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">営業時間</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">
@@ -179,6 +167,13 @@ export default function StoreDetail() {
             </tbody>
           </table>
         </div>
+
+        {/* Instagramスライダー */}
+        <InstagramSlider posts={
+          [store.store_instagrams, store.store_instagrams2, store.store_instagrams3]
+            .filter((url): url is string => Boolean(url))
+        } />
+
 
         {/* 公式サイトリンク */}
         {store.website && (
@@ -193,6 +188,8 @@ export default function StoreDetail() {
             </a>
           </div>
         )}
+
+
       </div>
     </div>
   );
