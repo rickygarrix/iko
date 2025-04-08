@@ -110,7 +110,7 @@ export default function Header() {
           >
             <div className="w-6 h-6 relative">
               <Image
-                src="/header/search.svg" // ←メールアイコン画像パスを用意してね
+                src="/header/search.svg"
                 alt="問い合わせ"
                 fill
                 className="object-contain"
@@ -120,6 +120,34 @@ export default function Header() {
               問合せ
             </span>
           </button>
+
+          {/* 店舗登録ボタン ←★これ追加★ */}
+          <button
+            onClick={() => {
+              document.body.style.opacity = "0";
+              router.push("/register");
+              setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: "auto" });
+                document.body.style.opacity = "1";
+              }, 200);
+            }}
+            className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1
+      transition-transform duration-200 hover:scale-105 active:scale-95"
+          >
+            <div className="w-6 h-6 relative">
+              <Image
+                src="/header/search.svg" // 仮でsearch.svg
+                alt="店舗登録"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <span className="text-zinc-900 text-[10px] font-light leading-none">
+              店舗登録
+            </span>
+          </button>
+
         </div>
       </div>
     </header>
