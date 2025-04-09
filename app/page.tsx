@@ -16,10 +16,12 @@ export default function Home() {
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [previewCount, setPreviewCount] = useState<number>(0);
 
-  // 🔄 フィルター変更時に件数を更新
   useEffect(() => {
     const fetchPreviewCount = async () => {
-      let query = supabase.from("stores").select("*");
+      let query = supabase
+        .from("stores")
+        .select("*")
+        .eq("is_published", true); // 🌟 ここ追加！公開中だけ取得
 
       if (selectedGenres.length > 0) {
         query = query.in("genre", selectedGenres);
@@ -30,7 +32,6 @@ export default function Home() {
       }
 
       if (selectedPayments.length > 0) {
-        // `or` 条件で支払い方法のいずれかにマッチ
         query = query.or(
           selectedPayments.map((p) => `payment_methods.cs.{${p}}`).join(",")
         );
@@ -45,7 +46,6 @@ export default function Home() {
         const filtered = data || [];
 
         if (showOnlyOpen) {
-          // 営業中フィルターを後でローカルに適用（DBに開閉状態はないため）
           const { checkIfOpen } = await import("@/lib/utils");
           const opened = filtered.filter((store) =>
             checkIfOpen(store.opening_hours).isOpen
@@ -60,7 +60,6 @@ export default function Home() {
     fetchPreviewCount();
   }, [selectedGenres, selectedAreas, selectedPayments, showOnlyOpen]);
 
-  // 🔍 検索ボタン押下時の動作
   const handleSearch = () => {
     const params = new URLSearchParams();
 
@@ -108,7 +107,7 @@ export default function Home() {
       </div>
 
       {/* 🌟 今月のおすすめ */}
-      <div className=" mt-8">
+      <div className="mt-8">
         <RecommendedStores />
       </div>
 

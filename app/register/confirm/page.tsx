@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { uploadImage } from "@/lib/uploadImage";
 import { useState } from "react";
+import Image from "next/image"; // ← ⭐ 追加！
 
 export default function StoreRegisterConfirmPage() {
   const router = useRouter();
@@ -14,35 +15,49 @@ export default function StoreRegisterConfirmPage() {
 
   const handleRegister = async () => {
     try {
-      let uploadedImageUrl = "";
+      // ① 仮登録（まずは画像なし）
+      const { data, error: insertError } = await supabase
+        .from("pending_stores")
+        .insert([
+          {
+            name: pendingStore.name,
+            genre: pendingStore.genre,
+            address: pendingStore.address,
+            phone: pendingStore.phone,
+            opening_hours: pendingStore.opening_hours,
+            regular_holiday: pendingStore.regular_holiday,
+            website_url: pendingStore.website_url,
+            instagram_url: pendingStore.instagram_url,
+            payment_methods: pendingStore.payment_methods,
+            description: pendingStore.description,
+            image_url: "",
+            submitted_by_email: null,
+          },
+        ])
+        .select(); // ★新規登録データを取得する
 
-      // 画像ファイルがある場合はアップロード
-      if (pendingStore.image_file) {
-        const file = pendingStore.image_file;
-        const fileName = `${Date.now()}_${file.name}`; // ユニークなファイル名
-        uploadedImageUrl = await uploadImage(file, fileName);
+      if (insertError || !data || data.length === 0) {
+        throw new Error("店舗データの登録に失敗しました");
       }
 
-      const { error: insertError } = await supabase.from("pending_stores").insert([
-        {
-          name: pendingStore.name,
-          genre: pendingStore.genre,
-          address: pendingStore.address,
-          phone: pendingStore.phone,
-          opening_hours: pendingStore.opening_hours,
-          regular_holiday: pendingStore.regular_holiday,
-          website_url: pendingStore.website_url,
-          instagram_url: pendingStore.instagram_url,
-          payment_methods: pendingStore.payment_methods,
-          description: pendingStore.description,
-          image_url: uploadedImageUrl,
-          submitted_by_email: null, // ← supabase側にカラムがあるのでnullで入れてOK
-        },
-      ]);
+      const newStoreId = data[0].id as string;
 
-      if (insertError) {
-        console.error("登録エラー:", insertError);
-        throw new Error(insertError.message || "データベース登録に失敗しました。");
+      // ② 画像があればアップロード
+      let uploadedImageUrl = "";
+      if (pendingStore.image_file) {
+        const file = pendingStore.image_file;
+        const filePath = `pending_stores/${newStoreId}/${Date.now()}_${file.name}`; // サブフォルダ保存
+        uploadedImageUrl = await uploadImage(file, filePath);
+
+        // ③ 画像URLを上書き更新
+        const { error: updateError } = await supabase
+          .from("pending_stores")
+          .update({ image_url: uploadedImageUrl })
+          .eq("id", newStoreId);
+
+        if (updateError) {
+          throw new Error("画像URLの更新に失敗しました");
+        }
       }
 
       console.log("登録成功");
@@ -51,7 +66,7 @@ export default function StoreRegisterConfirmPage() {
 
     } catch (err) {
       console.error("エラー詳細:", err);
-      setError(err instanceof Error ? err.message : "エラーが発生しました。時間を置いて再度お試しください。");
+      setError(err instanceof Error ? err.message : "エラーが発生しました。時間を置いて再試行してください。");
     }
   };
 
@@ -73,24 +88,30 @@ export default function StoreRegisterConfirmPage() {
           <Item title="定休日" value={pendingStore.regular_holiday} />
           <Item title="公式サイトURL" value={pendingStore.website_url} />
           <Item title="Instagramアカウント" value={pendingStore.instagram_url} />
-          <Item title="支払い方法" value={pendingStore.payment_methods.join(", ")} />
+          <Item title="支払い方法" value={pendingStore.payment_methods?.join(", ")} />
           <Item title="店舗説明" value={pendingStore.description} />
+
+          {/* 画像プレビュー */}
           {pendingStore.image_url && (
-            <div>
+            <div className="flex flex-col items-center">
               <p className="text-sm text-gray-500 mb-1">店舗画像プレビュー</p>
-              <img
+              <Image
                 src={pendingStore.image_url}
                 alt="店舗外観"
-                className="w-full max-w-xs rounded shadow"
+                width={400}
+                height={300}
+                className="rounded shadow"
               />
             </div>
           )}
         </div>
 
+        {/* エラーメッセージ */}
         {error && (
           <div className="text-red-500 text-sm font-semibold mb-4 text-center">{error}</div>
         )}
 
+        {/* ボタン */}
         <div className="flex flex-col gap-4">
           <button
             onClick={handleRegister}
@@ -110,12 +131,12 @@ export default function StoreRegisterConfirmPage() {
   );
 }
 
-// 情報表示コンポーネント
+// 🧩 店舗情報表示コンポーネント
 function Item({ title, value }: { title: string; value: string }) {
   return (
     <div>
       <p className="text-sm text-gray-500">{title}</p>
-      <p className="text-lg whitespace-pre-wrap">{value || "ー"}</p>
+      <p className="text-gray-800 text-lg whitespace-pre-wrap">{value || "ー"}</p>
     </div>
   );
 }
