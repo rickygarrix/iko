@@ -24,6 +24,8 @@ const fetchStores = async (
 ): Promise<Store[]> => {
   let query = supabase.from("stores").select("*");
 
+  query = query.eq("is_published", true);
+
   if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
   if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
   if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
@@ -51,6 +53,7 @@ export default function SearchResults({
 
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   const { data: stores, error, isLoading } = useSWR<Store[]>(
     isSearchTriggered ? "search-stores" : null,
@@ -82,6 +85,23 @@ export default function SearchResults({
       }, 100);
     }
   }, [stores, restoreY]);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      setIsScrolling(true);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsScrolling(false);
+      }, 150);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const handleStoreClick = (storeId: string) => {
     const currentY = window.scrollY;
@@ -153,7 +173,9 @@ export default function SearchResults({
           return (
             <div
               key={store.id}
-              className="bg-[#FEFCF6] rounded-xl cursor-pointer hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
+              className={`bg-[#FEFCF6] rounded-xl cursor-pointer
+              ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}
+              transition-colors duration-200`}
               onClick={() => handleStoreClick(store.id)}
             >
               <div className="space-y-3 pt-4">

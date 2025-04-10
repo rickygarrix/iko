@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import Image from "next/image"; // ← 追加！
+import Image from "next/image";
 
 interface Store {
   id: string;
@@ -15,6 +15,7 @@ interface Store {
   opening_hours: string;
   image_url?: string | null;
   description?: string;
+  is_recommended?: boolean;
 }
 
 export default function RecommendedStores() {
@@ -22,12 +23,19 @@ export default function RecommendedStores() {
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [storesReady, setStoresReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false); // 🔥 追加！
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     const fetchStores = async () => {
-      const { data, error } = await supabase.from("stores").select("*").limit(3);
+      const { data, error } = await supabase
+        .from("stores")
+        .select("*")
+        .eq("is_published", true)
+        .eq("is_recommended", true)
+        .limit(3);
+
       if (error) {
         console.error("🔥 Supabase Error:", error.message);
       } else {
@@ -59,6 +67,24 @@ export default function RecommendedStores() {
     }
   }, [restoreY, stores]);
 
+  useEffect(() => {
+    // 🔥 スクロール中か判定するやつ
+    let timeoutId: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      setIsScrolling(true);
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsScrolling(false);
+      }, 150);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   const handleClick = (storeId: string) => {
     if (pathname === "/") {
       const currentY = window.scrollY;
@@ -70,10 +96,7 @@ export default function RecommendedStores() {
 
   return (
     <div className="w-full bg-white flex justify-center pt-8 relative">
-      {/* オーバーレイ */}
-      {isLoading && (
-        <div className="fixed inset-0 z-[9999] bg-white/80" />
-      )}
+      {isLoading && <div className="fixed inset-0 z-[9999] bg-white/80" />}
 
       <div className="w-full max-w-[600px] flex flex-col mx-auto gap-2">
         {/* 見出し */}
@@ -97,8 +120,9 @@ export default function RecommendedStores() {
                 <motion.div
                   key={store.id}
                   onClick={() => handleClick(store.id)}
-                  className="w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer
-                    hover:bg-gray-100 active:bg-gray-200 transition-colors duration-200"
+                  className={`w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer
+                    ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}
+                    transition-colors duration-200`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}

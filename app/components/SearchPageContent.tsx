@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import SearchResults from "@/components/SearchResults";
 import { supabase } from "@/lib/supabase";
-import { checkIfOpen } from "@/lib/utils"; // これ追加！！
+import { checkIfOpen } from "@/lib/utils";
 import useSWR from "swr";
 
 export default function SearchPageContent() {
@@ -18,14 +18,14 @@ export default function SearchPageContent() {
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [isSearchTriggered, setIsSearchTriggered] = useState<boolean>(false);
 
-  // 🔥 プレビュー件数取得（営業中フィルターも対応）
+  // 🔥 プレビュー件数取得（公開中 + 営業中フィルター対応）
   const fetchPreviewCount = async (
     selectedGenres: string[],
     selectedAreas: string[],
     selectedPayments: string[],
     showOnlyOpen: boolean
   ): Promise<number> => {
-    let query = supabase.from("stores").select("*"); // ✨ 全件取得！
+    let query = supabase.from("stores").select("*").eq("is_published", true);
 
     if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
     if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
@@ -38,7 +38,6 @@ export default function SearchPageContent() {
       return 0;
     }
 
-    // ✨ 営業中フィルター（クライアント側判定）
     const filtered = showOnlyOpen
       ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen)
       : data;
@@ -53,7 +52,7 @@ export default function SearchPageContent() {
     { revalidateOnFocus: false }
   );
 
-  // 🔥 ページロード時のフィルター復元 or リセット
+  // 🔥 ページロード時のフィルター復元
   useEffect(() => {
     const genres = searchParams.get("genre")?.split(",") || [];
     const areas = searchParams.get("area")?.split(",") || [];
