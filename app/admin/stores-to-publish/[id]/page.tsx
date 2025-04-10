@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import Link from "next/link";
 
 type Store = {
   id: string;
@@ -24,6 +23,7 @@ type Store = {
 
 export default function StoreToPublishDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = params.id;
 
   const [store, setStore] = useState<Store | null>(null);
@@ -36,7 +36,7 @@ export default function StoreToPublishDetailPage() {
         .from("stores")
         .select("*")
         .eq("id", id)
-        .eq("is_published", false) // 未公開のみ
+        .eq("is_published", false)
         .single<Store>();
 
       if (error || !data) {
@@ -70,7 +70,7 @@ export default function StoreToPublishDetailPage() {
       <div className="max-w-2xl mx-auto bg-white rounded shadow p-8 space-y-6">
         <h1 className="text-2xl font-bold text-center mb-6">未公開店舗の詳細</h1>
 
-        {/* 詳細項目リスト */}
+        {/* 詳細項目 */}
         <div className="space-y-4">
           <DetailItem label="店名" value={store.name} />
           <DetailItem label="ジャンル" value={store.genre} />
@@ -83,7 +83,7 @@ export default function StoreToPublishDetailPage() {
           <DetailItem label="支払い方法" value={store.payment_methods.join(", ")} />
           <DetailItem label="説明" value={store.description} />
 
-          {/* 店舗画像 */}
+          {/* 画像 */}
           {store.image_url && (
             <div className="flex flex-col items-center mt-6">
               <p className="text-gray-500 text-sm mb-1">店舗画像</p>
@@ -100,19 +100,19 @@ export default function StoreToPublishDetailPage() {
 
         {/* 戻るボタン */}
         <div className="flex justify-center mt-8">
-          <Link
-            href="/admin/stores-to-publish"
+          <button
+            onClick={() => router.back()}
             className="bg-gray-600 text-white py-2 px-6 rounded hover:bg-gray-700"
           >
             戻る
-          </Link>
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// 共通：ラベルと値の表示
+// ラベル＋値を表示するコンポーネント
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>

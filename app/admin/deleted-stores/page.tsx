@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // ✅ 追加！
 import { supabase } from "@/lib/supabase";
 import { RestoreStoreButton } from "@/components/RestoreStoreButton";
 import { PermanentlyDeleteButton } from "@/components/PermanentlyDeleteButton";
@@ -13,8 +14,32 @@ type DeletedStore = {
 };
 
 export default function DeletedStoresPage() {
+  const router = useRouter();
   const [stores, setStores] = useState<DeletedStore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState<boolean | null>(null); // ✅ 認証チェック
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("ログインが必要です");
+        router.push("/login");
+        return;
+      }
+
+      if (user.email !== "chloerickyc@gmail.com") {
+        alert("アクセス権限がありません");
+        router.push("/");
+        return;
+      }
+
+      setAuthorized(true);
+    };
+
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
     const fetchDeletedStores = async () => {
@@ -32,6 +57,10 @@ export default function DeletedStoresPage() {
 
     fetchDeletedStores();
   }, []);
+
+  if (authorized === null) {
+    return <div className="text-center p-10 text-gray-800">認証確認中...</div>;
+  }
 
   if (loading) {
     return <div className="text-center p-10 text-gray-800">読み込み中...</div>;
