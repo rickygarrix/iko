@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // ✅ 追加！
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { RestoreStoreButton } from "@/components/RestoreStoreButton";
 import { PermanentlyDeleteButton } from "@/components/PermanentlyDeleteButton";
 
-type DeletedStore = {
+type Store = {
   id: string;
   name: string;
   genre: string;
-  original_table: "stores" | "stores_to_publish" | "pending_stores";
 };
 
 export default function DeletedStoresPage() {
   const router = useRouter();
-  const [stores, setStores] = useState<DeletedStore[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authorized, setAuthorized] = useState<boolean | null>(null); // ✅ 認証チェック
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -44,8 +43,9 @@ export default function DeletedStoresPage() {
   useEffect(() => {
     const fetchDeletedStores = async () => {
       const { data, error } = await supabase
-        .from("deleted_stores")
-        .select("id, name, genre, original_table");
+        .from("stores")
+        .select("id, name, genre")
+        .eq("is_deleted", true);
 
       if (error) {
         console.error("取得エラー:", error.message);
@@ -67,19 +67,18 @@ export default function DeletedStoresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FEFCF6] p-6 text-gray-800">
+    <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-20 text-gray-800">
       <h1 className="text-2xl font-bold text-center mb-6">削除済み店舗一覧</h1>
 
       {stores.length === 0 ? (
-        <p className="text-center text-gray-500">削除済み店舗はありません。</p>
+        <p className="text-center text-gray-500 mb-10">削除済み店舗はありません。</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto mb-10">
           <table className="min-w-full bg-white rounded shadow">
             <thead>
               <tr className="bg-gray-100 text-gray-700">
                 <th className="py-2 px-4 border">店名</th>
                 <th className="py-2 px-4 border">ジャンル</th>
-                <th className="py-2 px-4 border">元のテーブル</th>
                 <th className="py-2 px-4 border">操作</th>
               </tr>
             </thead>
@@ -88,9 +87,8 @@ export default function DeletedStoresPage() {
                 <tr key={store.id} className="text-center">
                   <td className="py-2 px-4 border">{store.name}</td>
                   <td className="py-2 px-4 border">{store.genre}</td>
-                  <td className="py-2 px-4 border">{store.original_table}</td>
                   <td className="py-2 px-4 border space-x-2">
-                    <RestoreStoreButton id={store.id} originalTable={store.original_table} />
+                    <RestoreStoreButton id={store.id} />
                     <PermanentlyDeleteButton id={store.id} />
                   </td>
                 </tr>
@@ -99,6 +97,16 @@ export default function DeletedStoresPage() {
           </table>
         </div>
       )}
+
+      {/* --- 🔥 管理画面トップに戻るボタン追加 --- */}
+      <div className="flex justify-center mt-8">
+        <button
+          onClick={() => router.push("/admin")}
+          className="bg-gray-600 text-white py-2 px-6 rounded hover:bg-gray-700"
+        >
+          管理画面トップに戻る
+        </button>
+      </div>
     </div>
   );
 }

@@ -3,21 +3,29 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Image from "next/image";
+import InstagramSlider from "@/components/InstagramSlider";
 
+// 型定義を編集ページと揃える！
 type Store = {
   id: string;
   name: string;
   genre: string;
+  area: string;
   address: string;
-  phone_number: string;
+  phone: string;
   opening_hours: string;
-  regular_holiday: string;
-  website: string;
-  instagram: string;
+  website_url: string;
+  instagram_url: string;
   payment_methods: string[];
   description: string;
   image_url: string;
+  store_instagrams: string | null;
+  store_instagrams2: string | null;
+  store_instagrams3: string | null;
 };
+
+const DAYS = ["月", "火", "水", "木", "金", "土", "日"];
 
 export default function StoreDetailPage() {
   const router = useRouter();
@@ -55,37 +63,60 @@ export default function StoreDetailPage() {
   if (!store) return null;
 
   return (
-    <div className="min-h-screen bg-[#FEFCF6] p-6 text-gray-800">
-      <div className="max-w-2xl mx-auto bg-white shadow p-8 rounded space-y-6">
-        <h1 className="text-2xl font-bold text-center">店舗詳細</h1>
+    <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
+      <h1 className="text-2xl font-bold text-center mb-8">店舗詳細</h1>
 
+      <div className="max-w-2xl mx-auto space-y-4">
         <DetailItem label="店名" value={store.name} />
         <DetailItem label="ジャンル" value={store.genre} />
+        <DetailItem label="エリア" value={store.area} />
         <DetailItem label="住所" value={store.address} />
-        <DetailItem label="電話番号" value={store.phone_number} />
-        <DetailItem label="営業時間" value={store.opening_hours} />
-        <DetailItem label="定休日" value={store.regular_holiday} />
-        <DetailItem label="公式サイト" value={store.website} />
-        <DetailItem label="Instagram" value={store.instagram} />
+        <DetailItem label="電話番号" value={store.phone} />
+
+        {/* 営業時間だけ特別に整形 */}
+        <div>
+          <p className="text-sm text-gray-500">営業時間</p>
+          <div className="text-lg whitespace-pre-line">
+            {parseOpeningHours(store.opening_hours)}
+          </div>
+        </div>
+
+        <DetailItem label="公式サイト" value={store.website_url} isLink />
+        <DetailItem label="Instagramアカウント" value={store.instagram_url} isLink />
         <DetailItem label="支払い方法" value={store.payment_methods.join(", ")} />
         <DetailItem label="説明" value={store.description} />
 
         {store.image_url && (
           <div className="flex justify-center mt-4">
-            <img
+            <Image
               src={store.image_url}
               alt="店舗画像"
-              className="w-full max-w-xs rounded shadow"
+              width={400}
+              height={300}
+              className="rounded shadow"
             />
           </div>
         )}
 
-        <div className="flex justify-center mt-8">
+        {/* Instagramスライダー */}
+        <InstagramSlider posts={
+          [store.store_instagrams, store.store_instagrams2, store.store_instagrams3]
+            .filter((url): url is string => Boolean(url))
+        } />
+
+        {/* ボタン */}
+        <div className="flex justify-center gap-4 mt-8">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push("/admin/stores")}
             className="bg-gray-500 text-white py-2 px-6 rounded hover:bg-gray-600"
           >
             戻る
+          </button>
+          <button
+            onClick={() => router.push(`/admin/stores/${store.id}/edit`)}
+            className="bg-blue-500 text-white py-2 px-6 rounded hover:bg-blue-600"
+          >
+            編集する
           </button>
         </div>
       </div>
@@ -94,11 +125,24 @@ export default function StoreDetailPage() {
 }
 
 // 共通：ラベルと値を表示
-function DetailItem({ label, value }: { label: string; value: string }) {
+function DetailItem({ label, value, isLink }: { label: string; value: string; isLink?: boolean }) {
+  if (!value) return null;
   return (
     <div>
       <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-lg">{value || "ー"}</p>
+      {isLink ? (
+        <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-words">
+          {value}
+        </a>
+      ) : (
+        <p className="text-lg break-words">{value || "ー"}</p>
+      )}
     </div>
   );
+}
+
+// 営業時間を曜日ごとに改行整形する
+function parseOpeningHours(text: string): string {
+  const lines = text.split("\n").filter(Boolean);
+  return lines.map(line => line.trim()).join("\n");
 }

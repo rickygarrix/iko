@@ -62,7 +62,7 @@ export default function PendingStoreDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#FEFCF6] p-6">
-      <div className="max-w-2xl mx-auto bg-white rounded shadow p-8">
+      <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
         <h1 className="text-2xl font-bold mb-6">店舗詳細</h1>
 
         <div className="space-y-4">

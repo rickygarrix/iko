@@ -5,57 +5,28 @@ import { useRouter } from "next/navigation";
 
 type Props = {
   id: string;
-  originalTable: "stores" | "stores_to_publish" | "pending_stores";
 };
 
-export function RestoreStoreButton({ id, originalTable }: Props) {
+export function RestoreStoreButton({ id }: Props) {
   const router = useRouter();
 
   const handleRestore = async () => {
     const confirmRestore = window.confirm("この店舗を復元しますか？");
     if (!confirmRestore) return;
 
-    // ① deleted_storesからデータ取得
-    const { data: deletedStore, error: fetchError } = await supabase
-      .from("deleted_stores")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !deletedStore) {
-      alert("復元に失敗しました（取得エラー）");
-      console.error(fetchError);
-      return;
-    }
-
-    // ② 元のテーブルに挿入
-    const insertData = { ...deletedStore };
-    delete insertData.id; // idは元テーブルで自動採番される想定（必要なら調整）
-
-    const { error: insertError } = await supabase
-      .from(originalTable)
-      .insert(insertData);
-
-    if (insertError) {
-      alert("復元に失敗しました（挿入エラー）");
-      console.error(insertError);
-      return;
-    }
-
-    // ③ deleted_storesから削除
-    const { error: deleteError } = await supabase
-      .from("deleted_stores")
-      .delete()
+    const { error } = await supabase
+      .from("stores")
+      .update({ is_deleted: false })
       .eq("id", id);
 
-    if (deleteError) {
-      alert("復元に失敗しました（削除エラー）");
-      console.error(deleteError);
+    if (error) {
+      console.error("復元エラー:", error.message);
+      alert("復元に失敗しました");
       return;
     }
 
-    alert("復元が完了しました！");
-    router.refresh();
+    alert("復元しました！");
+    router.refresh(); // 最新一覧に更新
   };
 
   return (

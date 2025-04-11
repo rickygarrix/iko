@@ -1,11 +1,10 @@
-// lib/store/pendingStore.ts
-
 import { create } from "zustand";
 
 // 店舗登録用の型
 export type PendingStore = {
   name: string;
   genre: string;
+  area: string;                 // 🆕 エリア追加！
   address: string;
   phone: string;
   opening_hours: string;
@@ -15,7 +14,7 @@ export type PendingStore = {
   payment_methods: string[];
   description: string;
   image_url: string;
-  image_file: File | null;          // ★ 店舗画像ファイル
+  image_file: File | null;        // ★ 店舗画像ファイル
   submitted_by_email: string | null; // ★ 登録者メール（現状nullでOK）
 };
 
@@ -23,6 +22,7 @@ export type PendingStore = {
 const initialPendingStore: PendingStore = {
   name: "",
   genre: "",
+  area: "",                      // 🆕 areaも初期化して追加！
   address: "",
   phone: "",
   opening_hours: "",

@@ -40,7 +40,8 @@ export default function StoresToPublishPage() {
       const { data, error } = await supabase
         .from("stores")
         .select("id, name, genre")
-        .eq("is_published", false);
+        .eq("is_published", false)
+        .eq("is_deleted", false); // ★ここ追加！
 
       if (error) {
         console.error("取得エラー:", error);
@@ -53,21 +54,24 @@ export default function StoresToPublishPage() {
     fetchStores();
   }, []);
 
-  const handlePublish = async (id: string) => {
-    const confirmPublish = window.confirm("この店舗を公開しますか？");
-    if (!confirmPublish) return;
+  const handleDelete = async (id: string) => {
+    const confirmed = window.confirm("本当に削除しますか？");
+    if (!confirmed) return;
 
     const { error } = await supabase
       .from("stores")
-      .update({ is_published: true })
+      .update({ is_deleted: true })
       .eq("id", id);
 
     if (error) {
-      alert("公開に失敗しました");
-    } else {
-      alert("公開しました！");
-      setStores((prev) => prev.filter((store) => store.id !== id));
+      alert("削除に失敗しました");
+      console.error(error.message);
+      return;
     }
+
+    // 成功したら一覧から即削除
+    setStores((prev) => prev.filter((store) => store.id !== id));
+    alert("削除しました！");
   };
 
   if (loading) {
@@ -75,13 +79,13 @@ export default function StoresToPublishPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FEFCF6] p-6 text-gray-800">
+    <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
       <h1 className="text-2xl font-bold text-center mb-6">未公開店舗一覧</h1>
 
       {stores.length === 0 ? (
-        <p className="text-center text-gray-500">未公開の店舗はありません。</p>
+        <p className="text-center text-gray-500 mb-10">未公開の店舗はありません。</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto mb-10">
           <table className="min-w-full bg-white rounded shadow">
             <thead>
               <tr className="bg-gray-100 text-gray-700">
@@ -97,10 +101,18 @@ export default function StoresToPublishPage() {
                   <td className="py-2 px-4 border">{store.genre}</td>
                   <td className="py-2 px-4 border">
                     <button
-                      className="bg-green-500 text-white font-semibold rounded px-3 py-1 hover:bg-green-600"
-                      onClick={() => handlePublish(store.id)}
+                      className="bg-blue-500 text-white font-semibold rounded px-3 py-1 hover:bg-blue-600"
+                      onClick={() => router.push(`/admin/stores-to-publish/${store.id}`)}
                     >
-                      公開する
+                      詳細確認
+                    </button>
+
+                    {/* 🔥 ここに削除ボタンを追加！ */}
+                    <button
+                      className="bg-red-500 text-white font-semibold rounded px-3 py-1 hover:bg-red-600 ml-2"
+                      onClick={() => handleDelete(store.id)}
+                    >
+                      削除する
                     </button>
                   </td>
                 </tr>
@@ -109,6 +121,16 @@ export default function StoresToPublishPage() {
           </table>
         </div>
       )}
+
+      {/* --- 管理画面に戻るボタン追加 --- */}
+      <div className="flex justify-center mt-6">
+        <button
+          onClick={() => router.push("/admin")}
+          className="bg-gray-600 text-white py-2 px-6 rounded hover:bg-gray-700"
+        >
+          管理画面トップに戻る
+        </button>
+      </div>
     </div>
   );
 }

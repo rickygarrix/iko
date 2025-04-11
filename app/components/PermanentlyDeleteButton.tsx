@@ -12,22 +12,24 @@ export function PermanentlyDeleteButton({ id }: Props) {
 
   const handleDelete = async () => {
     const confirmDelete = window.confirm(
-      "この店舗を完全に削除しますか？（復元できなくなります）"
+      "この店舗を完全に削除しますか？（※復元できなくなります）"
     );
     if (!confirmDelete) return;
 
+    // 🔥 storesテーブルから物理削除！
     const { error } = await supabase
-      .from("deleted_stores")
+      .from("stores")
       .delete()
       .eq("id", id);
 
     if (error) {
-      alert("削除に失敗しました");
-      console.error(error);
-    } else {
-      alert("完全に削除しました！");
-      router.refresh(); // 画面リフレッシュ
+      console.error("完全削除エラー:", error.message);
+      alert("完全削除に失敗しました");
+      return;
     }
+
+    alert("完全に削除しました！");
+    router.refresh(); // 最新一覧に更新
   };
 
   return (

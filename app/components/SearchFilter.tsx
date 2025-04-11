@@ -1,11 +1,11 @@
+
 "use client";
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-
-const GENRES = ["House", "Jazz", "Techno", "EDM"];
-const AREAS = ["新宿", "渋谷", "六本木", "池袋", "銀座", "表参道"];
-const PAYMENTS = ["現金", "クレジットカード", "電子マネー", "コード決済"];
+import { GENRES } from "@/constants/genres";
+import { AREAS } from "@/constants/areas";
+import { PAYMENTS } from "@/constants/payments";
 
 type SearchFilterProps = {
   selectedGenres: string[];

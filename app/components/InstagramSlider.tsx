@@ -11,7 +11,7 @@ type InstagramSliderProps = {
   posts: string[];
 };
 
-// 👇ここ追加！！
+// 👇 グローバル型宣言
 declare global {
   interface Window {
     instgrm?: {
@@ -24,20 +24,23 @@ declare global {
 
 export default function InstagramSlider({ posts }: InstagramSliderProps) {
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://www.instagram.com/embed.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    // すでにscriptが読み込まれていなければ追加
+    if (!document.getElementById("instagram-embed-script")) {
+      const script = document.createElement("script");
+      script.id = "instagram-embed-script";
+      script.src = "https://www.instagram.com/embed.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
   }, []);
 
   useEffect(() => {
-    if (window.instgrm) {
-      window.instgrm.Embeds.process();
-    }
+    // 少し待ってからembedを再実行
+    const timer = setTimeout(() => {
+      window.instgrm?.Embeds.process();
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [posts]);
 
   if (posts.length === 0) {
@@ -57,9 +60,9 @@ export default function InstagramSlider({ posts }: InstagramSliderProps) {
         navigation
         loop
         pagination={{ clickable: true }}
-        simulateTouch={true}  // 追加
-        grabCursor={true}      // 追加
-        touchStartPreventDefault={false} // 追加！超重要
+        grabCursor
+        simulateTouch
+        touchStartPreventDefault={false}
         modules={[Navigation, Pagination]}
         className="w-full rounded-lg instagram-slider"
       >
@@ -68,7 +71,7 @@ export default function InstagramSlider({ posts }: InstagramSliderProps) {
             <div className="w-full aspect-square rounded-lg overflow-hidden">
               <blockquote
                 className="instagram-media"
-                data-instgrm-permalink={`${url}`}
+                data-instgrm-permalink={url}
                 data-instgrm-version="14"
                 style={{ width: "100%", height: "100%", margin: 0 }}
               ></blockquote>

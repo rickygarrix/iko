@@ -16,43 +16,30 @@ export default function PendingStoresAdminPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 🌟 ページロード時に認証チェック
   useEffect(() => {
     const checkAuth = async () => {
       const { data, error } = await supabase.auth.getUser();
-
-      if (error) {
-        console.error("認証エラー:", error);
-        alert("エラーが発生しました。もう一度ログインしてください。");
+      if (error || !data.user) {
+        alert("ログインが必要です");
         router.push("/login");
         return;
       }
-
-      const user = data.user;
-
-      if (!user) {
-        alert("ログインが必要です");
-        router.push("/login"); // 未ログインならログインページへ
-        return;
-      }
-
-      // ここで管理者かチェック（特定のメールアドレスだけ通す）
-      if (user.email !== "chloerickyc@gmail.com") { // ←君の管理用メールにしてる
+      if (data.user.email !== "chloerickyc@gmail.com") {
         alert("アクセス権限がありません");
-        router.push("/"); // トップページへリダイレクト
+        router.push("/");
         return;
       }
     };
-
     checkAuth();
   }, [router]);
 
-  // データ取得
   useEffect(() => {
     const fetchPendingStores = async () => {
       const { data, error } = await supabase
-        .from("pending_stores")
-        .select("id, name, genre, description");
+        .from("stores")
+        .select("id, name, genre, description")
+        .eq("is_pending", true)
+        .eq("is_deleted", false);
 
       if (error) {
         console.error("取得エラー:", error);
@@ -65,73 +52,40 @@ export default function PendingStoresAdminPage() {
     fetchPendingStores();
   }, []);
 
-  // ⭐ 承認処理
   const handleApprove = async (storeId: string) => {
-    const confirmApprove = window.confirm("この店舗を承認して登録しますか？");
+    const confirmApprove = window.confirm("この店舗を承認しますか？");
     if (!confirmApprove) return;
 
-    const { data, error: fetchError } = await supabase
-      .from("pending_stores")
-      .select("*")
-      .eq("id", storeId)
-      .single();
-
-    if (fetchError || !data) {
-      alert("データ取得に失敗しました");
-      return;
-    }
-
-    const { error: insertError } = await supabase.from("stores").insert([
-      {
-        name: data.name,
-        genre: data.genre,
-        address: data.address,
-        phone: data.phone,
-        opening_hours: data.opening_hours,
-        regular_holiday: data.regular_holiday,
-        website_url: data.website_url,
-        instagram_url: data.instagram_url,
-        payment_methods: data.payment_methods,
-        description: data.description,
-        image_url: data.image_url,
-      },
-    ]);
-
-    if (insertError) {
-      alert("storesテーブルへの登録に失敗しました");
-      return;
-    }
-
-    const { error: deleteError } = await supabase
-      .from("pending_stores")
-      .delete()
+    const { error } = await supabase
+      .from("stores")
+      .update({ is_pending: false, is_published: true })
       .eq("id", storeId);
 
-    if (deleteError) {
-      alert("pending_storesからの削除に失敗しました");
+    if (error) {
+      alert("承認に失敗しました");
       return;
     }
 
-    alert("承認が完了しました！");
+    alert("承認しました！");
     location.reload();
   };
 
-  // ⭐ 削除処理
   const handleDelete = async (storeId: string) => {
     const confirmDelete = window.confirm("この店舗を削除しますか？");
     if (!confirmDelete) return;
 
     const { error } = await supabase
-      .from("pending_stores")
-      .delete()
+      .from("stores")
+      .update({ is_deleted: true })
       .eq("id", storeId);
 
     if (error) {
       alert("削除に失敗しました");
-    } else {
-      alert("削除が完了しました！");
-      location.reload();
+      return;
     }
+
+    alert("削除しました！");
+    location.reload();
   };
 
   if (loading) {
@@ -139,9 +93,8 @@ export default function PendingStoresAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FEFCF6] p-6 text-gray-800">
-      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900">店舗登録申請一覧</h1>
-
+    <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
+      <h1 className="text-2xl font-bold text-center mb-6">店舗登録申請一覧</h1>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded shadow">
           <thead>
