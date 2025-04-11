@@ -52,24 +52,6 @@ export default function PendingStoresAdminPage() {
     fetchPendingStores();
   }, []);
 
-  const handleApprove = async (storeId: string) => {
-    const confirmApprove = window.confirm("この店舗を承認しますか？");
-    if (!confirmApprove) return;
-
-    const { error } = await supabase
-      .from("stores")
-      .update({ is_pending: false, is_published: true })
-      .eq("id", storeId);
-
-    if (error) {
-      alert("承認に失敗しました");
-      return;
-    }
-
-    alert("承認しました！");
-    location.reload();
-  };
-
   const handleDelete = async (storeId: string) => {
     const confirmDelete = window.confirm("この店舗を削除しますか？");
     if (!confirmDelete) return;
@@ -85,7 +67,9 @@ export default function PendingStoresAdminPage() {
     }
 
     alert("削除しました！");
-    location.reload();
+
+    // 即座にpendingStoresから削除
+    setPendingStores((prev) => prev.filter((store) => store.id !== storeId));
   };
 
   if (loading) {
@@ -95,6 +79,7 @@ export default function PendingStoresAdminPage() {
   return (
     <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
       <h1 className="text-2xl font-bold text-center mb-6">店舗登録申請一覧</h1>
+
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded shadow">
           <thead>
@@ -119,12 +104,6 @@ export default function PendingStoresAdminPage() {
                     詳細
                   </button>
                   <button
-                    className="bg-green-500 text-white font-semibold rounded px-3 py-1 hover:bg-green-600"
-                    onClick={() => handleApprove(store.id)}
-                  >
-                    承認
-                  </button>
-                  <button
                     className="bg-red-500 text-white font-semibold rounded px-3 py-1 hover:bg-red-600"
                     onClick={() => handleDelete(store.id)}
                   >
@@ -135,6 +114,16 @@ export default function PendingStoresAdminPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* 🔥 管理画面トップへ戻るボタン追加 */}
+      <div className="flex justify-center mt-10">
+        <button
+          onClick={() => router.push("/admin")}
+          className="bg-gray-500 text-white py-2 px-6 rounded hover:bg-gray-600"
+        >
+          管理画面トップに戻る
+        </button>
       </div>
     </div>
   );

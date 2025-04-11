@@ -148,7 +148,7 @@ export default function StoreToPublishEditPage() {
     };
 
     sessionStorage.setItem("editStoreData", JSON.stringify(storeData));
-    router.push(`/admin/stores-to-publish/${id}/confirm`);
+
   };
 
   const setAsHoliday = (idx: number) => {

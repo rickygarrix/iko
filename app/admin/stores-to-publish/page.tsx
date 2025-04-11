@@ -54,25 +54,7 @@ export default function StoresToPublishPage() {
     fetchStores();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm("本当に削除しますか？");
-    if (!confirmed) return;
 
-    const { error } = await supabase
-      .from("stores")
-      .update({ is_deleted: true })
-      .eq("id", id);
-
-    if (error) {
-      alert("削除に失敗しました");
-      console.error(error.message);
-      return;
-    }
-
-    // 成功したら一覧から即削除
-    setStores((prev) => prev.filter((store) => store.id !== id));
-    alert("削除しました！");
-  };
 
   if (loading) {
     return <div className="text-center p-10 text-gray-800">読み込み中...</div>;
@@ -107,13 +89,8 @@ export default function StoresToPublishPage() {
                       詳細確認
                     </button>
 
-                    {/* 🔥 ここに削除ボタンを追加！ */}
-                    <button
-                      className="bg-red-500 text-white font-semibold rounded px-3 py-1 hover:bg-red-600 ml-2"
-                      onClick={() => handleDelete(store.id)}
-                    >
-                      削除する
-                    </button>
+
+
                   </td>
                 </tr>
               ))}

@@ -1,161 +1,171 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Image from "next/image";
+import InstagramSlider from "@/components/InstagramSlider";
 
+// 型定義
 type Store = {
   id: string;
   name: string;
   genre: string;
+  area: string;
+  address: string;
+  phone: string;
+  opening_hours: string;
+  website_url: string;
+  instagram_url: string;
+  payment_methods: string[];
+  description: string;
+  image_url: string;
+  store_instagrams: string | null;
+  store_instagrams2: string | null;
+  store_instagrams3: string | null;
 };
 
-export default function StoresToPublishPage() {
-  const [stores, setStores] = useState<Store[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function StoreDetailPage() {
   const router = useRouter();
+  const params = useParams<{ id: string }>();
+  const id = params.id;
+
+  const [store, setStore] = useState<Store | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        alert("ログインが必要です");
-        router.push("/login");
-        return;
-      }
-
-      if (user.email !== "chloerickyc@gmail.com") {
-        alert("アクセス権限がありません");
-        router.push("/");
-        return;
-      }
-    };
-
-    checkAuth();
-  }, [router]);
-
-  useEffect(() => {
-    const fetchStores = async () => {
+    const fetchStore = async () => {
       const { data, error } = await supabase
         .from("stores")
-        .select("id, name, genre")
-        .eq("is_published", false)
-        .eq("is_deleted", false);
+        .select("*")
+        .eq("id", id)
+        .single<Store>();
 
-      if (error) {
+      if (error || !data) {
         console.error("取得エラー:", error);
+        setError("データ取得に失敗しました");
       } else {
-        setStores(data || []);
+        setStore(data);
       }
       setLoading(false);
     };
 
-    fetchStores();
-  }, []);
+    if (id) {
+      fetchStore();
+    }
+  }, [id]);
 
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm("本当に削除しますか？");
-    if (!confirmed) return;
+  const handleDelete = async (storeId: string) => {
+    const confirmDelete = window.confirm("この店舗を削除しますか？");
+    if (!confirmDelete) return;
 
-    const { error: updateError } = await supabase
+    const { error } = await supabase
       .from("stores")
-      .update({ is_deleted: true, is_published: false })
-      .eq("id", id);
+      .update({ is_deleted: true })
+      .eq("id", storeId);
 
-    if (updateError) {
+    if (error) {
       alert("削除に失敗しました");
-      console.error(updateError.message);
+      console.error(error.message);
       return;
     }
 
-    const { data, error: fetchError } = await supabase
-      .from("stores")
-      .select("name, genre")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !data) {
-      alert("削除ログ作成に失敗しました");
-      console.error(fetchError?.message);
-      return;
-    }
-
-    const { error: insertError } = await supabase
-      .from("deleted_stores")
-      .insert([
-        {
-          id: id,
-          name: data.name,
-          genre: data.genre,
-          original_table: "stores",
-        },
-      ]);
-
-    if (insertError) {
-      alert("削除ログ保存に失敗しました");
-      console.error(insertError.message);
-      return;
-    }
-
-    setStores((prev) => prev.filter((store) => store.id !== id));
     alert("削除しました！");
+
+    // ⭐️ 削除完了後にstores-to-publish一覧に自動で戻る
+    router.push("/admin/stores-to-publish");
   };
 
-  if (loading) {
-    return <div className="text-center p-10 text-gray-800">読み込み中...</div>;
-  }
+  if (loading) return <div className="text-center p-10">読み込み中...</div>;
+  if (error) return <div className="text-center text-red-500 p-10">{error}</div>;
+  if (!store) return null;
 
   return (
     <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
-      <h1 className="text-2xl font-bold text-center mb-6">未公開店舗一覧</h1>
+      <h1 className="text-2xl font-bold text-center mb-8">店舗詳細</h1>
 
-      {stores.length === 0 ? (
-        <p className="text-center text-gray-500 mb-10">未公開の店舗はありません。</p>
-      ) : (
-        <div className="overflow-x-auto mb-10">
-          <table className="min-w-full bg-white rounded shadow">
-            <thead>
-              <tr className="bg-gray-100 text-gray-700">
-                <th className="py-2 px-4 border">店名</th>
-                <th className="py-2 px-4 border">ジャンル</th>
-                <th className="py-2 px-4 border">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stores.map((store) => (
-                <tr key={store.id} className="text-center">
-                  <td className="py-2 px-4 border">{store.name}</td>
-                  <td className="py-2 px-4 border">{store.genre}</td>
-                  <td className="py-2 px-4 border">
-                    <button
-                      className="bg-blue-500 text-white font-semibold rounded px-3 py-1 hover:bg-blue-600"
-                      onClick={() => router.push(`/admin/stores-to-publish/${store.id}`)}
-                    >
-                      詳細確認
-                    </button>
-                    <button
-                      className="bg-red-500 text-white font-semibold rounded px-3 py-1 hover:bg-red-600 ml-2"
-                      onClick={() => handleDelete(store.id)}
-                    >
-                      削除する
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="max-w-2xl mx-auto space-y-4">
+        <DetailItem label="店名" value={store.name} />
+        <DetailItem label="ジャンル" value={store.genre} />
+        <DetailItem label="エリア" value={store.area} />
+        <DetailItem label="住所" value={store.address} />
+        <DetailItem label="電話番号" value={store.phone} />
+
+        <div>
+          <p className="text-sm text-gray-500">営業時間</p>
+          <div className="text-lg whitespace-pre-line">
+            {parseOpeningHours(store.opening_hours)}
+          </div>
         </div>
-      )}
 
-      <div className="flex justify-center mt-6">
-        <button
-          onClick={() => router.push("/admin")}
-          className="bg-gray-600 text-white py-2 px-6 rounded hover:bg-gray-700"
-        >
-          管理画面トップに戻る
-        </button>
+        <DetailItem label="公式サイト" value={store.website_url} isLink />
+        <DetailItem label="Instagramアカウント" value={store.instagram_url} isLink />
+        <DetailItem label="支払い方法" value={store.payment_methods.join(", ")} />
+        <DetailItem label="店舗説明" value={store.description} />
+
+        {store.image_url && (
+          <div className="flex justify-center mt-4">
+            <Image
+              src={store.image_url}
+              alt="店舗画像"
+              width={400}
+              height={300}
+              className="rounded shadow"
+            />
+          </div>
+        )}
+
+        <InstagramSlider posts={
+          [store.store_instagrams, store.store_instagrams2, store.store_instagrams3]
+            .filter((url): url is string => Boolean(url))
+        } />
+
+        {/* ボタンたち */}
+        <div className="flex justify-center gap-4 mt-8">
+          <button
+            onClick={() => router.push('/admin/stores-to-publish')}
+            className="bg-gray-500 text-white py-2 px-6 rounded hover:bg-gray-600"
+          >
+            戻る
+          </button>
+          <button
+            onClick={() => router.push(`/admin/stores/${store.id}/edit`)}
+            className="bg-blue-500 text-white py-2 px-6 rounded hover:bg-blue-600"
+          >
+            編集する
+          </button>
+          <button
+            onClick={() => handleDelete(store.id)}
+            className="bg-red-500 text-white py-2 px-6 rounded hover:bg-red-600"
+          >
+            削除する
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+// 共通：ラベルと値を表示
+function DetailItem({ label, value, isLink }: { label: string; value: string; isLink?: boolean }) {
+  if (!value) return null;
+  return (
+    <div>
+      <p className="text-sm text-gray-500">{label}</p>
+      {isLink ? (
+        <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-words">
+          {value}
+        </a>
+      ) : (
+        <p className="text-lg break-words">{value || "ー"}</p>
+      )}
+    </div>
+  );
+}
+
+// 営業時間を改行整形
+function parseOpeningHours(text: string): string {
+  const lines = text.split("\n").filter(Boolean);
+  return lines.map(line => line.trim()).join("\n");
 }
