@@ -88,7 +88,11 @@ export default function PendingStoreDetailPage() {
     }
 
     alert("削除しました！");
+    router.push("/admin/pending-stores");
   };
+
+
+
 
   if (loading) return <div className="text-center p-10">読み込み中...</div>;
   if (error) return <div className="text-center text-red-500 p-10">{error}</div>;

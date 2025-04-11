@@ -63,13 +63,16 @@ export default function PendingStoresAdminPage() {
 
     if (error) {
       alert("削除に失敗しました");
+      console.error(error.message);
       return;
     }
 
     alert("削除しました！");
 
-    // 即座にpendingStoresから削除
-    setPendingStores((prev) => prev.filter((store) => store.id !== storeId));
+    // 1回レンダリングを終わらせてから遷移させる
+    setTimeout(() => {
+      router.push("/admin/pending-stores");
+    }, 0);
   };
 
   if (loading) {
