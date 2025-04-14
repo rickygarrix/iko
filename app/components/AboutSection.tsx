@@ -23,7 +23,7 @@ export default function AboutSection() {
 
         {/* 説明文 */}
         <div className="w-full py-4 max-w-[600px] text-sm font-light leading-relaxed text-center">
-          「オトナビ」は、クラブ・ジャズバー専門の音楽スポット検索サイト。行きたいエリアと聴きたいジャンルを選ぶと、夜の音楽スポットがすぐ見つかる。「オトナビ」があなたにぴったりの音楽体験をナビゲートします。
+          夜に音楽を楽しむことをもっと気軽に。オトナビは夜の音楽スポットを初心者の方でも安心して使えるよう、これからも進化していきます
         </div>
 
         {/* ボタン */}

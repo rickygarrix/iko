@@ -9,7 +9,7 @@ const nextConfig = {
     domains: [
       "blogger.googleusercontent.com",
       "lh3.googleusercontent.com",
-      "bqexmwjcmtyypzucndrb.supabase.co", // ⭐️ 追加！Supabase用
+      "bqexmwjcmtyypzucndrb.supabase.co",
     ],
   },
 };

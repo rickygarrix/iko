@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { checkIfOpen } from "@/lib/utils";
+import { checkIfOpen, logAction } from "@/lib/utils"; // ✅ ここ！
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-interface Store {
+type Store = {
   id: string;
   name: string;
   genre: string;
@@ -16,17 +16,19 @@ interface Store {
   image_url?: string | null;
   description?: string;
   is_recommended?: boolean;
-}
+  store_instagrams?: string | null; // ← これを追加！！
+};
 
 export default function RecommendedStores() {
   const [stores, setStores] = useState<Store[]>([]);
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [storesReady, setStoresReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false); // 🔥 追加！
+  const [isScrolling, setIsScrolling] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
+  // 🔥 店舗データ取得
   useEffect(() => {
     const fetchStores = async () => {
       const { data, error } = await supabase
@@ -45,6 +47,7 @@ export default function RecommendedStores() {
     fetchStores();
   }, []);
 
+  // 🔥 戻り時スクロール位置復元
   useEffect(() => {
     const saved = sessionStorage.getItem("recommendedScrollY");
     if (saved && pathname === "/") {
@@ -68,9 +71,20 @@ export default function RecommendedStores() {
   }, [restoreY, stores]);
 
   useEffect(() => {
-    // 🔥 スクロール中か判定するやつ
-    let timeoutId: NodeJS.Timeout;
+    if (!document.getElementById("instagram-embed-script")) {
+      const script = document.createElement("script");
+      script.id = "instagram-embed-script";
+      script.src = "https://www.instagram.com/embed.js";
+      script.async = true;
+      document.body.appendChild(script);
+    } else {
+      window.instgrm?.Embeds.process(); // 既に読み込んでたら再レンダリング
+    }
+  }, [stores]);
 
+  // 🔥 スクロール中か検知
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     const handleScroll = () => {
       setIsScrolling(true);
       clearTimeout(timeoutId);
@@ -78,19 +92,29 @@ export default function RecommendedStores() {
         setIsScrolling(false);
       }, 150);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  const handleClick = (storeId: string) => {
+  // 🔥 おすすめタップ時にログ保存＋遷移
+  const handleClick = async (storeId: string) => {
     if (pathname === "/") {
       const currentY = window.scrollY;
       sessionStorage.setItem("recommendedScrollY", currentY.toString());
     }
+
     setIsLoading(true);
+
+    try {
+      await logAction("click_recommended_store", {
+        store_id: storeId,
+      }); // ✅ logActionに丸投げ
+    } catch (error) {
+      console.error("🔥 アクションログ保存失敗:", error);
+    }
+
     router.push(`/stores/${storeId}`);
   };
 
@@ -121,33 +145,54 @@ export default function RecommendedStores() {
                   key={store.id}
                   onClick={() => handleClick(store.id)}
                   className={`w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer
-                    ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}
-                    transition-colors duration-200`}
+            ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}
+            transition-colors duration-200`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
+                  {/* 店舗名と説明 */}
                   <div className="flex flex-col gap-2">
                     <div className="text-zinc-900 text-base font-semibold leading-normal">
                       {store.name}
                     </div>
-                    <div className="text-zinc-900 text-xs font-light leading-none">
+                    <div className="text-zinc-900 text-xs font-light leading-normal line-clamp-2">
                       {store.description || "店舗の詳細情報がありません。"}
                     </div>
                   </div>
 
-                  <div className="flex gap-4 items-center">
-                    <div className="relative w-40 h-24 rounded-lg overflow-hidden outline outline-2 outline-zinc-900">
-                      <Image
-                        src={store.image_url || "/default-image.jpg"}
-                        alt={store.name}
-                        fill
-                        style={{ objectFit: "cover" }}
-                        sizes="160px"
-                        unoptimized
-                      />
+                  {/* 画像＋店舗情報 */}
+                  <div className="flex gap-4 items-start">
+                    {/* 投稿エリア（スマホ型） */}
+                    <div className="relative w-32 h-56 rounded-lg overflow-hidden outline outline-2 outline-zinc-900 flex-shrink-0">
+                      {store.store_instagrams ? (
+                        <blockquote
+                          className="instagram-media"
+                          data-instgrm-permalink={store.store_instagrams}
+                          data-instgrm-version="14"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            margin: 0,
+                            transform: "scale(0.75)",
+                            transformOrigin: "top left",
+                            overflow: "hidden",
+                          }}
+                        ></blockquote>
+                      ) : (
+                        <Image
+                          src={store.image_url || "/default-image.jpg"}
+                          alt={store.name}
+                          fill
+                          style={{ objectFit: "cover" }}
+                          sizes="160px"
+                          unoptimized
+                        />
+                      )}
                     </div>
-                    <div className="flex flex-col gap-1 flex-1">
+
+                    {/* 右側情報エリア */}
+                    <div className="flex flex-col gap-2 flex-1">
                       <div className="text-zinc-900 text-sm font-light">
                         {store.area} / {store.genre}
                       </div>

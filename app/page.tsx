@@ -10,6 +10,7 @@ import RecommendedStores from "@/components/RecommendedStores";
 
 export default function Home() {
   const router = useRouter();
+
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
@@ -21,16 +22,10 @@ export default function Home() {
       let query = supabase
         .from("stores")
         .select("*")
-        .eq("is_published", true); // 🌟 ここ追加！公開中だけ取得
+        .eq("is_published", true);
 
-      if (selectedGenres.length > 0) {
-        query = query.in("genre", selectedGenres);
-      }
-
-      if (selectedAreas.length > 0) {
-        query = query.in("area", selectedAreas);
-      }
-
+      if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
+      if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
       if (selectedPayments.length > 0) {
         query = query.or(
           selectedPayments.map((p) => `payment_methods.cs.{${p}}`).join(",")
@@ -44,7 +39,6 @@ export default function Home() {
         setPreviewCount(0);
       } else {
         const filtered = data || [];
-
         if (showOnlyOpen) {
           const { checkIfOpen } = await import("@/lib/utils");
           const opened = filtered.filter((store) =>
@@ -62,13 +56,11 @@ export default function Home() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-
     if (selectedGenres.length > 0) params.append("genre", selectedGenres.join(","));
     if (selectedAreas.length > 0) params.append("area", selectedAreas.join(","));
     if (selectedPayments.length > 0) params.append("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.append("open", "true");
     if (params.toString() === "") params.set("all", "true");
-
     router.push(`/search?${params.toString()}`);
   };
 
@@ -103,6 +95,7 @@ export default function Home() {
           setShowOnlyOpen={setShowOnlyOpen}
           handleSearch={handleSearch}
           previewCount={previewCount}
+          showTitle={false}
         />
       </div>
 

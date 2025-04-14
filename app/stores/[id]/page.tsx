@@ -1,12 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
-import Skeleton from "@/components/Skeleton"; // 追加！
-import React from "react";
+import { logAction } from "@/lib/utils"; // ✅ logAction使う
+import Skeleton from "@/components/Skeleton";
 import MapEmbed from "@/components/MapEmbed";
-import InstagramSlider from "@/components/InstagramSlider"; //
+import InstagramSlider from "@/components/InstagramSlider";
+import React from "react";
 
 type Store = {
   id: string;
@@ -33,7 +35,6 @@ type Store = {
   store_instagrams3?: string | null;
 };
 
-// fetcher関数
 const fetchStore = async (id: string): Promise<Store> => {
   const { data, error } = await supabase.from("stores").select("*").eq("id", id).single();
   if (error || !data) {
@@ -50,7 +51,41 @@ export default function StoreDetail() {
     { revalidateOnFocus: false }
   );
 
-  // ローディング中：Skeleton
+  // ✅ ページ表示時にアクセスログ
+  useEffect(() => {
+    if (id) {
+      logAction("open_store", { store_id: id, referrer_page: document.referrer || null });
+    }
+  }, [id]);
+
+  // ✅ Instagram投稿クリック
+  const handleInstagramPostClick = async (url: string) => {
+    if (id) {
+      await logAction("click_instagram_post", { store_id: id, detail: url });
+    }
+  };
+
+  // ✅ 公式Instagramアカウントクリック
+  const handleInstagramAccountClick = async () => {
+    if (id) {
+      await logAction("click_instagram_account", { store_id: id });
+    }
+  };
+
+  // ✅ Googleマップクリック
+  const handleMapClick = async () => {
+    if (id) {
+      await logAction("click_map", { store_id: id });
+    }
+  };
+
+  // ✅ 公式サイトクリック
+  const handleWebsiteClick = async () => {
+    if (id) {
+      await logAction("click_website", { store_id: id });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px] flex justify-center">
@@ -64,7 +99,6 @@ export default function StoreDetail() {
     );
   }
 
-  // エラー時
   if (error || !store) {
     return (
       <div className="min-h-screen bg-[#FEFCF6] text-center pt-[100px] text-red-500">
@@ -73,22 +107,22 @@ export default function StoreDetail() {
     );
   }
 
-  // 通常表示
   return (
     <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px]">
       <div className="w-full max-w-[600px] mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
 
-        {/* Googleマップ埋め込み */}
+        {/* Googleマップ */}
         {store.map_embed && (
           <div className="mb-4">
-            <MapEmbed src={store.map_embed} title={`${store.name}の地図`} />
+            <a href={store.map_link || "#"} target="_blank" rel="noopener noreferrer" onClick={handleMapClick}>
+              <MapEmbed src={store.map_embed} title={`${store.name}の地図`} />
+            </a>
           </div>
         )}
 
         {/* 店舗名・説明 */}
         <div className="p-4">
           <h1 className="text-2xl font-bold mb-1">{store.name}</h1>
-
           <p className="text-sm text-[#1F1F21] pt-4 leading-relaxed mb-4 whitespace-pre-line">
             {store.description}
           </p>
@@ -129,7 +163,7 @@ export default function StoreDetail() {
         </div>
 
         {/* 店舗情報 */}
-        <div className="my-10 px-4 pt-0">
+        <div className="my-10 px-4">
           <p className="text-base mb-2 flex items-center gap-2 font-[#1F1F21]">
             <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
             店舗情報
@@ -152,41 +186,41 @@ export default function StoreDetail() {
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">アクセス</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">{store.access}</td>
               </tr>
-
               <tr>
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">営業時間</th>
                 <td className="border px-4 py-4 whitespace-pre-wrap">
                   {store.opening_hours}
-                  <p className="text-[10px] text-gray-500 mt-1">
-                    ※日により変更する可能性があります。
-                  </p>
+                  <p className="text-[10px] text-gray-500 mt-1">※日により変更する可能性があります。</p>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        {/* Instagramスライダー */}
-        <InstagramSlider posts={
-          [store.store_instagrams, store.store_instagrams2, store.store_instagrams3]
-            .filter((url): url is string => Boolean(url))
-        } />
+        {/* Instagramスライダーだけ表示 */}
+        <InstagramSlider
+          posts={[
+            store.store_instagrams,
+            store.store_instagrams2,
+            store.store_instagrams3,
+          ].filter((url): url is string => Boolean(url))}
+          onClickPost={handleInstagramPostClick}
+        />
 
-
-        {/* 公式サイトリンク */}
+        {/* 公式サイト */}
         {store.website && (
           <div className="px-4 pb-4">
             <a
               href={store.website}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleWebsiteClick}
               className="block w-full max-w-[358px] h-[48px] bg-black text-white rounded-lg hover:bg-gray-800 flex items-center justify-center mx-auto"
             >
               公式サイト →
             </a>
           </div>
         )}
-
 
       </div>
     </div>

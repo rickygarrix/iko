@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
-import { checkIfOpen } from "@/lib/utils";
+import { checkIfOpen, logAction } from "@/lib/utils"; // ✅ logActionを追加
 import { Store } from "../../types";
 import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -61,6 +61,7 @@ export default function SearchResults({
     { revalidateOnFocus: false }
   );
 
+  // 🔥 スクロール位置復元
   useEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
     if (savedY && pathname === "/search") {
@@ -86,9 +87,9 @@ export default function SearchResults({
     }
   }, [stores, restoreY]);
 
+  // 🔥 スクロール監視
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-
     const handleScroll = () => {
       setIsScrolling(true);
       clearTimeout(timeoutId);
@@ -96,17 +97,28 @@ export default function SearchResults({
         setIsScrolling(false);
       }, 150);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
-  const handleStoreClick = (storeId: string) => {
+  // 🔥 店舗クリック時の処理
+  const handleStoreClick = async (storeId: string) => {
     const currentY = window.scrollY;
     sessionStorage.setItem("searchScrollY", currentY.toString());
     setIsOverlayVisible(true);
+
+    try {
+      await logAction("click_search_store", {
+        store_id: storeId,
+        referrer_page: pathname,
+        query_params: queryParams,
+      });
+    } catch (error) {
+      console.error("🔥 アクションログ保存失敗:", error);
+    }
+
     setTimeout(() => {
       router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
@@ -196,12 +208,12 @@ export default function SearchResults({
                       unoptimized
                     />
                   </div>
-                  <div className="text-left space-y-1 text-[14px] text-[#1F1F21]">
+                  <div className="flex flex-col gap-1 flex-1 text-[14px] text-[#1F1F21]">
                     <p>{store.area} / {store.genre}</p>
                     <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
                       {isOpen ? "営業中" : "営業時間外"}
                     </p>
-                    <p className="text-xs text-[#1F1F21]">{nextOpening}</p>
+                    <p className="text-xs">{nextOpening}</p>
                   </div>
                 </div>
               </div>

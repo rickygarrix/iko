@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -6,6 +5,9 @@ import Image from "next/image";
 import { GENRES } from "@/constants/genres";
 import { AREAS } from "@/constants/areas";
 import { PAYMENTS } from "@/constants/payments";
+import { useSearchParams } from "next/navigation";
+import { logAction } from "@/lib/utils";
+
 
 type SearchFilterProps = {
   selectedGenres: string[];
@@ -18,6 +20,7 @@ type SearchFilterProps = {
   setShowOnlyOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleSearch: () => void;
   previewCount: number;
+  showTitle?: boolean; // ⭐️ ここ追加するだけ！
 };
 
 export default function SearchFilter({
@@ -27,21 +30,47 @@ export default function SearchFilter({
   showOnlyOpen, setShowOnlyOpen,
   handleSearch,
   previewCount,
+  showTitle, // ⭐️ これ追加するだけ！
 }: SearchFilterProps) {
+  const searchParams = useSearchParams(); // ✅ クエリパラメータ取得	return (
+  // ✅ 検索・リセット時にログ保存
+  const logSearchAction = async (action: "search" | "reset_search") => {
+    const currentParams = new URLSearchParams(window.location.search).toString();
+
+    const payload: any = {
+      query_params: currentParams,
+    };
+
+    if (action === "search") {
+      payload.search_conditions = {
+        genres: selectedGenres,
+        areas: selectedAreas,
+        payments: selectedPayments,
+        openOnly: showOnlyOpen,
+      };
+      payload.result_count = previewCount;
+    }
+
+    await logAction(action, payload);
+  };
   return (
+
     <div className="w-full flex justify-center bg-[#F7F5EF] pt-[48px] pb-12">
       <div className="w-full max-w-[600px] px-6 text-[#1F1F21] text-[14px] font-normal space-y-10">
 
         {/* --- タイトル --- */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <h2 className="text-[18px] font-bold leading-[26px] mb-1">条件検索</h2>
-          <p className="text-sm text-[#4B5C9E]">Search</p>
-        </motion.div>
+        {/* --- タイトル --- */}
+        {showTitle !== false && ( // ⭐️ ここ追加！
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <h2 className="text-[18px] font-bold leading-[26px] mb-1">条件検索</h2>
+            <p className="text-sm text-[#4B5C9E]">Search</p>
+          </motion.div>
+        )}
 
         {/* --- フィルター --- */}
         <motion.div
@@ -61,7 +90,7 @@ export default function SearchFilter({
             <p className="text-[16px] font-bold leading-[24px] mb-2">営業時間</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {[
-                { label: "営業時間外も含む", value: false },
+                { label: "全店舗から探す", value: false },
                 { label: "営業時間内のみ", value: true },
               ].map(({ label, value }) => (
                 <label key={label} className="relative flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
@@ -170,23 +199,25 @@ export default function SearchFilter({
         >
           {/* リセット */}
           <button
-            onClick={() => {
+            onClick={async () => {
+              await logSearchAction("reset_search");
               setSelectedGenres([]);
               setSelectedAreas([]);
               setSelectedPayments([]);
               setShowOnlyOpen(false);
             }}
             className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21]
-            text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
+          text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
           >
             リセット
           </button>
 
           {/* 検索 */}
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: "auto" });
+              await logSearchAction("search");
               handleSearch();
             }}
             className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21]
@@ -205,6 +236,6 @@ export default function SearchFilter({
         </motion.div>
 
       </div>
-    </div>
+    </div >
   );
 }

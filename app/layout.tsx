@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import "./globals.css";
 import GoogleMapsProvider from "@/components/GoogleMapsProvider";
 import ScrollRestoration from "@/components/ScrollRestoration"; // ✅ スクロール復元コンポーネント
+import "./globals.css";
 
 // フォント設定
 const geistSans = Geist({
@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 const zenKaku = Zen_Kaku_Gothic_New({
   subsets: ["latin"],
-  weight: "400", // ← 配列じゃなくて単体に直した！
+  weight: "400",
   variable: "--font-zen-kaku",
   display: "swap",
 });
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="ja">
       <head>
@@ -42,15 +42,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${zenKaku.variable} antialiased flex flex-col min-h-screen bg-[#FAFAF5]`}
       >
-        <GoogleMapsProvider>
-          <Header />
-          <main className="flex-grow w-full">
-            {/* ✅ 検索画面などでのスクロール復元 */}
-            <ScrollRestoration />
-            {children}
-          </main>
-          <Footer />
-        </GoogleMapsProvider>
+
       </body>
     </html>
   );
