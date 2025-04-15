@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations } from "next-intl"; // ⭐ useTranslationsを追加！
 
 export default function AboutSection() {
+  const t = useTranslations(); // ⭐ t関数を用意！
+
   return (
     <section className="w-full bg-[#4B5C9E] text-white flex justify-center">
       {/* 中央寄せ・幅制限コンテナ */}
@@ -9,7 +14,7 @@ export default function AboutSection() {
         <div className="relative w-32 h-10">
           <Image
             src="/footer/logo.svg"
-            alt="オトナビ ロゴ"
+            alt={t("about.logo_alt")} // ✨ 翻訳対応
             fill
             className="object-contain"
             priority
@@ -18,12 +23,12 @@ export default function AboutSection() {
 
         {/* サブタイトル */}
         <div className="text-sm font-semibold leading-tight tracking-wider">
-          What’s Otonavi?
+          {t("about.subtitle")} {/* ✨ 翻訳対応 */}
         </div>
 
         {/* 説明文 */}
         <div className="w-full py-4 max-w-[600px] text-sm font-light leading-relaxed text-center">
-          夜に音楽を楽しむことをもっと気軽に。オトナビは夜の音楽スポットを初心者の方でも安心して使えるよう、これからも進化していきます
+          {t("about.description")} {/* ✨ 翻訳対応 */}
         </div>
 
         {/* ボタン */}
@@ -33,7 +38,7 @@ export default function AboutSection() {
   hover:scale-105 active:scale-95 transition-transform duration-200"
         >
           <a href="/search" className="text-white text-sm font-medium">
-            行きたいお店を見つけよう →
+            {t("about.button")} {/* ✨ 翻訳対応 */}
           </a>
         </div>
       </div>

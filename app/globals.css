@@ -45,12 +45,16 @@
 }
 
 /* 追加：スクロール挙動の安定化 */
-html,
-body {
+html {
+  background-color: #F7F5EF;
   width: 100%;
   overflow-x: hidden;
-  scroll-behavior: auto;
-  /* スムーススクロールを無効に */
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 body {

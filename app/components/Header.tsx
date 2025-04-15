@@ -1,46 +1,43 @@
 "use client";
 
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useParams } from "next/navigation";
 import { useCallback } from "react";
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
+  const { locale } = useParams() as { locale: string }; // ✅ locale取得
 
-  // ホーム遷移＋スクロールトップ＋チラ見え防止
+  // ホーム遷移
   const handleHomeClick = useCallback(() => {
-    if (pathname !== "/") {
-      document.body.style.opacity = "0"; // チラ見え防止
-
-      router.push("/");
-
+    if (pathname !== `/${locale}`) {
+      document.body.style.opacity = "0";
+      router.push(`/${locale}`);
       setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "auto" });
-        document.body.style.opacity = "1"; // 表示復元
+        document.body.style.opacity = "1";
       }, 200);
     } else {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [pathname, router]);
+  }, [pathname, router, locale]);
 
-  // 検索ページ遷移＋スクロールトップ
+  // 検索ページ遷移
   const handleSearchClick = useCallback(() => {
-    if (pathname === "/search") {
+    if (pathname === `/${locale}/search`) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      document.body.style.opacity = "0"; // チラ見え防止
-
-      router.push("/search");
-
+      document.body.style.opacity = "0";
+      router.push(`/${locale}/search`);
       setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "auto" });
-        document.body.style.opacity = "1"; // 表示復元
+        document.body.style.opacity = "1";
       }, 200);
     }
-  }, [pathname, router]);
+  }, [pathname, router, locale]);
 
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
@@ -54,8 +51,8 @@ export default function Header() {
             src="/header/logo.svg"
             alt="オトナビ ロゴ"
             fill
+            unoptimized
             className="object-contain"
-            priority
           />
         </div>
 
@@ -64,8 +61,7 @@ export default function Header() {
           {/* 条件ボタン */}
           <button
             onClick={handleSearchClick}
-            className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1
-             transition-transform duration-200 hover:scale-105 active:scale-95"
+            className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1 transition-transform duration-200 hover:scale-105 active:scale-95"
           >
             <div className="w-6 h-6 relative">
               <Image
@@ -94,59 +90,7 @@ export default function Header() {
               開発中
             </span>
           </div>
-          {/* 問い合わせボタン */}
-          <button
-            onClick={() => {
-              document.body.style.opacity = "0";
-              router.push("/contact");
-              setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
-              setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: "auto" });
-                document.body.style.opacity = "1";
-              }, 200);
-            }}
-            className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1
-    transition-transform duration-200 hover:scale-105 active:scale-95"
-          >
-            <div className="w-6 h-6 relative">
-              <Image
-                src="/header/search.svg"
-                alt="問い合わせ"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <span className="text-zinc-900 text-[10px] font-light leading-none">
-              問合せ
-            </span>
-          </button>
 
-          {/* 店舗登録ボタン ←★これ追加★ */}
-          <button
-            onClick={() => {
-              document.body.style.opacity = "0";
-              router.push("/register");
-              setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
-              setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: "auto" });
-                document.body.style.opacity = "1";
-              }, 200);
-            }}
-            className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1
-      transition-transform duration-200 hover:scale-105 active:scale-95"
-          >
-            <div className="w-6 h-6 relative">
-              <Image
-                src="/header/search.svg" // 仮でsearch.svg
-                alt="店舗登録"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <span className="text-zinc-900 text-[10px] font-light leading-none">
-              店舗登録
-            </span>
-          </button>
 
         </div>
       </div>
