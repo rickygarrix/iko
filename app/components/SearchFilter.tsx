@@ -7,7 +7,7 @@ import { AREAS } from "@/constants/areas";
 import { PAYMENTS } from "@/constants/payments";
 import { useSearchParams } from "next/navigation";
 import { logAction } from "@/lib/utils";
-
+import type { Messages } from "@/types/messages"; // ← 追加
 
 type SearchFilterProps = {
   selectedGenres: string[];
@@ -20,20 +20,26 @@ type SearchFilterProps = {
   setShowOnlyOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleSearch: () => void;
   previewCount: number;
-  showTitle?: boolean; // ⭐️ ここ追加するだけ！
+  showTitle?: boolean;
+  messages: Messages["searchFilter"]; // ← 🔥 新規追加
 };
 
 export default function SearchFilter({
-  selectedGenres, setSelectedGenres,
-  selectedAreas, setSelectedAreas,
-  selectedPayments, setSelectedPayments,
-  showOnlyOpen, setShowOnlyOpen,
+  selectedGenres,
+  setSelectedGenres,
+  selectedAreas,
+  setSelectedAreas,
+  selectedPayments,
+  setSelectedPayments,
+  showOnlyOpen,
+  setShowOnlyOpen,
   handleSearch,
   previewCount,
-  showTitle, // ⭐️ これ追加するだけ！
+  showTitle = true,
+  messages,
 }: SearchFilterProps) {
-  const searchParams = useSearchParams(); // ✅ クエリパラメータ取得	return (
-  // ✅ 検索・リセット時にログ保存
+  const searchParams = useSearchParams();
+
   const logSearchAction = async (action: "search" | "reset_search") => {
     const currentParams = new URLSearchParams(window.location.search).toString();
 
@@ -53,33 +59,26 @@ export default function SearchFilter({
 
     await logAction(action, payload);
   };
-  return (
 
+  return (
     <div className="w-full flex justify-center bg-[#F7F5EF] pt-[48px] pb-12">
       <div className="w-full max-w-[600px] px-6 text-[#1F1F21] text-[14px] font-normal space-y-10">
-
-        {/* --- タイトル --- */}
-        {/* --- タイトル --- */}
-        {showTitle !== false && ( // ⭐️ ここ追加！
+        {showTitle && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h2 className="text-[18px] font-bold leading-[26px] mb-1">条件検索</h2>
-            <p className="text-sm text-[#4B5C9E]">Search</p>
+            <h2 className="text-[18px] font-bold leading-[26px] mb-1">{messages.title}</h2>
+            <p className="text-sm text-[#4B5C9E]">{messages.search}</p>
           </motion.div>
         )}
 
-        {/* --- フィルター --- */}
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.2 } },
-          }}
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.2 } } }}
           className="space-y-8"
         >
           {/* 営業時間 */}
@@ -87,12 +86,9 @@ export default function SearchFilter({
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             transition={{ duration: 0.5 }}
           >
-            <p className="text-[16px] font-bold leading-[24px] mb-2">営業時間</p>
+            <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.open}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {[
-                { label: "全店舗から探す", value: false },
-                { label: "営業時間内のみ", value: true },
-              ].map(({ label, value }) => (
+              {[{ label: messages.open_all, value: false }, { label: messages.open_now, value: true }].map(({ label, value }) => (
                 <label key={label} className="relative flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
                   <input
                     type="radio"
@@ -109,11 +105,8 @@ export default function SearchFilter({
           </motion.div>
 
           {/* ジャンル */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            transition={{ duration: 0.5 }}
-          >
-            <p className="text-[16px] font-bold leading-[24px] mb-2">ジャンル</p>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
+            <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.genre}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {GENRES.map((genre) => (
                 <label key={genre} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
@@ -140,34 +133,36 @@ export default function SearchFilter({
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             transition={{ duration: 0.5 }}
           >
-            <p className="text-[16px] font-bold leading-[24px] mb-2">エリア</p>
+            <p className="text-[16px] font-bold leading-[24px] mb-2">
+              {messages.area}
+            </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {AREAS.map((area) => (
-                <label key={area} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+                <label
+                  key={area.key}
+                  className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
+                >
                   <input
                     type="checkbox"
-                    checked={selectedAreas.includes(area)}
+                    checked={selectedAreas.includes(area.key)}
                     onChange={() =>
                       setSelectedAreas(
-                        selectedAreas.includes(area)
-                          ? selectedAreas.filter((a) => a !== area)
-                          : [...selectedAreas, area]
+                        selectedAreas.includes(area.key)
+                          ? selectedAreas.filter((a) => a !== area.key)
+                          : [...selectedAreas, area.key]
                       )
                     }
                     className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
                   />
-                  {area}
+                  {messages.areas[area.key]}
                 </label>
               ))}
             </div>
           </motion.div>
 
           {/* 支払い方法 */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            transition={{ duration: 0.5 }}
-          >
-            <p className="text-[16px] font-bold leading-[24px] mb-2">支払い方法</p>
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
+            <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.payment}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {PAYMENTS.map((payment) => (
                 <label key={payment} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
@@ -190,7 +185,7 @@ export default function SearchFilter({
           </motion.div>
         </motion.div>
 
-        {/* --- ボタンエリア --- */}
+        {/* ボタン */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -207,9 +202,9 @@ export default function SearchFilter({
               setShowOnlyOpen(false);
             }}
             className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21]
-          text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
+            text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
           >
-            リセット
+            {messages.reset}
           </button>
 
           {/* 検索 */}
@@ -231,11 +226,10 @@ export default function SearchFilter({
                 className="object-contain"
               />
             </div>
-            検索（{previewCount}件）
+            {messages.search}（{previewCount}件）
           </button>
         </motion.div>
-
       </div>
-    </div >
+    </div>
   );
 }

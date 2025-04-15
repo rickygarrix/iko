@@ -1,0 +1,44 @@
+{
+  "top": {
+    "catchphrase": "今夜、あなたの音を見つけよう",
+    "title": "オトナビ",
+    "search": "条件で探す",
+    "recommend": "今月のおすすめ"
+  },
+  "meta": {
+    "title": "オトナビ - 音楽と夜遊びのスポットを探す",
+    "description": "オトナビは、ジャズバー、クラブ、ライブハウスなど、夜に音楽を楽しめる場所を探せるサービスです。"
+  },
+  "about": {
+    "logo_alt": "オトナビのロゴ",
+    "subtitle": "オトナビとは？",
+    "description": "もっと気軽に夜に音楽を楽しもう。オトナビは初心者でも安心して夜の音楽スポットを使えるよう進化し続けます。",
+    "button": "お気に入りの場所を探す →"
+  },
+  "searchFilter": {
+    "title": "条件検索",
+    "open": "営業時間",
+    "open_all": "全店舗から探す",
+    "open_now": "営業時間内のみ",
+    "genre": "ジャンル",
+    "area": "エリア",
+    "payment": "支払い方法",
+    "reset": "リセット",
+    "search": "検索",
+    "areas": {
+      "shibuya": "渋谷",
+      "shinjuku": "新宿",
+      "roppongi": "六本木",
+      "ebisu": "恵比寿",
+      "ginza": "銀座",
+      "ikebukuro": "池袋",
+      "nakameguro": "中目黒",
+      "daikanyama": "代官山",
+      "omotesando": "表参道",
+      "akasaka": "赤坂",
+      "akihabara": "秋葉原",
+      "ueno": "上野",
+      "other": "その他"
+    }
+  }
+}

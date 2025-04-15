@@ -1,0 +1,44 @@
+{
+  "top": {
+    "catchphrase": "Find your sound tonight",
+    "title": "Otonavi",
+    "search": "Search by condition",
+    "recommend": "This Month's Picks"
+  },
+  "meta": {
+    "title": "Otonavi - Discover music and nightlife spots",
+    "description": "Otonavi helps you discover jazz bars, clubs, and live houses where you can enjoy music at night."
+  },
+  "about": {
+    "logo_alt": "Otonavi Logo",
+    "subtitle": "What is Otonavi?",
+    "description": "Enjoy nighttime music more casually. Otonavi continues to evolve to make music venues accessible for beginners too.",
+    "button": "Find your favorite place →"
+  },
+  "searchFilter": {
+    "title": "Search by condition",
+    "open": "Opening hours",
+    "open_all": "All stores",
+    "open_now": "Open now only",
+    "genre": "Genre",
+    "area": "Area",
+    "payment": "Payment method",
+    "reset": "Reset",
+    "search": "Search",
+    "areas": {
+      "shibuya": "Shibuya",
+      "shinjuku": "Shinjuku",
+      "roppongi": "Roppongi",
+      "ebisu": "Ebisu",
+      "ginza": "Ginza",
+      "ikebukuro": "Ikebukuro",
+      "nakameguro": "Nakameguro",
+      "daikanyama": "Daikanyama",
+      "omotesando": "Omotesando",
+      "akasaka": "Akasaka",
+      "akihabara": "Akihabara",
+      "ueno": "Ueno",
+      "other": "Others"
+    }
+  }
+}

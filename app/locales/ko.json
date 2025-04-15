@@ -1,0 +1,44 @@
+{
+  "top": {
+    "catchphrase": "오늘 밤, 당신의 음악을 찾아보세요",
+    "title": "Otonavi",
+    "search": "조건으로 검색",
+    "recommend": "이번 달 추천"
+  },
+  "meta": {
+    "title": "Otonavi - 음악과 야간 명소를 찾기",
+    "description": "Otonavi는 재즈 바, 클럽, 라이브 하우스 등 밤에 음악을 즐길 수 있는 장소를 찾을 수 있는 서비스입니다."
+  },
+  "about": {
+    "logo_alt": "Otonavi 로고",
+    "subtitle": "Otonavi란?",
+    "description": "더 편하게 밤의 음악을 즐기세요. Otonavi는 초보자도 안심하고 사용할 수 있도록 계속 발전합니다.",
+    "button": "마음에 드는 장소를 찾아보세요 →"
+  },
+  "searchFilter": {
+    "title": "조건 검색",
+    "open": "영업 시간",
+    "open_all": "전체 매장",
+    "open_now": "영업 중인 매장만",
+    "genre": "장르",
+    "area": "지역",
+    "payment": "결제 방법",
+    "reset": "초기화",
+    "search": "검색",
+    "areas": {
+      "shibuya": "시부야",
+      "shinjuku": "신주쿠",
+      "roppongi": "롯폰기",
+      "ebisu": "에비스",
+      "ginza": "긴자",
+      "ikebukuro": "이케부쿠로",
+      "nakameguro": "나카메구로",
+      "daikanyama": "다이칸야마",
+      "omotesando": "오모테산도",
+      "akasaka": "아카사카",
+      "akihabara": "아키하바라",
+      "ueno": "우에노",
+      "other": "기타"
+    }
+  }
+}

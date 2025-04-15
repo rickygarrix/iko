@@ -1,0 +1,44 @@
+{
+  "top": {
+    "catchphrase": "今晚，发现你的音乐",
+    "title": "Otonavi",
+    "search": "按条件搜索",
+    "recommend": "本月推荐"
+  },
+  "meta": {
+    "title": "Otonavi - 探索音乐和夜生活地点",
+    "description": "Otonavi 是一项服务，帮助你找到爵士酒吧、俱乐部和现场音乐场所，享受夜晚的音乐。"
+  },
+  "about": {
+    "logo_alt": "Otonavi 标志",
+    "subtitle": "什么是 Otonavi？",
+    "description": "更轻松地享受夜晚的音乐。Otonavi 不断进化，让初学者也能安心使用夜晚的音乐场所。",
+    "button": "寻找你喜欢的地方 →"
+  },
+  "searchFilter": {
+    "title": "按条件搜索",
+    "open": "营业时间",
+    "open_all": "所有店铺",
+    "open_now": "仅营业中",
+    "genre": "音乐类型",
+    "area": "区域",
+    "payment": "支付方式",
+    "reset": "重置",
+    "search": "搜索",
+    "areas": {
+      "shibuya": "涩谷",
+      "shinjuku": "新宿",
+      "roppongi": "六本木",
+      "ebisu": "惠比寿",
+      "ginza": "银座",
+      "ikebukuro": "池袋",
+      "nakameguro": "中目黑",
+      "daikanyama": "代官山",
+      "omotesando": "表参道",
+      "akasaka": "赤坂",
+      "akihabara": "秋叶原",
+      "ueno": "上野",
+      "other": "其他"
+    }
+  }
+}
