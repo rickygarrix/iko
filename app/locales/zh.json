@@ -40,5 +40,23 @@
       "ueno": "上野",
       "other": "其他"
     }
+  },
+  "genres": {
+    "house": "浩室",
+    "techno": "电子",
+    "jazz": "爵士",
+    "hiphop": "嘻哈",
+    "rock": "摇滚",
+    "pops": "流行",
+    "reggae": "雷鬼",
+    "other": "其他",
+    "test": "测试"
+  },
+  "payments": {
+    "cash": "现金",
+    "credit": "信用卡",
+    "emoney": "电子货币",
+    "qr": "二维码",
+    "other": "其他"
   }
 }

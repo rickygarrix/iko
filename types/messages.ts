@@ -29,6 +29,10 @@ export type Messages = {
       [key: string]: string;
     };
   };
-
-
+  genres: {
+    [key: string]: string;
+  };
+  payments: {
+    [key: string]: string;
+  };
 };

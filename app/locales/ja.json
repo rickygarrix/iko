@@ -40,5 +40,23 @@
       "ueno": "上野",
       "other": "その他"
     }
+  },
+  "genres": {
+    "house": "ハウス",
+    "techno": "テクノ",
+    "jazz": "ジャズ",
+    "hiphop": "ヒップホップ",
+    "rock": "ロック",
+    "pops": "ポップス",
+    "reggae": "レゲエ",
+    "other": "その他",
+    "test": "テスト"
+  },
+  "payments": {
+    "cash": "現金",
+    "credit": "クレジットカード",
+    "emoney": "電子マネー",
+    "qr": "QRコード決済",
+    "other": "その他"
   }
 }

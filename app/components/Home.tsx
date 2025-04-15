@@ -13,7 +13,6 @@ import Footer from "./Footer";
 type HomeProps = {
   messages: Messages;
 };
-
 export default function Home({ messages }: HomeProps) {
   const router = useRouter();
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -94,7 +93,11 @@ export default function Home({ messages }: HomeProps) {
           handleSearch={handleSearch}
           previewCount={previewCount}
           showTitle={false}
-          messages={messages.searchFilter}
+          messages={{
+            ...messages.searchFilter,
+            genres: messages.genres,
+            payments: messages.payments,
+          }}
         />
       </div>
 

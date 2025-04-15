@@ -40,5 +40,23 @@
       "ueno": "우에노",
       "other": "기타"
     }
+  },
+  "genres": {
+    "house": "하우스",
+    "techno": "테크노",
+    "jazz": "재즈",
+    "hiphop": "힙합",
+    "rock": "록",
+    "pops": "팝스",
+    "reggae": "레게",
+    "other": "기타",
+    "test": "테스트"
+  },
+  "payments": {
+    "cash": "현금",
+    "credit": "신용카드",
+    "emoney": "전자 화폐",
+    "qr": "QR 코드",
+    "other": "기타"
   }
 }

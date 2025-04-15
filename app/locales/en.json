@@ -40,5 +40,23 @@
       "ueno": "Ueno",
       "other": "Others"
     }
+  },
+  "genres": {
+    "house": "House",
+    "techno": "Techno",
+    "jazz": "Jazz",
+    "hiphop": "Hip-Hop",
+    "rock": "Rock",
+    "pops": "Pops",
+    "reggae": "Reggae",
+    "other": "Others",
+    "test": "Test"
+  },
+  "payments": {
+    "cash": "Cash",
+    "credit": "Credit Card",
+    "emoney": "E-Money",
+    "qr": "QR Code",
+    "other": "Others"
   }
 }

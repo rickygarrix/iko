@@ -1,7 +1,7 @@
 export const PAYMENTS = [
-  "現金",
-  "クレジットカード",
-  "電子マネー",
-  "QRコード決済",
-  "その他",
+  { key: "cash", label: "現金" },
+  { key: "credit", label: "クレジットカード" },
+  { key: "e_money", label: "電子マネー" },
+  { key: "qr", label: "QRコード決済" },
+  { key: "other", label: "その他" }
 ];

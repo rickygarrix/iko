@@ -7,7 +7,7 @@ import { AREAS } from "@/constants/areas";
 import { PAYMENTS } from "@/constants/payments";
 import { useSearchParams } from "next/navigation";
 import { logAction } from "@/lib/utils";
-import type { Messages } from "@/types/messages"; // ← 追加
+import type { Messages } from "@/types/messages";
 
 type SearchFilterProps = {
   selectedGenres: string[];
@@ -21,7 +21,10 @@ type SearchFilterProps = {
   handleSearch: () => void;
   previewCount: number;
   showTitle?: boolean;
-  messages: Messages["searchFilter"]; // ← 🔥 新規追加
+  messages: Messages["searchFilter"] & {
+    payments: { [key: string]: string };
+    genres: { [key: string]: string };
+  };
 };
 
 export default function SearchFilter({
@@ -105,24 +108,30 @@ export default function SearchFilter({
           </motion.div>
 
           {/* ジャンル */}
-          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            transition={{ duration: 0.5 }}
+          >
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.genre}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {GENRES.map((genre) => (
-                <label key={genre} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+                <label
+                  key={genre.key}
+                  className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
+                >
                   <input
                     type="checkbox"
-                    checked={selectedGenres.includes(genre)}
+                    checked={selectedGenres.includes(genre.key)}
                     onChange={() =>
                       setSelectedGenres(
-                        selectedGenres.includes(genre)
-                          ? selectedGenres.filter((g) => g !== genre)
-                          : [...selectedGenres, genre]
+                        selectedGenres.includes(genre.key)
+                          ? selectedGenres.filter((g) => g !== genre.key)
+                          : [...selectedGenres, genre.key]
                       )
                     }
                     className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
                   />
-                  {genre}
+                  {messages.genres[genre.key]}
                 </label>
               ))}
             </div>
@@ -161,24 +170,30 @@ export default function SearchFilter({
           </motion.div>
 
           {/* 支払い方法 */}
-          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5 }}>
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            transition={{ duration: 0.5 }}
+          >
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.payment}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {PAYMENTS.map((payment) => (
-                <label key={payment} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+                <label
+                  key={payment.key}
+                  className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
+                >
                   <input
                     type="checkbox"
-                    checked={selectedPayments.includes(payment)}
+                    checked={selectedPayments.includes(payment.key)}
                     onChange={() =>
                       setSelectedPayments(
-                        selectedPayments.includes(payment)
-                          ? selectedPayments.filter((p) => p !== payment)
-                          : [...selectedPayments, payment]
+                        selectedPayments.includes(payment.key)
+                          ? selectedPayments.filter((p) => p !== payment.key)
+                          : [...selectedPayments, payment.key]
                       )
                     }
                     className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
                   />
-                  {payment}
+                  {messages.payments[payment.key]}
                 </label>
               ))}
             </div>
