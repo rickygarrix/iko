@@ -1,5 +1,12 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const withNextIntl = require('next-intl/plugin')(
+  './i18n/request.ts',
+  {
+    locales: ['ja', 'en', 'zh', 'ko'],
+    defaultLocale: 'ja',
+  }
+);
+
+module.exports = withNextIntl({
   experimental: {
     appDir: true,
     scrollRestoration: true,
@@ -12,6 +19,4 @@ const nextConfig = {
       "bqexmwjcmtyypzucndrb.supabase.co",
     ],
   },
-};
-
-module.exports = nextConfig;
+});
