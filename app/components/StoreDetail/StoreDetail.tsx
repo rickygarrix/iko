@@ -55,6 +55,7 @@ export default function StoreDetail({ messages }: Props) {
   );
 
   useEffect(() => {
+    console.log("🧪 [StoreDetail] messages passed:", messages);
     if (id) {
       logAction("open_store", { store_id: id, referrer_page: document.referrer || null });
     }
@@ -98,7 +99,7 @@ export default function StoreDetail({ messages }: Props) {
           )}
           onClickPost={(url) => handleLog("click_instagram_post", url)}
         />
-        {store.website && (
+        {store.website && messages?.website && (
           <StoreWebsiteButton
             href={store.website}
             label={messages.website}

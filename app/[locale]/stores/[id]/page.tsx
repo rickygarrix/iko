@@ -1,14 +1,20 @@
-"use client";
-
 import StoreDetail from "@/components/StoreDetail/StoreDetail";
-import type { Messages } from "@/types/messages";
+import ja from "@/locales/ja.json";
+import en from "@/locales/en.json";
+import zh from "@/locales/zh.json";
+import ko from "@/locales/ko.json";
 
-// StoreDetail 側で useParams や Supabase の取得処理を行うので、ここでは messages を渡すだけ
+const dictionaries = { ja, en, zh, ko } as const;
+
+type Locale = keyof typeof dictionaries;
 
 type Props = {
-  messages: Messages["storeDetail"];
+  params: { locale: string };
 };
 
-export default function StorePage(props: Props) {
-  return <StoreDetail {...props} />;
+export default async function Page({ params }: Props) {
+  const locale = params.locale as Locale;
+  const messages = dictionaries[locale] || dictionaries.ja;
+
+  return <StoreDetail messages={messages.storeDetail ?? {}} />;
 }

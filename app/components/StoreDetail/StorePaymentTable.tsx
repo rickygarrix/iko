@@ -1,6 +1,7 @@
 // components/StoreDetail/StorePaymentTable.tsx
 import type { Store } from "./StoreDetail";
 import type { Messages } from "@/types/messages";
+import React from "react";
 
 export default function StorePaymentTable({
   store,
@@ -26,24 +27,18 @@ export default function StorePaymentTable({
             .map((row, i) => (
               <tr key={i}>
                 {row.map((method, j) => (
-                  <>
-                    <td
-                      className="border border-[#E7E7EF] px-3 py-2 w-[40%]"
-                      key={`label-${j}`}
-                    >
+                  <React.Fragment key={j}>
+                    <td className="border border-[#E7E7EF] px-3 py-2 w-[40%]">
                       {method}
                     </td>
-                    <td
-                      className="border border-[#E7E7EF] px-3 py-2 w-[10%] text-center"
-                      key={`val-${j}`}
-                    >
+                    <td className="border border-[#E7E7EF] px-3 py-2 w-[10%] text-center">
                       {method === "その他"
                         ? "ー"
                         : store.payment_methods.includes(method)
                           ? "○"
                           : "ー"}
                     </td>
-                  </>
+                  </React.Fragment>
                 ))}
               </tr>
             ))}
