@@ -5,7 +5,6 @@ import Image from "next/image";
 import { GENRES } from "@/constants/genres";
 import { AREAS } from "@/constants/areas";
 import { PAYMENTS } from "@/constants/payments";
-import { useSearchParams } from "next/navigation";
 import { logAction } from "@/lib/utils";
 import type { Messages } from "@/types/messages";
 
@@ -24,6 +23,7 @@ type SearchFilterProps = {
   messages: Messages["searchFilter"] & {
     payments: { [key: string]: string };
     genres: { [key: string]: string };
+    areas: { [key: string]: string };
   };
 };
 
@@ -41,12 +41,10 @@ export default function SearchFilter({
   showTitle = true,
   messages,
 }: SearchFilterProps) {
-  const searchParams = useSearchParams();
-
   const logSearchAction = async (action: "search" | "reset_search") => {
     const currentParams = new URLSearchParams(window.location.search).toString();
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       query_params: currentParams,
     };
 
@@ -142,9 +140,7 @@ export default function SearchFilter({
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             transition={{ duration: 0.5 }}
           >
-            <p className="text-[16px] font-bold leading-[24px] mb-2">
-              {messages.area}
-            </p>
+            <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.area}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {AREAS.map((area) => (
                 <label

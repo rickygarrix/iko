@@ -59,7 +59,7 @@ export default function StoreDetail({ messages }: Props) {
     if (id) {
       logAction("open_store", { store_id: id, referrer_page: document.referrer || null });
     }
-  }, [id]);
+  }, [id, messages]); // ← messagesを追加！
 
   const handleLog = async (action: string, detail?: string) => {
     if (id) await logAction(action, { store_id: id, ...(detail ? { detail } : {}) });

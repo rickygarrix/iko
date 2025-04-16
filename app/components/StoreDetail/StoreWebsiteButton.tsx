@@ -1,5 +1,4 @@
 // components/StoreDetail/StoreWebsiteButton.tsx
-import type { Store } from "./StoreDetail";
 
 type Props = {
   href: string;

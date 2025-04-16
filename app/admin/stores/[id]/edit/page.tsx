@@ -10,6 +10,25 @@ import { PAYMENTS } from "@/constants/payments";
 
 const DAYS = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"];
 
+type Option = { key: string; label: string };
+
+type ParsedStoreData = {
+  name?: string;
+  genre?: string;
+  area?: string;
+  address?: string;
+  phone?: string;
+  openingHoursList?: string[];
+  websiteUrl?: string;
+  instagramUrl?: string;
+  paymentMethods?: string[];
+  description?: string;
+  imageUrl?: string;
+  storeInstagram1?: string;
+  storeInstagram2?: string;
+  storeInstagram3?: string;
+};
+
 export default function StoreEditPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -33,26 +52,11 @@ export default function StoreEditPage() {
   const [storeInstagram2, setStoreInstagram2] = useState("");
   const [storeInstagram3, setStoreInstagram3] = useState("");
 
-  const clearHoliday = (idx: number) => {
-    const newStarts = [...startHours];
-    const newEnds = [...endHours];
-    newStarts[idx] = "";
-    newEnds[idx] = "";
-    setStartHours(newStarts);
-    setEndHours(newEnds);
-  };
-
-  const isValidTimeFormat = (time: string): boolean => {
-    if (!time) return true; // 空欄はOKにする
-    const regex = /^[0-9]{1,2}:[0-9]{2}$/;
-    return regex.test(time);
-  };
-
   useEffect(() => {
     const fetchStore = async () => {
       const sessionData = sessionStorage.getItem("editStoreData");
       if (sessionData) {
-        const parsed = JSON.parse(sessionData);
+        const parsed: ParsedStoreData = JSON.parse(sessionData);
         setFields(parsed);
         setLoading(false);
         return;
@@ -67,7 +71,7 @@ export default function StoreEditPage() {
       if (error || !data) {
         console.error("取得エラー:", error);
       } else {
-        setFields({
+        const parsed: ParsedStoreData = {
           name: data.name,
           genre: data.genre,
           area: data.area,
@@ -82,8 +86,10 @@ export default function StoreEditPage() {
           storeInstagram1: data.store_instagrams || "",
           storeInstagram2: data.store_instagrams2 || "",
           storeInstagram3: data.store_instagrams3 || "",
-        });
+        };
+        setFields(parsed);
       }
+
       setLoading(false);
     };
 
@@ -92,23 +98,22 @@ export default function StoreEditPage() {
     }
   }, [id]);
 
-  const setFields = (parsed: any) => {
-    setName(parsed.name ?? ""); // ←これ！
+  const setFields = (parsed: ParsedStoreData) => {
+    setName(parsed.name ?? "");
     setGenre(parsed.genre ?? "");
     setArea(parsed.area ?? "");
     setAddress(parsed.address ?? "");
     setPhone(parsed.phone ?? "");
-    const starts = parsed.openingHoursList?.map((time: string) =>
-      time?.split("〜")[0] ?? ""
-    ) || Array(7).fill(""); // ←nullでも空文字にする
-    const ends = parsed.openingHoursList?.map((time: string) =>
-      time?.split("〜")[1] ?? ""
-    ) || Array(7).fill(""); // ←同様
+
+    const starts = parsed.openingHoursList?.map((time) => time?.split("~")[0] ?? "") || Array(7).fill("");
+    const ends = parsed.openingHoursList?.map((time) => time?.split("~")[1] ?? "") || Array(7).fill("");
+
     setStartHours(starts);
     setEndHours(ends);
+
     setWebsiteUrl(parsed.websiteUrl ?? "");
     setInstagramUrl(parsed.instagramUrl ?? "");
-    setPaymentMethods(parsed.paymentMethods || []);
+    setPaymentMethods(parsed.paymentMethods ?? []);
     setDescription(parsed.description ?? "");
     setImageUrl(parsed.imageUrl ?? "");
     setStoreInstagram1(parsed.storeInstagram1 ?? "");
@@ -130,7 +135,7 @@ export default function StoreEditPage() {
       const end = endHours[idx];
       if (start === "休み") return `${DAYS[idx]} 休み`;
       if (!start || !end) return `${DAYS[idx]} 休み`;
-      return `${DAYS[idx]} ${start}〜${end}`;
+      return `${DAYS[idx]} ${start}~${end}`;
     });
 
     const storeData = {
@@ -154,6 +159,21 @@ export default function StoreEditPage() {
     router.push(`/admin/stores/${id}/confirm`);
   };
 
+  const isValidTimeFormat = (time: string): boolean => {
+    if (!time) return true;
+    const regex = /^[0-9]{1,2}:[0-9]{2}$/;
+    return regex.test(time);
+  };
+
+  const clearHoliday = (idx: number) => {
+    const newStarts = [...startHours];
+    const newEnds = [...endHours];
+    newStarts[idx] = "";
+    newEnds[idx] = "";
+    setStartHours(newStarts);
+    setEndHours(newEnds);
+  };
+
   const setAsHoliday = (idx: number) => {
     const newStarts = [...startHours];
     const newEnds = [...endHours];
@@ -168,16 +188,20 @@ export default function StoreEditPage() {
   return (
     <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
       <h1 className="text-2xl font-bold text-center mb-8">店舗情報編集</h1>
-
       <div className="space-y-4">
-        {/* 入力フォーム */}
         <InputField label="店舗名" value={name} setValue={setName} />
         <RadioGroup label="ジャンル" options={GENRES} selected={genre} setSelected={setGenre} />
         <RadioGroup label="エリア" options={AREAS} selected={area} setSelected={setArea} />
         <InputField label="住所" value={address} setValue={setAddress} />
         <InputField label="電話番号" value={phone} setValue={setPhone} />
+        <InputField label="公式サイト" value={websiteUrl} setValue={setWebsiteUrl} />
+        <InputField label="Instagramアカウント" value={instagramUrl} setValue={setInstagramUrl} />
+        <CheckboxGroup label="支払い方法" options={PAYMENTS} selected={paymentMethods} setSelected={setPaymentMethods} />
+        <InputField label="Instagram投稿リンク1" value={storeInstagram1} setValue={setStoreInstagram1} />
+        <InputField label="Instagram投稿リンク2" value={storeInstagram2} setValue={setStoreInstagram2} />
+        <InputField label="Instagram投稿リンク3" value={storeInstagram3} setValue={setStoreInstagram3} />
+        <TextAreaField label="店舗説明" value={description} setValue={setDescription} />
 
-        {/* 営業時間入力 */}
         <div>
           <p className="text-sm text-gray-600 mb-2">営業時間</p>
           {DAYS.map((day, idx) => (
@@ -186,12 +210,7 @@ export default function StoreEditPage() {
               {startHours[idx] === "休み" ? (
                 <div className="text-red-500 flex items-center">
                   休み
-                  <button
-                    onClick={() => clearHoliday(idx)}
-                    className="ml-2 text-sm text-blue-600 underline"
-                  >
-                    クリア
-                  </button>
+                  <button onClick={() => clearHoliday(idx)} className="ml-2 text-sm text-blue-600 underline">クリア</button>
                 </div>
               ) : (
                 <>
@@ -203,11 +222,10 @@ export default function StoreEditPage() {
                       updated[idx] = e.target.value;
                       setStartHours(updated);
                     }}
-                    className={`border p-2 rounded w-20 ${isValidTimeFormat(startHours[idx]) ? "" : "border-red-500"
-                      }`}
+                    className={`border p-2 rounded w-20 ${isValidTimeFormat(startHours[idx]) ? "" : "border-red-500"}`}
                     placeholder="18:00"
                   />
-                  <span>〜</span>
+                  <span>~</span>
                   <input
                     type="text"
                     value={endHours[idx] || ""}
@@ -216,39 +234,22 @@ export default function StoreEditPage() {
                       updated[idx] = e.target.value;
                       setEndHours(updated);
                     }}
-                    className={`border p-2 rounded w-20 ${isValidTimeFormat(endHours[idx]) ? "" : "border-red-500"
-                      }`}
+                    className={`border p-2 rounded w-20 ${isValidTimeFormat(endHours[idx]) ? "" : "border-red-500"}`}
                     placeholder="28:00"
                   />
-                  <button
-                    onClick={() => setAsHoliday(idx)}
-                    className="ml-2 text-sm text-blue-600 underline"
-                  >
-                    休み
-                  </button>
+                  <button onClick={() => setAsHoliday(idx)} className="ml-2 text-sm text-blue-600 underline">休み</button>
                 </>
               )}
             </div>
           ))}
         </div>
 
-        {/* その他入力 */}
-        <CheckboxGroup label="支払い方法" options={PAYMENTS} selected={paymentMethods} setSelected={setPaymentMethods} />
-        <InputField label="公式サイト" value={websiteUrl} setValue={setWebsiteUrl} />
-        <InputField label="Instagramアカウント" value={instagramUrl} setValue={setInstagramUrl} />
-        <InputField label="Instagram投稿リンク1" value={storeInstagram1} setValue={setStoreInstagram1} />
-        <InputField label="Instagram投稿リンク2" value={storeInstagram2} setValue={setStoreInstagram2} />
-        <InputField label="Instagram投稿リンク3" value={storeInstagram3} setValue={setStoreInstagram3} />
-        <TextAreaField label="店舗説明" value={description} setValue={setDescription} />
-
-        {/* 画像表示 */}
         {imageUrl && (
           <div className="relative w-full max-w-xs h-60 mx-auto mb-4 rounded overflow-hidden border">
             <Image src={imageUrl} alt="店舗画像" fill style={{ objectFit: "cover" }} sizes="100%" unoptimized />
           </div>
         )}
 
-        {/* ボタン */}
         <div className="space-y-4 mt-8">
           <button
             onClick={() => router.push(`/admin/stores/${id}`)}
@@ -268,7 +269,6 @@ export default function StoreEditPage() {
   );
 }
 
-/* 以降、パーツコンポーネントたち */
 function InputField({ label, value, setValue }: { label: string; value: string; setValue: (v: string) => void }) {
   return (
     <div>
@@ -297,21 +297,26 @@ function TextAreaField({ label, value, setValue }: { label: string; value: strin
   );
 }
 
-function RadioGroup({ label, options, selected, setSelected }: { label: string; options: string[]; selected: string; setSelected: (v: string) => void }) {
+function RadioGroup({ label, options, selected, setSelected }: {
+  label: string;
+  options: Option[];
+  selected: string;
+  setSelected: (v: string) => void;
+}) {
   return (
     <div>
       <p className="text-sm text-gray-600 mb-2">{label}</p>
       <div className="flex flex-wrap gap-4">
         {options.map((o) => (
-          <label key={o} className="flex items-center gap-2">
+          <label key={o.key} className="flex items-center gap-2">
             <input
               type="radio"
               name={label}
-              value={o}
-              checked={selected === o}
+              value={o.key}
+              checked={selected === o.key}
               onChange={(e) => setSelected(e.target.value)}
             />
-            {o}
+            {o.label}
           </label>
         ))}
       </div>
@@ -319,25 +324,30 @@ function RadioGroup({ label, options, selected, setSelected }: { label: string; 
   );
 }
 
-function CheckboxGroup({ label, options, selected, setSelected }: { label: string; options: string[]; selected: string[]; setSelected: (v: string[]) => void }) {
+function CheckboxGroup({ label, options, selected, setSelected }: {
+  label: string;
+  options: Option[];
+  selected: string[];
+  setSelected: (v: string[]) => void;
+}) {
   return (
     <div>
       <p className="text-sm text-gray-600 mb-2">{label}</p>
       <div className="flex flex-wrap gap-4">
         {options.map((o) => (
-          <label key={o} className="flex items-center gap-2">
+          <label key={o.key} className="flex items-center gap-2">
             <input
               type="checkbox"
-              value={o}
-              checked={selected.includes(o)}
+              value={o.key}
+              checked={selected.includes(o.key)}
               onChange={(e) => {
                 const updated = e.target.checked
-                  ? [...selected, o]
-                  : selected.filter((item) => item !== o);
+                  ? [...selected, o.key]
+                  : selected.filter((item) => item !== o.key);
                 setSelected(updated);
               }}
             />
-            {o}
+            {o.label}
           </label>
         ))}
       </div>

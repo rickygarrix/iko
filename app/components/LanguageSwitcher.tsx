@@ -3,8 +3,6 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 
-const LOCALES = ["ja", "en", "zh", "ko"];
-
 export default function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();

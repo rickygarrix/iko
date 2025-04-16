@@ -53,11 +53,12 @@ export default function Header({ messages }: Props) {
           onClick={handleHomeClick}
           className="w-20 h-6 relative cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
         >
-          <img
+          <Image
             src="/header/logo.svg"
-            alt="Otonavi Logo"
+            alt="..."
             width={80}
             height={24}
+            unoptimized
           />
         </div>
 

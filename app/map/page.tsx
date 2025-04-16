@@ -99,7 +99,7 @@ export default function MapPage() {
     const handleFullscreenChange = () => setShowSearchButton(true);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
+  }, [mapCenter.lat, mapCenter.lng, selectedGenres, showOnlyOpen]);
 
   const fetchNearbyStores = async (lat: number, lng: number, filterOpen: boolean, genres: string[]): Promise<Store[]> => {
     const { data, error } = await supabase.from("stores").select("id, name, latitude, longitude, genre, area, image_url, opening_hours");

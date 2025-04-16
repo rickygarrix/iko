@@ -3,15 +3,13 @@ const withNextIntl = require('next-intl/plugin')(
   {
     locales: ['ja', 'en', 'zh', 'ko'],
     defaultLocale: 'ja',
-    localeDetection: false, // ← これを追加！
+    localeDetection: false, // 自動検出オフ
   }
 );
 
-module.exports = withNextIntl({
-  experimental: {
-    appDir: true,
-    scrollRestoration: true,
-  },
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  scrollRestoration: true, // ✅ トップレベルでOK
   reactStrictMode: true,
   images: {
     domains: [
@@ -20,4 +18,6 @@ module.exports = withNextIntl({
       "bqexmwjcmtyypzucndrb.supabase.co",
     ],
   },
-});
+};
+
+module.exports = withNextIntl(nextConfig);

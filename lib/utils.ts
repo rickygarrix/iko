@@ -2,7 +2,7 @@
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import isBetween from "dayjs/plugin/isBetween";
-import { supabase } from "@/lib/supabase"; // 🔥 追加
+import { supabase } from "@/lib/supabase";
 
 dayjs.extend(isBetween);
 
@@ -27,21 +27,20 @@ export const checkIfOpen = (opening_hours: string) => {
     now = nowRaw.subtract(1, "day");
   }
 
-  let today = convertToJapaneseDay(now.format("dddd"));
-  let tomorrow = convertToJapaneseDay(now.add(1, "day").format("dddd"));
-  const currentTime = nowRaw.format("HH:mm");
+  const today = convertToJapaneseDay(now.format("dddd"));
+  const tomorrow = convertToJapaneseDay(now.add(1, "day").format("dddd"));
 
   const hoursMap: { [key: string]: { open: string; close: string }[] } = {};
   opening_hours.split("\n").forEach((line) => {
     const match = line.match(/^(.+?曜)\s*(.+)$/);
     if (match && match[1] && match[2]) {
       const day = match[1].trim();
-      let hoursText = match[2].trim();
+      const hoursText = match[2].trim();
 
       if (hoursText === "休み") {
         hoursMap[day] = [];
       } else {
-        let hoursList = hoursText.split(", ");
+        const hoursList = hoursText.split(", ");
         hoursMap[day] = hoursList.map((hours) => {
           const [openTime, closeTime] = hours.split("〜").map((t) => t.trim());
           return { open: openTime, close: closeTime };
@@ -51,12 +50,26 @@ export const checkIfOpen = (opening_hours: string) => {
   });
 
   const foundKey = Object.keys(hoursMap).find((key) => key.startsWith(today));
-  if (!foundKey || !hoursMap.hasOwnProperty(foundKey) || !Array.isArray(hoursMap[foundKey]) || hoursMap[foundKey]?.length === 0) {
-    const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
-    if (!nextDayKey || !hoursMap.hasOwnProperty(nextDayKey) || !Array.isArray(hoursMap[nextDayKey])) {
+  if (
+    !foundKey ||
+    !hoursMap.hasOwnProperty(foundKey) ||
+    !Array.isArray(hoursMap[foundKey]) ||
+    hoursMap[foundKey]?.length === 0
+  ) {
+    const nextDayKey = Object.keys(hoursMap).find((key) =>
+      key.startsWith(tomorrow)
+    );
+    if (
+      !nextDayKey ||
+      !hoursMap.hasOwnProperty(nextDayKey) ||
+      !Array.isArray(hoursMap[nextDayKey])
+    ) {
       return { isOpen: false, nextOpening: "営業情報なし" };
     }
-    return { isOpen: false, nextOpening: `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から` };
+    return {
+      isOpen: false,
+      nextOpening: `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`,
+    };
   }
 
   const todayHours = hoursMap[foundKey] || [];
@@ -94,14 +107,16 @@ export const checkIfOpen = (opening_hours: string) => {
       return { isOpen: false, nextOpening: "" };
     }
 
-    let futureHours = todayHours.filter(period =>
+    const futureHours = todayHours.filter((period) =>
       dayjs(`${now.format("YYYY-MM-DD")} ${period.open}`).isAfter(now)
     );
 
     if (futureHours.length > 0) {
       nextOpening = `次の営業: ${today} ${futureHours[0]?.open} から`;
     } else {
-      let nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(tomorrow));
+      const nextDayKey = Object.keys(hoursMap).find((key) =>
+        key.startsWith(tomorrow)
+      );
       if (nextDayKey && hoursMap[nextDayKey].length > 0) {
         nextOpening = `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`;
       }
@@ -123,13 +138,13 @@ export const getDeviceType = (): "pc" | "mobile" => {
 // ✅ アクションログを保存する関数
 export const logAction = async (
   action: string,
-  payload?: Record<string, any> // 追加データ
+  payload?: Record<string, unknown> // 🔧 any → unknown に変更
 ) => {
   try {
     const baseLog = {
       action,
-      device: getDeviceType(), // 自動でデバイス付与
-      referrer_page: document.referrer || null, // 自動でリファラ付与
+      device: getDeviceType(),
+      referrer_page: document.referrer || null,
       ...payload,
     };
 

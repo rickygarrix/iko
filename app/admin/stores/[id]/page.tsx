@@ -25,8 +25,6 @@ type Store = {
   store_instagrams3: string | null;
 };
 
-const DAYS = ["月", "火", "水", "木", "金", "土", "日"];
-
 export default function StoreDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();

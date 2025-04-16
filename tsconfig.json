@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
     "target": "ESNext",
     "lib": [
       "dom",

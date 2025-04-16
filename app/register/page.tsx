@@ -10,9 +10,14 @@ import Image from "next/image";
 
 const DAYS = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"];
 
+type Option = {
+  key: string;
+  label: string;
+};
+
 export default function StoreRegisterPage() {
   const router = useRouter();
-  const pendingStore = usePendingStore((state) => state.pendingStore); // ★ 追加！
+  const pendingStore = usePendingStore((state) => state.pendingStore);
   const setPendingStore = usePendingStore((state) => state.setPendingStore);
 
   const [name, setName] = useState("");
@@ -30,7 +35,6 @@ export default function StoreRegisterPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState("");
 
-  // 🌟 追加：pendingStoreから初期値を復元
   useEffect(() => {
     if (pendingStore) {
       setName(pendingStore.name || "");
@@ -45,7 +49,6 @@ export default function StoreRegisterPage() {
       setImageUrl(pendingStore.image_url || "");
       setImageFile(pendingStore.image_file || null);
 
-      // 営業時間だけ特別パース
       if (pendingStore.opening_hours) {
         const lines = pendingStore.opening_hours.split("\n");
         const startList: string[] = [];
@@ -69,14 +72,6 @@ export default function StoreRegisterPage() {
       }
     }
   }, [pendingStore]);
-
-  const togglePaymentMethod = (method: string) => {
-    setPaymentMethods((prev) =>
-      prev.includes(method)
-        ? prev.filter((m) => m !== method)
-        : [...prev, method]
-    );
-  };
 
   const setAsHoliday = (idx: number) => {
     const newStarts = [...startHours];
@@ -131,7 +126,6 @@ export default function StoreRegisterPage() {
   return (
     <div className="min-h-screen bg-[#FEFCF6] pt-24 px-10 pb-10 text-gray-800">
       <h1 className="text-2xl font-bold text-center mb-8">店舗登録フォーム</h1>
-
       <div className="space-y-6">
         <InputField label="店舗名 (必須)" value={name} setValue={setName} />
         <RadioGroup label="ジャンル (必須)" options={GENRES} selected={genre} setSelected={setGenre} />
@@ -191,7 +185,7 @@ export default function StoreRegisterPage() {
         <InputField label="InstagramアカウントURL" value={instagramUrl} setValue={setInstagramUrl} />
         <TextAreaField label="店舗説明 (必須)" value={description} setValue={setDescription} />
 
-        {/* 店舗画像 */}
+        {/* 画像 */}
         <div>
           <p className="text-sm text-gray-600 mb-2">店舗画像（任意）</p>
           <input
@@ -213,10 +207,8 @@ export default function StoreRegisterPage() {
           )}
         </div>
 
-        {/* エラー */}
         {error && <p className="text-red-500 text-center">{error}</p>}
 
-        {/* ボタン */}
         <div className="space-y-4 mt-8">
           <button onClick={handleConfirm} className="w-full bg-[#1F1F21] text-white rounded p-3 hover:bg-[#333]">
             確認画面に進む
@@ -227,16 +219,12 @@ export default function StoreRegisterPage() {
   );
 }
 
+// 共通UI
 function InputField({ label, value, setValue }: { label: string; value: string; setValue: (v: string) => void }) {
   return (
     <div>
       <p className="text-sm text-gray-600 mb-2">{label}</p>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="w-full border p-2 rounded"
-      />
+      <input type="text" value={value} onChange={(e) => setValue(e.target.value)} className="w-full border p-2 rounded" />
     </div>
   );
 }
@@ -245,31 +233,36 @@ function TextAreaField({ label, value, setValue }: { label: string; value: strin
   return (
     <div>
       <p className="text-sm text-gray-600 mb-2">{label}</p>
-      <textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="w-full border p-2 rounded"
-        rows={5}
-      />
+      <textarea value={value} onChange={(e) => setValue(e.target.value)} className="w-full border p-2 rounded" rows={5} />
     </div>
   );
 }
 
-function RadioGroup({ label, options, selected, setSelected }: { label: string; options: string[]; selected: string; setSelected: (v: string) => void }) {
+function RadioGroup({
+  label,
+  options,
+  selected,
+  setSelected,
+}: {
+  label: string;
+  options: Option[];
+  selected: string;
+  setSelected: (v: string) => void;
+}) {
   return (
     <div>
       <p className="text-sm text-gray-600 mb-2">{label}</p>
       <div className="flex flex-wrap gap-4">
         {options.map((o) => (
-          <label key={o} className="flex items-center gap-2">
+          <label key={o.key} className="flex items-center gap-2">
             <input
               type="radio"
               name={label}
-              value={o}
-              checked={selected === o}
+              value={o.key}
+              checked={selected === o.key}
               onChange={(e) => setSelected(e.target.value)}
             />
-            {o}
+            {o.label}
           </label>
         ))}
       </div>
@@ -277,25 +270,35 @@ function RadioGroup({ label, options, selected, setSelected }: { label: string; 
   );
 }
 
-function CheckboxGroup({ label, options, selected, setSelected }: { label: string; options: string[]; selected: string[]; setSelected: (v: string[]) => void }) {
+function CheckboxGroup({
+  label,
+  options,
+  selected,
+  setSelected,
+}: {
+  label: string;
+  options: Option[];
+  selected: string[];
+  setSelected: (v: string[]) => void;
+}) {
   return (
     <div>
       <p className="text-sm text-gray-600 mb-2">{label}</p>
       <div className="flex flex-wrap gap-4">
         {options.map((o) => (
-          <label key={o} className="flex items-center gap-2">
+          <label key={o.key} className="flex items-center gap-2">
             <input
               type="checkbox"
-              value={o}
-              checked={selected.includes(o)}
+              value={o.key}
+              checked={selected.includes(o.key)}
               onChange={(e) => {
                 const updated = e.target.checked
-                  ? [...selected, o]
-                  : selected.filter((item) => item !== o);
+                  ? [...selected, o.key]
+                  : selected.filter((item) => item !== o.key);
                 setSelected(updated);
               }}
             />
-            {o}
+            {o.label}
           </label>
         ))}
       </div>
