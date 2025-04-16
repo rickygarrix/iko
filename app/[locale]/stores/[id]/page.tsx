@@ -1,20 +1,31 @@
-import StoreDetail from "@/components/StoreDetail/StoreDetail";
-import ja from "@/locales/ja.json";
-import en from "@/locales/en.json";
-import zh from "@/locales/zh.json";
-import ko from "@/locales/ko.json";
-
-const dictionaries = { ja, en, zh, ko } as const;
-
-type Locale = keyof typeof dictionaries;
+import { type Locale } from "@/i18n/config";
+import StoreDetailPage from "@/components/StoreDetail/StoreDetail";
+import { getDictionary } from "@/lib/getDictionary"; // ← 追加
 
 type Props = {
-  params: { locale: string };
+  params: {
+    locale: Locale;
+    id: string;
+  };
 };
 
-export default async function Page({ params }: Props) {
-  const locale = params.locale as Locale;
-  const messages = dictionaries[locale] || dictionaries.ja;
+export function generateStaticParams() {
+  const locales: Locale[] = ["ja", "en", "zh", "ko"];
+  return locales.map((locale) => ({
+    locale,
+    id: "dummy",
+  }));
+}
 
-  return <StoreDetail messages={messages.storeDetail ?? {}} />;
+// ✅ ページ本体（messagesを取得して渡す）
+export default async function Page({ params }: Props) {
+  const dict = await getDictionary(params.locale);
+
+  return (
+    <StoreDetailPage
+      id={params.id}
+      locale={params.locale}
+      messages={dict.storeDetail ?? {}}
+    />
+  );
 }

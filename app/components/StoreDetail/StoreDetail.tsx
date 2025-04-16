@@ -1,6 +1,5 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +12,7 @@ import StorePaymentTable from "./StorePaymentTable";
 import StoreInfoTable from "./StoreInfoTable";
 import StoreWebsiteButton from "./StoreWebsiteButton";
 import type { Messages } from "@/types/messages";
+import type { Locale } from "@/i18n/config";
 
 export type Store = {
   id: string;
@@ -40,11 +40,12 @@ export type Store = {
 };
 
 type Props = {
+  id: string;
+  locale: Locale; // ← ✅ これを追加！
   messages: Messages["storeDetail"];
 };
 
-export default function StoreDetail({ messages }: Props) {
-  const { id } = useParams();
+export default function StoreDetail({ id, messages }: Props) {
   const { data: store, error, isLoading } = useSWR<Store>(
     id ? ["store", id] : null,
     async ([, id]) => {
@@ -55,11 +56,10 @@ export default function StoreDetail({ messages }: Props) {
   );
 
   useEffect(() => {
-    console.log("🧪 [StoreDetail] messages passed:", messages);
     if (id) {
       logAction("open_store", { store_id: id, referrer_page: document.referrer || null });
     }
-  }, [id, messages]); // ← messagesを追加！
+  }, [id, messages]);
 
   const handleLog = async (action: string, detail?: string) => {
     if (id) await logAction(action, { store_id: id, ...(detail ? { detail } : {}) });

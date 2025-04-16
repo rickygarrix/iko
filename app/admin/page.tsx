@@ -7,32 +7,25 @@ import Link from "next/link";
 
 export default function AdminPage() {
   const router = useRouter();
-  const [authorized, setAuthorized] = useState<boolean | null>(null); // null = チェック中
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) {
-        alert("ログインが必要です");
-        router.push("/login");
+      if (!user || user.email !== "chloerickyc@gmail.com") {
+        router.replace("/not-found"); // ← ここで404風ページにリダイレクト
         return;
       }
 
-      if (user.email !== "chloerickyc@gmail.com") {
-        alert("アクセス権限がありません");
-        router.push("/");
-        return;
-      }
-
-      setAuthorized(true); // OK
+      setIsAuthorized(true);
     };
 
     checkAuth();
   }, [router]);
 
-  if (authorized === null) {
-    return <div className="text-center p-10 text-gray-800">認証確認中...</div>;
+  if (!isAuthorized) {
+    return null; // ← 何も表示しない
   }
 
   return (
@@ -65,7 +58,6 @@ export default function AdminPage() {
   );
 }
 
-// --- 🔥 改良版 AdminCard コンポーネント ---
 function AdminCard({ href, title, description }: { href: string; title: string; description: string }) {
   return (
     <Link href={href} className="block">

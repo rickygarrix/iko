@@ -63,12 +63,25 @@
     "qr": "QR Code",
     "other": "Others"
   },
+  "store": {
+    "nextOpen": "Next open: {day} from {time}"
+  },
   "recommend": {
     "title": "This Month's Picks",
     "subtitle": "Recommend",
     "open": "Open now",
     "closed": "Closed",
-    "noDescription": "No store description available."
+    "noDescription": "No store description available.",
+    "nextOpen": "Next open: {day} from {time}",
+    "days": {
+      "Monday": "Mon",
+      "Tuesday": "Tue",
+      "Wednesday": "Wed",
+      "Thursday": "Thu",
+      "Friday": "Fri",
+      "Saturday": "Sat",
+      "Sunday": "Sun"
+    }
   },
   "searchResults": {
     "prompt": "🔍 Please select search filters and press the 'Search' button",
@@ -79,7 +92,17 @@
     "items": "items",
     "open": "Open",
     "closed": "Closed",
-    "noDescription": "No store description available."
+    "noDescription": "No store description available.",
+    "nextOpen": "Next open: {day} from {time}",
+    "days": {
+      "Monday": "Mon",
+      "Tuesday": "Tue",
+      "Wednesday": "Wed",
+      "Thursday": "Thu",
+      "Friday": "Fri",
+      "Saturday": "Sat",
+      "Sunday": "Sun"
+    }
   },
   "storeDetail": {
     "mapTitle": " Map",

@@ -190,7 +190,18 @@ export default function SearchResults({
                     <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
                       {isOpen ? messages.open : messages.closed}
                     </p>
-                    <p className="text-xs">{nextOpening}</p>
+                    <p className="text-xs text-zinc-700">
+                      {nextOpening && (
+                        <div className="text-sm font-light text-zinc-700">
+                          {messages.nextOpen
+                            .replace(
+                              "{day}",
+                              messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
+                            )
+                            .replace("{time}", nextOpening.time)}
+                        </div>
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>

@@ -71,12 +71,25 @@
     "privacy": "隐私政策",
     "copyright": "© オトナビ"
   },
+  "store": {
+    "nextOpen": "下次营业：{day} {time} 起"
+  },
   "recommend": {
     "title": "本月推荐",
     "subtitle": "推荐",
     "open": "营业中",
     "closed": "已打烊",
-    "noDescription": "暂无店铺介绍。"
+    "noDescription": "暂无店铺介绍。",
+    "nextOpen": "下次营业：{day} {time} 起",
+    "days": {
+      "Monday": "周一",
+      "Tuesday": "周二",
+      "Wednesday": "周三",
+      "Thursday": "周四",
+      "Friday": "周五",
+      "Saturday": "周六",
+      "Sunday": "周日"
+    }
   },
   "storeDetail": {
     "mapTitle": " 地图",
@@ -100,6 +113,16 @@
     "items": "件",
     "open": "营业中",
     "closed": "非营业时间",
-    "noDescription": "暂无店铺介绍。"
+    "noDescription": "暂无店铺介绍。",
+    "nextOpen": "下次营业：{day} {time} 起",
+    "days": {
+      "Monday": "周一",
+      "Tuesday": "周二",
+      "Wednesday": "周三",
+      "Thursday": "周四",
+      "Friday": "周五",
+      "Saturday": "周六",
+      "Sunday": "周日"
+    }
   }
 }

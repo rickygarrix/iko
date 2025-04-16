@@ -20,6 +20,14 @@ type Store = {
   store_instagrams?: string | null;
 };
 
+type OpeningInfo = {
+  isOpen: boolean;
+  nextOpening: {
+    day: string;
+    time: string;
+  } | null;
+};
+
 type Props = {
   messages: Messages["recommend"];
 };
@@ -96,9 +104,7 @@ export default function RecommendedStores({ messages }: Props) {
       }, 150);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleClick = async (storeId: string) => {
@@ -123,7 +129,6 @@ export default function RecommendedStores({ messages }: Props) {
   return (
     <div className="w-full bg-white flex justify-center pt-8 relative">
       {isLoading && <div className="fixed inset-0 z-[9999] bg-white/80" />}
-
       <div className="w-full max-w-[600px] flex flex-col mx-auto gap-2">
         {/* 見出し */}
         <div className="w-full px-4 flex flex-col justify-start items-center gap-1">
@@ -141,13 +146,12 @@ export default function RecommendedStores({ messages }: Props) {
         ) : (
           <div className="w-full flex flex-col justify-start items-center gap-px">
             {stores.map((store, index) => {
-              const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
+              const { isOpen, nextOpening } = checkIfOpen(store.opening_hours) as OpeningInfo;
               return (
                 <motion.div
                   key={store.id}
                   onClick={() => handleClick(store.id)}
-                  className={`w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""
-                    } transition-colors duration-200`}
+                  className={`w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""} transition-colors duration-200`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -200,9 +204,20 @@ export default function RecommendedStores({ messages }: Props) {
                           {isOpen ? messages.open : messages.closed}
                         </span>
                       </div>
-                      <div className="text-sm font-light text-zinc-700">
-                        {nextOpening}
-                      </div>
+                      {nextOpening && (
+                        <div className="text-sm font-light text-zinc-700">
+                          {nextOpening && (
+                            <div className="text-sm font-light text-zinc-700">
+                              {messages.nextOpen
+                                .replace(
+                                  "{day}",
+                                  messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
+                                )
+                                .replace("{time}", nextOpening.time)}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>

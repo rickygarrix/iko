@@ -50,23 +50,6 @@ export default function ContactPage() {
             </div>
           )}
 
-          {/* カテゴリー */}
-          <div>
-            <label className="block text-sm font-medium mb-1">お問い合わせカテゴリ</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full border rounded p-2 text-gray-800"
-              required
-            >
-              <option value="">選択してください</option>
-              <option value="ユーザー問い合わせ">ユーザー問い合わせ</option>
-              <option value="店舗掲載について">店舗掲載について</option>
-              <option value="サービスに関する質問">サービスに関する質問</option>
-              <option value="その他">その他</option>
-            </select>
-          </div>
-
           {/* メールアドレス */}
           <div>
             <label className="block text-sm font-medium mb-1">メールアドレス</label>

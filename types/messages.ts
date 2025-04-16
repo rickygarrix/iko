@@ -53,6 +53,16 @@ export type Messages = {
     open: string;
     closed: string;
     noDescription: string;
+    nextOpen: string;
+    days: {
+      Monday: string;
+      Tuesday: string;
+      Wednesday: string;
+      Thursday: string;
+      Friday: string;
+      Saturday: string;
+      Sunday: string;
+    };
   };
   searchResults: {
     prompt: string;
@@ -64,6 +74,16 @@ export type Messages = {
     open: string;
     closed: string;
     noDescription: string;
+    nextOpen: string;
+    days: {
+      Monday: string;
+      Tuesday: string;
+      Wednesday: string;
+      Thursday: string;
+      Friday: string;
+      Saturday: string;
+      Sunday: string;
+    };
   };
   storeDetail: {
     mapTitle: string;

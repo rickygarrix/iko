@@ -16,9 +16,10 @@ export default function Header({ messages }: Props) {
   const { locale } = useParams() as { locale: string };
 
   const handleHomeClick = useCallback(() => {
-    if (pathname !== `/${locale}`) {
+    const targetPath = `/${locale}`;
+    if (pathname !== targetPath) {
       document.body.style.opacity = "0";
-      router.push(`/${locale}`);
+      router.push(targetPath);
       setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 50);
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "auto" });

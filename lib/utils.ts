@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 
 dayjs.extend(isBetween);
 
-// ✅ 曜日を日本語に変換
+// ✅ 日本語曜日名へ変換（マッチング用）
 export const convertToJapaneseDay = (day: string) => {
   return day
     .replace("Sunday", "日曜日")
@@ -19,18 +19,26 @@ export const convertToJapaneseDay = (day: string) => {
     .replace("曜日", "");
 };
 
-// ✅ 営業時間を判定
-export const checkIfOpen = (opening_hours: string) => {
-  const nowRaw = dayjs().locale("ja");
+// ✅ 英語で曜日を返す（翻訳対応前提）
+export const checkIfOpen = (opening_hours: string): {
+  isOpen: boolean;
+  nextOpening: { day: string; time: string } | null;
+} => {
+  const nowRaw = dayjs();
   let now = nowRaw;
+
   if (nowRaw.hour() < 6) {
     now = nowRaw.subtract(1, "day");
   }
 
-  const today = convertToJapaneseDay(now.format("dddd"));
-  const tomorrow = convertToJapaneseDay(now.add(1, "day").format("dddd"));
+  const today = now.format("dddd"); // "Monday"
+  const tomorrow = now.add(1, "day").format("dddd");
+
+  const jpToday = convertToJapaneseDay(today);       // "月曜日"
+  const jpTomorrow = convertToJapaneseDay(tomorrow); // "火曜日"
 
   const hoursMap: { [key: string]: { open: string; close: string }[] } = {};
+
   opening_hours.split("\n").forEach((line) => {
     const match = line.match(/^(.+?曜)\s*(.+)$/);
     if (match && match[1] && match[2]) {
@@ -49,76 +57,60 @@ export const checkIfOpen = (opening_hours: string) => {
     }
   });
 
-  const foundKey = Object.keys(hoursMap).find((key) => key.startsWith(today));
-  if (
-    !foundKey ||
-    !hoursMap.hasOwnProperty(foundKey) ||
-    !Array.isArray(hoursMap[foundKey]) ||
-    hoursMap[foundKey]?.length === 0
-  ) {
-    const nextDayKey = Object.keys(hoursMap).find((key) =>
-      key.startsWith(tomorrow)
-    );
-    if (
-      !nextDayKey ||
-      !hoursMap.hasOwnProperty(nextDayKey) ||
-      !Array.isArray(hoursMap[nextDayKey])
-    ) {
-      return { isOpen: false, nextOpening: "営業情報なし" };
+  const foundKey = Object.keys(hoursMap).find((key) => key.startsWith(jpToday));
+  if (!foundKey || !hoursMap[foundKey]?.length) {
+    const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(jpTomorrow));
+    if (!nextDayKey || !hoursMap[nextDayKey]?.length) {
+      return { isOpen: false, nextOpening: null };
     }
     return {
       isOpen: false,
-      nextOpening: `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`,
+      nextOpening: {
+        day: tomorrow,
+        time: hoursMap[nextDayKey][0].open,
+      },
     };
   }
 
   const todayHours = hoursMap[foundKey] || [];
-  if (!todayHours.length) {
-    return { isOpen: false, nextOpening: "情報なし" };
-  }
-
-  let nextOpening = "";
+  let nextOpening: { day: string; time: string } | null = null;
   let isOpen = false;
 
   for (const period of todayHours) {
-    let openHour = parseInt(period.open.split(":")[0], 10);
-    let openMinute = parseInt(period.open.split(":")[1], 10);
-    let closeHour = parseInt(period.close.split(":")[0], 10);
-    let closeMinute = parseInt(period.close.split(":")[1], 10);
+    const [openHourStr, openMinuteStr] = period.open.split(":");
+    const [closeHourStr, closeMinuteStr] = period.close.split(":");
 
-    let open = now.set("hour", openHour).set("minute", openMinute);
-    let close = now.set("hour", closeHour).set("minute", closeMinute);
+    let open = now.set("hour", parseInt(openHourStr)).set("minute", parseInt(openMinuteStr));
+    let close = now.set("hour", parseInt(closeHourStr)).set("minute", parseInt(closeMinuteStr));
 
-    if (closeHour >= 24) {
-      closeHour -= 24;
-      close = now.add(1, "day").set("hour", closeHour).set("minute", closeMinute);
+    if (parseInt(closeHourStr) >= 24) {
+      close = now.add(1, "day").set("hour", parseInt(closeHourStr) - 24).set("minute", parseInt(closeMinuteStr));
     }
 
     if (nowRaw.isBetween(open, close, null, "[)")) {
       isOpen = true;
-      nextOpening = `${close.format("HH:mm")} まで営業`;
+      nextOpening = null;
       break;
     }
   }
 
   if (!isOpen) {
     const currentHour = nowRaw.hour();
-    if (currentHour < 6) {
-      return { isOpen: false, nextOpening: "" };
-    }
+    if (currentHour < 6) return { isOpen: false, nextOpening: null };
 
     const futureHours = todayHours.filter((period) =>
       dayjs(`${now.format("YYYY-MM-DD")} ${period.open}`).isAfter(now)
     );
 
     if (futureHours.length > 0) {
-      nextOpening = `次の営業: ${today} ${futureHours[0]?.open} から`;
+      nextOpening = { day: today, time: futureHours[0].open };
     } else {
-      const nextDayKey = Object.keys(hoursMap).find((key) =>
-        key.startsWith(tomorrow)
-      );
+      const nextDayKey = Object.keys(hoursMap).find((key) => key.startsWith(jpTomorrow));
       if (nextDayKey && hoursMap[nextDayKey].length > 0) {
-        nextOpening = `次の営業: ${nextDayKey} ${hoursMap[nextDayKey][0]?.open} から`;
+        nextOpening = {
+          day: tomorrow,
+          time: hoursMap[nextDayKey][0].open,
+        };
       }
     }
   }
@@ -129,16 +121,13 @@ export const checkIfOpen = (opening_hours: string) => {
 // ✅ デバイス判定関数
 export const getDeviceType = (): "pc" | "mobile" => {
   const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("iphone") || ua.includes("android")) {
-    return "mobile";
-  }
-  return "pc";
+  return ua.includes("iphone") || ua.includes("android") ? "mobile" : "pc";
 };
 
-// ✅ アクションログを保存する関数
+// ✅ アクションログを保存
 export const logAction = async (
   action: string,
-  payload?: Record<string, unknown> // 🔧 any → unknown に変更
+  payload?: Record<string, unknown>
 ) => {
   try {
     const baseLog = {

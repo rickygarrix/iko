@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   if (!checked) {
-    return <div className="text-center p-10 text-gray-800">認証確認中...</div>; // 認証中ローディング
+    return null;
   }
 
   if (!authorized) {

@@ -68,7 +68,17 @@
     "subtitle": "Recommend",
     "open": "営業中",
     "closed": "営業時間外",
-    "noDescription": "店舗の詳細情報がありません。"
+    "noDescription": "店舗の詳細情報がありません。",
+    "nextOpen": "次の営業：{day} {time} から",
+    "days": {
+      "Monday": "月曜",
+      "Tuesday": "火曜",
+      "Wednesday": "水曜",
+      "Thursday": "木曜",
+      "Friday": "金曜",
+      "Saturday": "土曜",
+      "Sunday": "日曜"
+    }
   },
   "searchResults": {
     "prompt": "🔍 検索条件を選んで「検索」ボタンを押してください",
@@ -79,7 +89,20 @@
     "items": "件",
     "open": "営業中",
     "closed": "営業時間外",
-    "noDescription": "店舗説明がありません。"
+    "noDescription": "店舗説明がありません。",
+    "nextOpen": "次の営業：{day} {time} から",
+    "days": {
+      "Monday": "月曜",
+      "Tuesday": "火曜",
+      "Wednesday": "水曜",
+      "Thursday": "木曜",
+      "Friday": "金曜",
+      "Saturday": "土曜",
+      "Sunday": "日曜"
+    }
+  },
+  "store": {
+    "nextOpen": "次の営業：{day} {time} から"
   },
   "storeDetail": {
     "mapTitle": "の地図",
