@@ -5,6 +5,10 @@
     "search": "Search by condition",
     "recommend": "This Month's Picks"
   },
+  "header": {
+    "search": "Search",
+    "map": "Coming Soon"
+  },
   "meta": {
     "title": "Otonavi - Discover music and nightlife spots",
     "description": "Otonavi helps you discover jazz bars, clubs, and live houses where you can enjoy music at night."
@@ -55,8 +59,47 @@
   "payments": {
     "cash": "Cash",
     "credit": "Credit Card",
-    "emoney": "E-Money",
+    "e_money": "E-Money",
     "qr": "QR Code",
     "other": "Others"
+  },
+  "recommend": {
+    "title": "This Month's Picks",
+    "subtitle": "Recommend",
+    "open": "Open now",
+    "closed": "Closed",
+    "noDescription": "No store description available."
+  },
+  "searchResults": {
+    "prompt": "🔍 Please select search filters and press the 'Search' button",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "notFound": "No matching stores found.",
+    "resultLabel": "Search Results",
+    "items": "items",
+    "open": "Open",
+    "closed": "Closed",
+    "noDescription": "No store description available."
+  },
+  "storeDetail": {
+    "mapTitle": " Map",
+    "descriptionLabel": "Description",
+    "paymentTitle": "Payment Methods",
+    "infoTitle": "Store Information",
+    "name": "Store Name",
+    "genre": "Genre",
+    "address": "Address",
+    "access": "Access",
+    "hours": "Opening Hours",
+    "note": "*May vary depending on the day.",
+    "website": "Official Website →"
+  },
+  "footer": {
+    "search": "Search",
+    "map": "Map Search (Coming Soon)",
+    "contact": "Contact",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "copyright": "© オトナビ"
   }
 }

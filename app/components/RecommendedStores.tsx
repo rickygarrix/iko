@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { checkIfOpen, logAction } from "@/lib/utils"; // ✅ ここ！
+import { checkIfOpen, logAction } from "@/lib/utils";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import type { Messages } from "@/types/messages";
 
 type Store = {
   id: string;
@@ -16,10 +17,14 @@ type Store = {
   image_url?: string | null;
   description?: string;
   is_recommended?: boolean;
-  store_instagrams?: string | null; // ← これを追加！！
+  store_instagrams?: string | null;
 };
 
-export default function RecommendedStores() {
+type Props = {
+  messages: Messages["recommend"];
+};
+
+export default function RecommendedStores({ messages }: Props) {
   const [stores, setStores] = useState<Store[]>([]);
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [storesReady, setStoresReady] = useState(false);
@@ -28,7 +33,6 @@ export default function RecommendedStores() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // 🔥 店舗データ取得
   useEffect(() => {
     const fetchStores = async () => {
       const { data, error } = await supabase
@@ -47,7 +51,6 @@ export default function RecommendedStores() {
     fetchStores();
   }, []);
 
-  // 🔥 戻り時スクロール位置復元
   useEffect(() => {
     const saved = sessionStorage.getItem("recommendedScrollY");
     if (saved && pathname === "/") {
@@ -78,11 +81,10 @@ export default function RecommendedStores() {
       script.async = true;
       document.body.appendChild(script);
     } else {
-      window.instgrm?.Embeds.process(); // 既に読み込んでたら再レンダリング
+      window.instgrm?.Embeds.process();
     }
   }, [stores]);
 
-  // 🔥 スクロール中か検知
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     const handleScroll = () => {
@@ -98,7 +100,6 @@ export default function RecommendedStores() {
     };
   }, []);
 
-  // 🔥 おすすめタップ時にログ保存＋遷移
   const handleClick = async (storeId: string) => {
     if (pathname === "/") {
       const currentY = window.scrollY;
@@ -110,7 +111,7 @@ export default function RecommendedStores() {
     try {
       await logAction("click_recommended_store", {
         store_id: storeId,
-      }); // ✅ logActionに丸投げ
+      });
     } catch (error) {
       console.error("🔥 アクションログ保存失敗:", error);
     }
@@ -126,10 +127,10 @@ export default function RecommendedStores() {
         {/* 見出し */}
         <div className="w-full px-4 flex flex-col justify-start items-center gap-1">
           <div className="text-center text-zinc-900 text-lg font-bold leading-relaxed tracking-widest">
-            今月のおすすめ
+            {messages.title}
           </div>
           <div className="text-center text-slate-500 text-xs font-bold leading-none tracking-wide">
-            Recommend
+            {messages.subtitle}
           </div>
         </div>
 
@@ -144,9 +145,8 @@ export default function RecommendedStores() {
                 <motion.div
                   key={store.id}
                   onClick={() => handleClick(store.id)}
-                  className={`w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer
-            ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}
-            transition-colors duration-200`}
+                  className={`w-full px-4 py-4 bg-white flex flex-col gap-4 border-b last:border-b-0 cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""
+                    } transition-colors duration-200`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
@@ -157,13 +157,12 @@ export default function RecommendedStores() {
                       {store.name}
                     </div>
                     <div className="text-zinc-900 text-xs font-light leading-normal line-clamp-2">
-                      {store.description || "店舗の詳細情報がありません。"}
+                      {store.description || messages.noDescription}
                     </div>
                   </div>
 
                   {/* 画像＋店舗情報 */}
                   <div className="flex gap-4 items-start">
-                    {/* 投稿エリア（スマホ型） */}
                     <div className="relative w-32 h-56 rounded-lg overflow-hidden outline outline-2 outline-zinc-900 flex-shrink-0">
                       {store.store_instagrams ? (
                         <blockquote
@@ -191,14 +190,13 @@ export default function RecommendedStores() {
                       )}
                     </div>
 
-                    {/* 右側情報エリア */}
                     <div className="flex flex-col gap-2 flex-1">
                       <div className="text-zinc-900 text-sm font-light">
                         {store.area} / {store.genre}
                       </div>
                       <div className="text-sm font-light">
                         <span className={isOpen ? "text-green-700" : "text-rose-700"}>
-                          {isOpen ? "営業中" : "営業時間外"}
+                          {isOpen ? messages.open : messages.closed}
                         </span>
                       </div>
                       <div className="text-sm font-light text-zinc-700">

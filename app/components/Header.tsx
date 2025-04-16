@@ -3,11 +3,16 @@
 import Image from "next/image";
 import { usePathname, useRouter, useParams } from "next/navigation";
 import { useCallback } from "react";
+import type { Messages } from "@/types/messages";
 
-export default function Header() {
+type Props = {
+  messages: Messages["header"];
+};
+
+export default function Header({ messages }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const { locale } = useParams() as { locale: string }; // ✅ locale取得
+  const { locale } = useParams() as { locale: string };
 
   // ホーム遷移
   const handleHomeClick = useCallback(() => {
@@ -49,7 +54,7 @@ export default function Header() {
         >
           <Image
             src="/header/logo.svg"
-            alt="オトナビ ロゴ"
+            alt="Otonavi Logo"
             fill
             unoptimized
             className="object-contain"
@@ -66,13 +71,13 @@ export default function Header() {
             <div className="w-6 h-6 relative">
               <Image
                 src="/header/search.svg"
-                alt="検索"
+                alt={messages.search}
                 fill
                 className="object-contain"
               />
             </div>
             <span className="text-zinc-900 text-[10px] font-light leading-none">
-              条件
+              {messages.search}
             </span>
           </button>
 
@@ -81,17 +86,15 @@ export default function Header() {
             <div className="w-6 h-6 relative">
               <Image
                 src="/header/pin.svg"
-                alt="地図"
+                alt={messages.map}
                 fill
                 className="object-contain"
               />
             </div>
             <span className="text-zinc-900 text-[10px] font-light leading-none">
-              開発中
+              {messages.map}
             </span>
           </div>
-
-
         </div>
       </div>
     </header>

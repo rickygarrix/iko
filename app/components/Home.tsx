@@ -8,11 +8,11 @@ import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
 import RecommendedStores from "@/components/RecommendedStores";
 import type { Messages } from "@/types/messages";
-import Footer from "./Footer";
 
 type HomeProps = {
   messages: Messages;
 };
+
 export default function Home({ messages }: HomeProps) {
   const router = useRouter();
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -102,15 +102,11 @@ export default function Home({ messages }: HomeProps) {
       </div>
 
       <div className="mt-8">
-        <RecommendedStores />
+        <RecommendedStores messages={messages.recommend} />
       </div>
 
       <div className="mt-0">
         <AboutSection />
-      </div>
-
-      <div className="mt-0">
-        <Footer />
       </div>
     </div>
   );

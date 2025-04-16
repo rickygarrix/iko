@@ -1,16 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import SearchResults from "@/components/SearchResults";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import useSWR from "swr";
+import type { Messages } from "@/types/messages";
 
-export default function SearchPageContent() {
+export default function SearchPageContent({
+  messages,
+}: {
+  messages: Messages;
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { locale } = useParams() as { locale: string };
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
@@ -18,7 +24,6 @@ export default function SearchPageContent() {
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [isSearchTriggered, setIsSearchTriggered] = useState<boolean>(false);
 
-  // 🔥 プレビュー件数取得（公開中 + 営業中フィルター対応）
   const fetchPreviewCount = async (
     selectedGenres: string[],
     selectedAreas: string[],
@@ -52,7 +57,6 @@ export default function SearchPageContent() {
     { revalidateOnFocus: false }
   );
 
-  // 🔥 ページロード時のフィルター復元
   useEffect(() => {
     const genres = searchParams.get("genre")?.split(",") || [];
     const areas = searchParams.get("area")?.split(",") || [];
@@ -67,7 +71,6 @@ export default function SearchPageContent() {
     setIsSearchTriggered(true);
   }, [searchParams]);
 
-  // 🔥 検索ボタン押したとき
   const handleSearch = () => {
     sessionStorage.setItem("filterGenres", JSON.stringify(selectedGenres));
     sessionStorage.setItem("filterAreas", JSON.stringify(selectedAreas));
@@ -85,7 +88,7 @@ export default function SearchPageContent() {
     if (selectedPayments.length > 0) params.set("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.set("open", "true");
 
-    router.push(`/search?${params.toString()}`);
+    router.push(`/${locale}/search?${params.toString()}`);
   };
 
   return (
@@ -103,6 +106,11 @@ export default function SearchPageContent() {
             setShowOnlyOpen={setShowOnlyOpen}
             handleSearch={handleSearch}
             previewCount={previewCount ?? 0}
+            messages={{
+              ...messages.searchFilter,
+              genres: messages.genres,
+              payments: messages.payments,
+            }}
           />
         </div>
 
@@ -113,6 +121,7 @@ export default function SearchPageContent() {
             selectedPayments={selectedPayments}
             showOnlyOpen={showOnlyOpen}
             isSearchTriggered={isSearchTriggered}
+            messages={messages.searchResults}
           />
         )}
       </div>
