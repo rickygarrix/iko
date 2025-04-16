@@ -3,6 +3,7 @@ const withNextIntl = require('next-intl/plugin')(
   {
     locales: ['ja', 'en', 'zh', 'ko'],
     defaultLocale: 'ja',
+    localeDetection: false, // ← これを追加！
   }
 );
 

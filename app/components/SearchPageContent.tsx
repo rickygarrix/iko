@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter, useParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import SearchResults from "@/components/SearchResults";
 import { supabase } from "@/lib/supabase";
@@ -16,7 +16,15 @@ export default function SearchPageContent({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { locale } = useParams() as { locale: string };
+  const pathname = usePathname();
+
+  // ✅ locale を usePathname から抽出する関数
+  const getLocaleFromPathname = (pathname: string): string => {
+    const segments = pathname.split("/");
+    return segments[1] || "ja"; // 例: /ja/search → ja
+  };
+
+  const locale = getLocaleFromPathname(pathname);
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);

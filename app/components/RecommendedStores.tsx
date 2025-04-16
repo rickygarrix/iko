@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
@@ -32,6 +32,7 @@ export default function RecommendedStores({ messages }: Props) {
   const [isScrolling, setIsScrolling] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { locale } = useParams() as { locale: string };
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -53,10 +54,10 @@ export default function RecommendedStores({ messages }: Props) {
 
   useEffect(() => {
     const saved = sessionStorage.getItem("recommendedScrollY");
-    if (saved && pathname === "/") {
+    if (saved && pathname === `/${locale}`) {
       setRestoreY(parseInt(saved, 10));
     }
-  }, [pathname]);
+  }, [pathname, locale]);
 
   useEffect(() => {
     if (restoreY !== null && stores.length > 0) {
@@ -101,7 +102,7 @@ export default function RecommendedStores({ messages }: Props) {
   }, []);
 
   const handleClick = async (storeId: string) => {
-    if (pathname === "/") {
+    if (pathname === `/${locale}`) {
       const currentY = window.scrollY;
       sessionStorage.setItem("recommendedScrollY", currentY.toString());
     }
@@ -116,7 +117,7 @@ export default function RecommendedStores({ messages }: Props) {
       console.error("🔥 アクションログ保存失敗:", error);
     }
 
-    router.push(`/stores/${storeId}`);
+    router.push(`/${locale}/stores/${storeId}`);
   };
 
   return (

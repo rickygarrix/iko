@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
 import { Store } from "../../types";
 import Image from "next/image";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams, useParams } from "next/navigation";
 import type { Messages } from "@/types/messages";
 
 type SearchResultsProps = {
@@ -44,6 +44,7 @@ export default function SearchResults({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { locale } = useParams() as { locale: string };
   const queryParams = searchParams.toString();
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
@@ -57,8 +58,10 @@ export default function SearchResults({
 
   useEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
-    if (savedY && pathname === "/search") setRestoreY(parseInt(savedY, 10));
-  }, [pathname]);
+    if (savedY && pathname === `/${locale}/search`) {
+      setRestoreY(parseInt(savedY, 10));
+    }
+  }, [pathname, locale]);
 
   useEffect(() => {
     if (stores && stores.length > 0 && restoreY !== null) {
@@ -93,6 +96,7 @@ export default function SearchResults({
     const currentY = window.scrollY;
     sessionStorage.setItem("searchScrollY", currentY.toString());
     setIsOverlayVisible(true);
+
     try {
       await logAction("click_search_store", {
         store_id: storeId,
@@ -102,8 +106,9 @@ export default function SearchResults({
     } catch (error) {
       console.error("🔥 アクションログ保存失敗:", error);
     }
+
     setTimeout(() => {
-      router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
+      router.push(`/${locale}/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
   };
 
@@ -116,6 +121,7 @@ export default function SearchResults({
       </div>
     );
   }
+
   if (isLoading) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
@@ -125,6 +131,7 @@ export default function SearchResults({
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
@@ -136,6 +143,7 @@ export default function SearchResults({
       </div>
     );
   }
+
   if (!stores || stores.length === 0) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">

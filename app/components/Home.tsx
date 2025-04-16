@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation"; // ← useParams もここでOK
 import { supabase } from "@/lib/supabase";
 import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
@@ -15,6 +15,8 @@ type HomeProps = {
 
 export default function Home({ messages }: HomeProps) {
   const router = useRouter();
+  const { locale } = useParams() as { locale: string }; // ✅ Top-level で取得（🔥重要）
+
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
@@ -60,7 +62,8 @@ export default function Home({ messages }: HomeProps) {
     if (selectedPayments.length > 0) params.append("payment", selectedPayments.join(","));
     if (showOnlyOpen) params.append("open", "true");
     if (params.toString() === "") params.set("all", "true");
-    router.push(`/search?${params.toString()}`);
+
+    router.push(`/${locale}/search?${params.toString()}`); // ✅ ロケール付きに修正
   };
 
   return (
