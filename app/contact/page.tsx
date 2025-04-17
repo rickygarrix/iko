@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useContactStore } from "@/lib/store/contactStore"; // ★ zustandからstore呼び出し！
+import { useContactStore } from "@/lib/store/contactStore"; // zustand store
 
 export default function ContactPage() {
   const router = useRouter();
 
-  // zustandから現在の入力データを取得
   const contact = useContactStore((state) => state.contact);
   const setContact = useContactStore((state) => state.setContact);
 
-  // 取得したデータを初期値にセット！
-  const [category, setCategory] = useState(contact.category || "");
   const [email, setEmail] = useState(contact.email || "");
   const [name, setName] = useState(contact.name || "");
   const [subject, setSubject] = useState(contact.subject || "");
@@ -28,9 +25,7 @@ export default function ContactPage() {
     }
 
     setError("");
-
-    // フォーム内容をzustandに保存して、確認画面へ遷移！
-    setContact({ category, email, name, subject, message });
+    setContact({ email, name, subject, message });
     router.push("/contact/confirm");
   };
 
@@ -43,14 +38,12 @@ export default function ContactPage() {
         </p>
 
         <form className="space-y-6" onSubmit={handleConfirm}>
-          {/* エラーメッセージ */}
           {error && (
             <div className="text-red-500 text-sm font-semibold mb-4 text-center">
               {error}
             </div>
           )}
 
-          {/* メールアドレス */}
           <div>
             <label className="block text-sm font-medium mb-1">メールアドレス</label>
             <input
@@ -62,7 +55,6 @@ export default function ContactPage() {
             />
           </div>
 
-          {/* お名前 */}
           <div>
             <label className="block text-sm font-medium mb-1">お名前</label>
             <input
@@ -74,7 +66,6 @@ export default function ContactPage() {
             />
           </div>
 
-          {/* 件名 */}
           <div>
             <label className="block text-sm font-medium mb-1">件名</label>
             <input
@@ -85,7 +76,6 @@ export default function ContactPage() {
             />
           </div>
 
-          {/* お問い合わせ内容 */}
           <div>
             <label className="block text-sm font-medium mb-1">お問い合わせ内容詳細</label>
             <textarea
@@ -97,7 +87,6 @@ export default function ContactPage() {
             />
           </div>
 
-          {/* 確認画面に進むボタン */}
           <button
             type="submit"
             className="w-full bg-[#1F1F21] text-white rounded p-3 hover:bg-[#333]"

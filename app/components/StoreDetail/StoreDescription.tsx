@@ -2,14 +2,12 @@
 
 import { useParams } from "next/navigation";
 import type { Store } from "./StoreDetail";
-import type { Messages } from "@/types/messages";
 
 type Props = {
   store: Store;
-  messages: Messages["storeDetail"];
 };
 
-export default function StoreDescription({ store, messages }: Props) {
+export default function StoreDescription({ store }: Props) {
   const { locale } = useParams() as { locale: string };
 
   return (

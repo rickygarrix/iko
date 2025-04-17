@@ -136,9 +136,10 @@ export const logAction = async (
       action,
       device: getDeviceType(),
       referrer_page: document.referrer || null,
-      ...payload,
+      ...payload, // ← localeやsearch_conditionsなどもここに含める
     };
 
+    console.log("📤 Supabase Log Payload", baseLog); // デバッグ用に残してOK
     await supabase.from("action_logs").insert([baseLog]);
   } catch (error) {
     console.error("❌ ログ保存エラー:", error);

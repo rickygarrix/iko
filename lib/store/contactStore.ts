@@ -1,7 +1,6 @@
 import { create } from "zustand";
 
 type ContactForm = {
-  category: string;
   email: string;
   name: string;
   subject: string;
@@ -26,7 +25,6 @@ export const useContactStore = create<ContactState>((set) => ({
   resetContact: () =>
     set({
       contact: {
-        category: "",
         email: "",
         name: "",
         subject: "",

@@ -4,11 +4,8 @@ export const generateStaticParams = async () => {
   }));
 };
 
-type Props = {
-  params: { locale: "ja" | "en" | "zh" | "ko" };
-};
 
-export default function TermsPage({ params }: Props) {
+export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white text-gray-800 p-6 pt-16">
       <div className="max-w-3xl mx-auto bg-white border border-gray-200 p-8 rounded-md shadow-md">
