@@ -187,21 +187,23 @@ export default function SearchResults({
                   </div>
                   <div className="flex flex-col gap-1 flex-1 text-[14px] text-[#1F1F21]">
                     <p>{store.area} / {store.genre}</p>
-                    <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
+
+                    <p className={`font-semibold ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
                       {isOpen ? messages.open : messages.closed}
                     </p>
-                    <p className="text-xs text-zinc-700">
-                      {nextOpening && (
-                        <div className="text-sm font-light text-zinc-700">
-                          {messages.nextOpen
-                            .replace(
-                              "{day}",
-                              messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
-                            )
-                            .replace("{time}", nextOpening.time)}
-                        </div>
-                      )}
-                    </p>
+
+                    {/* ここを修正した！ */}
+                    {nextOpening && (
+                      <p className="text-xs text-zinc-700">
+                        {messages.nextOpen
+                          .replace(
+                            '{day}',
+                            messages.days[nextOpening.day as keyof typeof messages.days] ??
+                            nextOpening.day
+                          )
+                          .replace('{time}', nextOpening.time)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
