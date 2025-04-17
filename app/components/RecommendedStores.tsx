@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
 
-// 🔄 UI表示用に翻訳されたジャンル・エリアを取得する
 const useTranslatedNames = (locale: string) => {
   const [genreMap, setGenreMap] = useState<Record<string, string>>({});
   const [areaMap, setAreaMap] = useState<Record<string, string>>({});
@@ -61,10 +60,11 @@ type OpeningInfo = {
     day: string;
     time: string;
   } | null;
+  closeTime?: string;
 };
 
 type Props = {
-  messages: Messages["recommend"];
+  messages: Messages["recommend"] & { openUntil?: string };
 };
 
 export default function RecommendedStores({ messages }: Props) {
@@ -76,8 +76,8 @@ export default function RecommendedStores({ messages }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { locale } = useParams() as { locale: string };
-
   const { genreMap, areaMap } = useTranslatedNames(locale);
+
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -149,17 +149,12 @@ export default function RecommendedStores({ messages }: Props) {
       const currentY = window.scrollY;
       sessionStorage.setItem("recommendedScrollY", currentY.toString());
     }
-
     setIsLoading(true);
-
     try {
-      await logAction("click_recommended_store", {
-        store_id: storeId,
-      });
+      await logAction("click_recommended_store", { store_id: storeId });
     } catch (error) {
       console.error("🔥 アクションログ保存失敗:", error);
     }
-
     router.push(`/${locale}/stores/${storeId}`);
   };
 
@@ -167,7 +162,6 @@ export default function RecommendedStores({ messages }: Props) {
     <div className="w-full bg-white flex justify-center pt-8 relative">
       {isLoading && <div className="fixed inset-0 z-[9999] bg-white/80" />}
       <div className="w-full max-w-[600px] flex flex-col mx-auto gap-2">
-        {/* 見出し */}
         <div className="w-full px-4 flex flex-col justify-start items-center gap-1">
           <div className="text-center text-zinc-900 text-lg font-bold leading-relaxed tracking-widest">
             {messages.title}
@@ -177,13 +171,12 @@ export default function RecommendedStores({ messages }: Props) {
           </div>
         </div>
 
-        {/* リスト */}
         {!storesReady ? (
           <div style={{ height: "100vh" }} />
         ) : (
           <div className="w-full flex flex-col justify-start items-center gap-px">
             {stores.map((store, index) => {
-              const { isOpen, nextOpening } = checkIfOpen(store.opening_hours) as OpeningInfo;
+              const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours) as OpeningInfo;
               return (
                 <motion.div
                   key={store.id}
@@ -198,9 +191,11 @@ export default function RecommendedStores({ messages }: Props) {
                     <div className="text-zinc-900 text-base font-semibold leading-normal">
                       {store.name}
                     </div>
-                    <div className="text-zinc-900 text-xs font-light leading-normal line-clamp-2">
-                      {store.description || messages.noDescription}
-                    </div>
+                    {locale === "ja" && (
+                      <div className="text-zinc-900 text-xs font-light leading-normal line-clamp-2">
+                        {store.description || messages.noDescription}
+                      </div>
+                    )}
                   </div>
 
                   {/* 画像＋店舗情報 */}
@@ -241,7 +236,12 @@ export default function RecommendedStores({ messages }: Props) {
                           {isOpen ? messages.open : messages.closed}
                         </span>
                       </div>
-                      {nextOpening && (
+                      {isOpen && closeTime && (
+                        <div className="text-sm font-light text-zinc-700">
+                          {messages.openUntil?.replace("{time}", closeTime)}
+                        </div>
+                      )}
+                      {!isOpen && nextOpening && (
                         <div className="text-sm font-light text-zinc-700">
                           {messages.nextOpen
                             .replace(
@@ -261,4 +261,5 @@ export default function RecommendedStores({ messages }: Props) {
       </div>
     </div>
   );
+
 }

@@ -54,9 +54,13 @@ export default function SearchFilter({
         supabase.from("area_translations").select("area_id, name").eq("locale", locale),
         supabase.from("payment_method_translations").select("payment_method_id, name").eq("locale", locale),
       ]);
+
       setGenres(genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? []);
       setAreas(areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []);
-      setPayments(paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? []);
+      setPayments(
+        (paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? [])
+          .filter((p) => p.id !== "other") // ← この行がポイント！
+      );
     };
     fetch();
   }, []);
@@ -222,7 +226,7 @@ export default function SearchFilter({
             <div className="relative w-[14px] h-[14px]">
               <Image src="/icons/search.svg" alt="検索アイコン" fill className="object-contain" />
             </div>
-            {messages.search}（{previewCount}件）
+            {messages.search}（{previewCount}{messages.items}）
           </button>
         </motion.div>
       </div>

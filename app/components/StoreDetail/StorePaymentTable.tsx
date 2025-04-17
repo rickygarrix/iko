@@ -9,7 +9,7 @@ export default function StorePaymentTable({
   store: Store;
   messages?: Messages["storeDetail"] & { payments?: { [key: string]: string } };
 }) {
-  const paymentKeys = ["cash", "credit", "e_money", "code", "ic", "other"];
+  const paymentKeys = ["cash", "credit", "e_money", "qr", "other"];
 
   const displayRows = paymentKeys.reduce((rows, key, idx) => {
     if (idx % 2 === 0) rows.push([key]);

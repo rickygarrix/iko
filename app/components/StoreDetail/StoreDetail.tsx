@@ -28,7 +28,7 @@ export type Store = {
   capacity: string;
   instagram: string | null;
   payment_methods: string[];
-  payment_method_ids: string[];      // ✅ 新しいプロパティを追加！
+  payment_method_ids: string[];
   address: string;
   phone: string;
   website?: string;
@@ -48,9 +48,7 @@ type Props = {
   messages: Messages["storeDetail"];
 };
 
-const fetchStoreDetail = async ([, id, locale]: [string, string, string]): Promise<Store> => {
-  console.log("🪵 fetchStoreDetail", { id, locale });
-
+const fetchStoreDetail = async ([, id, locale]: [string, string, string]): Promise<Store & { payments?: Record<string, string> }> => {
   const { data: storeData, error: storeError } = await supabase
     .from("stores")
     .select("*")
@@ -58,39 +56,30 @@ const fetchStoreDetail = async ([, id, locale]: [string, string, string]): Promi
     .single();
 
   if (storeError || !storeData) {
-    console.error("❌ 店舗が取得できませんでした", {
-      error: storeError,
-      id,
-      storeData,
-    });
     throw new Error("店舗データが見つかりません");
   }
 
-  // 翻訳を個別に取得
-  const [{ data: genreData }, { data: areaData }] = await Promise.all([
-    supabase
-      .from("genre_translations")
-      .select("name")
-      .eq("genre_id", storeData.genre_id)
-      .eq("locale", locale)
-      .single(),
-    supabase
-      .from("area_translations")
-      .select("name")
-      .eq("area_id", storeData.area_id)
-      .eq("locale", locale)
-      .single(),
+  const [{ data: genreData }, { data: areaData }, { data: paymentData }] = await Promise.all([
+    supabase.from("genre_translations").select("name").eq("genre_id", storeData.genre_id).eq("locale", locale).single(),
+    supabase.from("area_translations").select("name").eq("area_id", storeData.area_id).eq("locale", locale).single(),
+    supabase.from("payment_method_translations").select("payment_method_id, name").eq("locale", locale)
   ]);
+
+  const paymentMap: Record<string, string> = {};
+  paymentData?.forEach((p) => {
+    paymentMap[p.payment_method_id] = p.name;
+  });
 
   return {
     ...storeData,
     genreTranslated: genreData?.name ?? storeData.genre_id,
     areaTranslated: areaData?.name ?? storeData.area_id,
+    payments: paymentMap,
   };
 };
 
 export default function StoreDetail({ id, locale, messages }: Props) {
-  const { data: store, error, isLoading } = useSWR<Store>(
+  const { data: store, error, isLoading } = useSWR<Store & { payments?: Record<string, string> }>(
     ["store", id, locale],
     fetchStoreDetail,
     { revalidateOnFocus: false }
@@ -120,7 +109,6 @@ export default function StoreDetail({ id, locale, messages }: Props) {
   }
 
   if (error || !store) {
-    console.error("❌ 店舗が取得できませんでした", { error, id, locale });
     return (
       <div className="min-h-screen bg-[#FEFCF6] text-center pt-[100px] text-red-500">
         店舗が見つかりませんでした。
@@ -133,7 +121,7 @@ export default function StoreDetail({ id, locale, messages }: Props) {
       <div className="w-full max-w-[600px] mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
         <StoreMap store={store} messages={messages} onClick={() => handleLog("click_map")} />
         <StoreDescription store={store} messages={messages} />
-        <StorePaymentTable store={store} messages={messages} />
+        <StorePaymentTable store={store} messages={{ ...messages, payments: store.payments }} />
         <StoreInfoTable store={store} messages={messages} />
         <InstagramSlider
           posts={[store.store_instagrams, store.store_instagrams2, store.store_instagrams3].filter(

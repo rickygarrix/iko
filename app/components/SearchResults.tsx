@@ -15,7 +15,7 @@ type SearchResultsProps = {
   selectedPayments: string[];
   showOnlyOpen: boolean;
   isSearchTriggered: boolean;
-  messages: Messages["searchResults"];
+  messages: Messages["searchResults"] & { openUntil?: string };
 };
 
 type TranslatedStore = Store & {
@@ -184,7 +184,7 @@ export default function SearchResults({
           {messages.resultLabel} <span className="text-[#4B5C9E]">{stores.length}</span> {messages.items}
         </p>
         {stores.map((store, index) => {
-          const { isOpen, nextOpening } = checkIfOpen(store.opening_hours);
+          const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
           return (
             <div
               key={store.id}
@@ -193,9 +193,11 @@ export default function SearchResults({
             >
               <div className="space-y-3 pt-4">
                 <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">{store.name}</h3>
-                <p className="text-[12px] text-[#000000] leading-relaxed text-left">
-                  {store.description ?? messages.noDescription}
-                </p>
+                {locale === "ja" && (
+                  <p className="text-[12px] text-[#000000] leading-relaxed text-left">
+                    {store.description ?? messages.noDescription}
+                  </p>
+                )}
                 <div className="flex gap-4 items-center">
                   <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden">
                     <Image
@@ -212,13 +214,15 @@ export default function SearchResults({
                     <p className={`font-semibold ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
                       {isOpen ? messages.open : messages.closed}
                     </p>
-                    {nextOpening && (
+                    {isOpen && closeTime && (
+                      <p className="text-xs text-zinc-700">
+                        {messages.openUntil?.replace("{time}", closeTime)}
+                      </p>
+                    )}
+                    {!isOpen && nextOpening && (
                       <p className="text-xs text-zinc-700">
                         {messages.nextOpen
-                          .replace(
-                            '{day}',
-                            messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
-                          )
+                          .replace('{day}', messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day)
                           .replace('{time}', nextOpening.time)}
                       </p>
                     )}

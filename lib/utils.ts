@@ -22,6 +22,7 @@ export const convertToJapaneseDay = (day: string) => {
 // ✅ 英語で曜日を返す（翻訳対応前提）
 export const checkIfOpen = (opening_hours: string): {
   isOpen: boolean;
+  closeTime?: string;
   nextOpening: { day: string; time: string } | null;
 } => {
   const nowRaw = dayjs();
@@ -31,11 +32,11 @@ export const checkIfOpen = (opening_hours: string): {
     now = nowRaw.subtract(1, "day");
   }
 
-  const today = now.format("dddd"); // "Monday"
+  const today = now.format("dddd");
   const tomorrow = now.add(1, "day").format("dddd");
 
-  const jpToday = convertToJapaneseDay(today);       // "月曜日"
-  const jpTomorrow = convertToJapaneseDay(tomorrow); // "火曜日"
+  const jpToday = convertToJapaneseDay(today);
+  const jpTomorrow = convertToJapaneseDay(tomorrow);
 
   const hoursMap: { [key: string]: { open: string; close: string }[] } = {};
 
@@ -75,6 +76,7 @@ export const checkIfOpen = (opening_hours: string): {
   const todayHours = hoursMap[foundKey] || [];
   let nextOpening: { day: string; time: string } | null = null;
   let isOpen = false;
+  let closeTime: string | undefined = undefined;
 
   for (const period of todayHours) {
     const [openHourStr, openMinuteStr] = period.open.split(":");
@@ -89,7 +91,7 @@ export const checkIfOpen = (opening_hours: string): {
 
     if (nowRaw.isBetween(open, close, null, "[)")) {
       isOpen = true;
-      nextOpening = null;
+      closeTime = close.format("HH:mm"); // ← ✨ ここ追加
       break;
     }
   }
@@ -115,7 +117,7 @@ export const checkIfOpen = (opening_hours: string): {
     }
   }
 
-  return { isOpen, nextOpening };
+  return { isOpen, closeTime, nextOpening };
 };
 
 // ✅ デバイス判定関数

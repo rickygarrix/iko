@@ -20,6 +20,7 @@ export type Messages = {
     button: string;
   };
   searchFilter: {
+    items: string;
     title: string;
     open: string;
     open_all: string;
@@ -104,5 +105,14 @@ export type Messages = {
     closed: string;
     nextOpen: string;
     area: string;
+    days: {
+      Monday: string;
+      Tuesday: string;
+      Wednesday: string;
+      Thursday: string;
+      Friday: string;
+      Saturday: string;
+      Sunday: string;
+    };
   };
 };

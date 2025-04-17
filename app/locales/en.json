@@ -20,6 +20,7 @@
     "button": "Find your favorite place →"
   },
   "searchFilter": {
+    "items": "items",
     "title": "Search by condition",
     "open": "Opening hours",
     "open_all": "All stores",
@@ -67,6 +68,7 @@
     "nextOpen": "Next open: {day} from {time}"
   },
   "recommend": {
+    "openUntil": "Open until {time}",
     "title": "This Month's Picks",
     "subtitle": "Recommend",
     "open": "Open now",
@@ -84,6 +86,7 @@
     }
   },
   "searchResults": {
+    "openUntil": "Open until {time}",
     "prompt": "🔍 Please select search filters and press the 'Search' button",
     "loading": "Loading...",
     "error": "An error occurred",
@@ -119,7 +122,16 @@
     "open": "Open now",
     "closed": "Closed",
     "nextOpen": "Next open: {day} from {time}",
-    "area": "Area"
+    "area": "Area",
+    "days": {
+      "Monday": "Mon",
+      "Tuesday": "Tue",
+      "Wednesday": "Wed",
+      "Thursday": "Thu",
+      "Friday": "Fri",
+      "Saturday": "Sat",
+      "Sunday": "Sun"
+    }
   },
   "areas": {
     "shibuya": "Shibuya",
