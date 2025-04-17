@@ -1,14 +1,20 @@
 "use client";
 
+import { useParams } from "next/navigation";   // ← 追加
 import Link from "next/link";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
 
 type Props = {
+  locale: "ja" | "en" | "zh" | "ko";
   messages: Messages["footer"];
 };
 
+
 export default function Footer({ messages }: Props) {
+  // ★ フッター内で locale を取得
+  const { locale } = useParams() as { locale?: string };
+
   return (
     <footer className="w-full bg-[#1F1F21] border-t border-b border-gray-800 flex justify-center">
       <div className="w-full max-w-[1400px] px-4 py-8 flex flex-col justify-start items-center gap-4">
@@ -44,12 +50,12 @@ export default function Footer({ messages }: Props) {
 
         {/* 利用規約・プライバシーポリシー */}
         <div className="w-full flex justify-center items-start flex-wrap gap-2">
-          <Link href="/terms" className="px-4 py-2">
+          <Link href={`/${locale}/terms`} className="px-4 py-2">
             <div className="text-white text-xs font-light leading-none">
               {messages.terms}
             </div>
           </Link>
-          <Link href="/privacy" className="px-4 py-2">
+          <Link href={`/${locale}/privacy`} className="px-4 py-2">
             <div className="text-white text-xs font-light leading-none">
               {messages.privacy}
             </div>

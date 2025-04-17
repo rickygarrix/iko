@@ -11,6 +11,7 @@
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.6.1",
     "@react-google-maps/api": "^2.20.6",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.49.1",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.6.3",

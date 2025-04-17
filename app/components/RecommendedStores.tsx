@@ -8,11 +8,46 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
 
+// 🔄 UI表示用に翻訳されたジャンル・エリアを取得する
+const useTranslatedNames = (locale: string) => {
+  const [genreMap, setGenreMap] = useState<Record<string, string>>({});
+  const [areaMap, setAreaMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchTranslations = async () => {
+      const [{ data: genres }, { data: areas }] = await Promise.all([
+        supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
+        supabase.from("area_translations").select("area_id, name").eq("locale", locale),
+      ]);
+
+      if (genres) {
+        const gMap: Record<string, string> = {};
+        genres.forEach((g) => {
+          gMap[g.genre_id] = g.name;
+        });
+        setGenreMap(gMap);
+      }
+
+      if (areas) {
+        const aMap: Record<string, string> = {};
+        areas.forEach((a) => {
+          aMap[a.area_id] = a.name;
+        });
+        setAreaMap(aMap);
+      }
+    };
+
+    fetchTranslations();
+  }, [locale]);
+
+  return { genreMap, areaMap };
+};
+
 type Store = {
   id: string;
   name: string;
-  genre: string;
-  area: string;
+  genre_id: string;
+  area_id: string;
   opening_hours: string;
   image_url?: string | null;
   description?: string;
@@ -41,6 +76,8 @@ export default function RecommendedStores({ messages }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { locale } = useParams() as { locale: string };
+
+  const { genreMap, areaMap } = useTranslatedNames(locale);
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -197,7 +234,7 @@ export default function RecommendedStores({ messages }: Props) {
 
                     <div className="flex flex-col gap-2 flex-1">
                       <div className="text-zinc-900 text-sm font-light">
-                        {store.area} / {store.genre}
+                        {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}
                       </div>
                       <div className="text-sm font-light">
                         <span className={isOpen ? "text-green-700" : "text-rose-700"}>
@@ -206,16 +243,12 @@ export default function RecommendedStores({ messages }: Props) {
                       </div>
                       {nextOpening && (
                         <div className="text-sm font-light text-zinc-700">
-                          {nextOpening && (
-                            <div className="text-sm font-light text-zinc-700">
-                              {messages.nextOpen
-                                .replace(
-                                  "{day}",
-                                  messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
-                                )
-                                .replace("{time}", nextOpening.time)}
-                            </div>
-                          )}
+                          {messages.nextOpen
+                            .replace(
+                              "{day}",
+                              messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
+                            )
+                            .replace("{time}", nextOpening.time)}
                         </div>
                       )}
                     </div>

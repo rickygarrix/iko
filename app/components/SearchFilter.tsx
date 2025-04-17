@@ -1,14 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { GENRES } from "@/constants/genres";
-import { AREAS } from "@/constants/areas";
-import { PAYMENTS } from "@/constants/payments";
+import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/utils";
 import type { Messages } from "@/types/messages";
 
-type SearchFilterProps = {
+type Option = { id: string; name: string };
+
+type Props = {
   selectedGenres: string[];
   setSelectedGenres: React.Dispatch<React.SetStateAction<string[]>>;
   selectedAreas: string[];
@@ -40,14 +41,29 @@ export default function SearchFilter({
   previewCount,
   showTitle = true,
   messages,
-}: SearchFilterProps) {
+}: Props) {
+  const [genres, setGenres] = useState<Option[]>([]);
+  const [areas, setAreas] = useState<Option[]>([]);
+  const [payments, setPayments] = useState<Option[]>([]);
+
+  useEffect(() => {
+    const locale = window.location.pathname.split("/")[1] || "ja";
+    const fetch = async () => {
+      const [{ data: genreData }, { data: areaData }, { data: paymentData }] = await Promise.all([
+        supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
+        supabase.from("area_translations").select("area_id, name").eq("locale", locale),
+        supabase.from("payment_method_translations").select("payment_method_id, name").eq("locale", locale),
+      ]);
+      setGenres(genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? []);
+      setAreas(areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []);
+      setPayments(paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? []);
+    };
+    fetch();
+  }, []);
+
   const logSearchAction = async (action: "search" | "reset_search") => {
     const currentParams = new URLSearchParams(window.location.search).toString();
-
-    const payload: Record<string, unknown> = {
-      query_params: currentParams,
-    };
-
+    const payload: Record<string, unknown> = { query_params: currentParams };
     if (action === "search") {
       payload.search_conditions = {
         genres: selectedGenres,
@@ -57,7 +73,6 @@ export default function SearchFilter({
       };
       payload.result_count = previewCount;
     }
-
     await logAction(action, payload);
   };
 
@@ -77,16 +92,13 @@ export default function SearchFilter({
         )}
 
         <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.2 } } }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
           className="space-y-8"
         >
           {/* 営業時間 */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.open}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {[{ label: messages.open_all, value: false }, { label: messages.open_now, value: true }].map(({ label, value }) => (
@@ -106,90 +118,72 @@ export default function SearchFilter({
           </motion.div>
 
           {/* ジャンル */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.genre}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {GENRES.map((genre) => (
-                <label
-                  key={genre.key}
-                  className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
-                >
+              {genres.map((genre) => (
+                <label key={genre.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
                   <input
                     type="checkbox"
-                    checked={selectedGenres.includes(genre.key)}
+                    checked={selectedGenres.includes(genre.id)}
                     onChange={() =>
                       setSelectedGenres(
-                        selectedGenres.includes(genre.key)
-                          ? selectedGenres.filter((g) => g !== genre.key)
-                          : [...selectedGenres, genre.key]
+                        selectedGenres.includes(genre.id)
+                          ? selectedGenres.filter((g) => g !== genre.id)
+                          : [...selectedGenres, genre.id]
                       )
                     }
-                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
+                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-[url('/icons/check.svg')] bg-center bg-no-repeat"
                   />
-                  {messages.genres[genre.key]}
+                  {genre.name}
                 </label>
               ))}
             </div>
           </motion.div>
 
           {/* エリア */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.area}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {AREAS.map((area) => (
-                <label
-                  key={area.key}
-                  className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
-                >
+              {areas.map((area) => (
+                <label key={area.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
                   <input
                     type="checkbox"
-                    checked={selectedAreas.includes(area.key)}
+                    checked={selectedAreas.includes(area.id)}
                     onChange={() =>
                       setSelectedAreas(
-                        selectedAreas.includes(area.key)
-                          ? selectedAreas.filter((a) => a !== area.key)
-                          : [...selectedAreas, area.key]
+                        selectedAreas.includes(area.id)
+                          ? selectedAreas.filter((a) => a !== area.id)
+                          : [...selectedAreas, area.id]
                       )
                     }
-                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
+                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-[url('/icons/check.svg')] bg-center bg-no-repeat"
                   />
-                  {messages.areas[area.key]}
+                  {area.name}
                 </label>
               ))}
             </div>
           </motion.div>
 
           {/* 支払い方法 */}
-          <motion.div
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.payment}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {PAYMENTS.map((payment) => (
-                <label
-                  key={payment.key}
-                  className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform"
-                >
+              {payments.map((payment) => (
+                <label key={payment.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
                   <input
                     type="checkbox"
-                    checked={selectedPayments.includes(payment.key)}
+                    checked={selectedPayments.includes(payment.id)}
                     onChange={() =>
                       setSelectedPayments(
-                        selectedPayments.includes(payment.key)
-                          ? selectedPayments.filter((p) => p !== payment.key)
-                          : [...selectedPayments, payment.key]
+                        selectedPayments.includes(payment.id)
+                          ? selectedPayments.filter((p) => p !== payment.id)
+                          : [...selectedPayments, payment.id]
                       )
                     }
-                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-check-icon bg-center bg-no-repeat"
+                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-[url('/icons/check.svg')] bg-center bg-no-repeat"
                   />
-                  {messages.payments[payment.key]}
+                  {payment.name}
                 </label>
               ))}
             </div>
@@ -203,7 +197,6 @@ export default function SearchFilter({
           transition={{ delay: 1.2, duration: 0.8 }}
           className="flex justify-center gap-4 mt-12"
         >
-          {/* リセット */}
           <button
             onClick={async () => {
               await logSearchAction("reset_search");
@@ -212,13 +205,11 @@ export default function SearchFilter({
               setSelectedPayments([]);
               setShowOnlyOpen(false);
             }}
-            className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21]
-            text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
+            className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21] text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
           >
             {messages.reset}
           </button>
 
-          {/* 検索 */}
           <button
             onClick={async (e) => {
               e.preventDefault();
@@ -226,16 +217,10 @@ export default function SearchFilter({
               await logSearchAction("search");
               handleSearch();
             }}
-            className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21]
-            px-4 flex items-center justify-center gap-2 text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
+            className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21] px-4 flex items-center justify-center gap-2 text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
           >
             <div className="relative w-[14px] h-[14px]">
-              <Image
-                src="/icons/search.svg"
-                alt="検索アイコン"
-                fill
-                className="object-contain"
-              />
+              <Image src="/icons/search.svg" alt="検索アイコン" fill className="object-contain" />
             </div>
             {messages.search}（{previewCount}件）
           </button>

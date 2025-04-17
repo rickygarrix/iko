@@ -7,6 +7,7 @@ import Image from "next/image";
 import type { Messages } from "@/types/messages";
 
 type Props = {
+  locale: "ja" | "en" | "zh" | "ko";
   messages: Messages["header"];
 };
 

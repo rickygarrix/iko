@@ -18,19 +18,41 @@ type SearchResultsProps = {
   messages: Messages["searchResults"];
 };
 
+type TranslatedStore = Store & {
+  areaTranslated?: string;
+  genreTranslated?: string;
+};
+
 const fetchStores = async (
   selectedGenres: string[],
   selectedAreas: string[],
   selectedPayments: string[],
-  showOnlyOpen: boolean
-): Promise<Store[]> => {
+  showOnlyOpen: boolean,
+  locale: string
+): Promise<TranslatedStore[]> => {
   let query = supabase.from("stores").select("*").eq("is_published", true);
-  if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
-  if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
-  if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return showOnlyOpen ? (data || []).filter((s) => checkIfOpen(s.opening_hours).isOpen) : data || [];
+  if (selectedGenres.length > 0) query = query.in("genre_id", selectedGenres);
+  if (selectedAreas.length > 0) query = query.in("area_id", selectedAreas);
+  if (selectedPayments.length > 0) query = query.overlaps("payment_method_ids", selectedPayments);
+
+  const { data: stores, error } = await query;
+  if (error || !stores) throw new Error(error?.message || "データ取得に失敗しました");
+
+  const [{ data: areaData }, { data: genreData }] = await Promise.all([
+    supabase.from("area_translations").select("area_id, name").eq("locale", locale),
+    supabase.from("genre_translations").select("genre_id, name").eq("locale", locale)
+  ]);
+
+  const areaMap = Object.fromEntries(areaData?.map((a) => [a.area_id, a.name]) || []);
+  const genreMap = Object.fromEntries(genreData?.map((g) => [g.genre_id, g.name]) || []);
+
+  const result = stores.map((store) => ({
+    ...store,
+    areaTranslated: areaMap[store.area_id],
+    genreTranslated: genreMap[store.genre_id]
+  }));
+
+  return showOnlyOpen ? result.filter((s) => checkIfOpen(s.opening_hours).isOpen) : result;
 };
 
 export default function SearchResults({
@@ -50,9 +72,9 @@ export default function SearchResults({
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
 
-  const { data: stores, error, isLoading } = useSWR<Store[]>(
-    isSearchTriggered ? "search-stores" : null,
-    () => fetchStores(selectedGenres, selectedAreas, selectedPayments, showOnlyOpen),
+  const { data: stores, error, isLoading } = useSWR<TranslatedStore[]>(
+    isSearchTriggered ? ["search-stores", locale] : null,
+    () => fetchStores(selectedGenres, selectedAreas, selectedPayments, showOnlyOpen, locale),
     { revalidateOnFocus: false }
   );
 
@@ -186,20 +208,16 @@ export default function SearchResults({
                     />
                   </div>
                   <div className="flex flex-col gap-1 flex-1 text-[14px] text-[#1F1F21]">
-                    <p>{store.area} / {store.genre}</p>
-
+                    <p>{store.areaTranslated} / {store.genreTranslated}</p>
                     <p className={`font-semibold ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
                       {isOpen ? messages.open : messages.closed}
                     </p>
-
-                    {/* ここを修正した！ */}
                     {nextOpening && (
                       <p className="text-xs text-zinc-700">
                         {messages.nextOpen
                           .replace(
                             '{day}',
-                            messages.days[nextOpening.day as keyof typeof messages.days] ??
-                            nextOpening.day
+                            messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
                           )
                           .replace('{time}', nextOpening.time)}
                       </p>

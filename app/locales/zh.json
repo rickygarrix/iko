@@ -69,7 +69,7 @@
     "contact": "联系",
     "terms": "服务条款",
     "privacy": "隐私政策",
-    "copyright": "© オトナビ"
+    "copyright": "© Otonavi"
   },
   "store": {
     "nextOpen": "下次营业：{day} {time} 起"
@@ -91,19 +91,6 @@
       "Sunday": "周日"
     }
   },
-  "storeDetail": {
-    "mapTitle": " 地图",
-    "descriptionLabel": "商户介绍",
-    "paymentTitle": "支付方式",
-    "infoTitle": "商户信息",
-    "name": "店名",
-    "genre": "音乐类型",
-    "address": "地址",
-    "access": "交通方式",
-    "hours": "营业时间",
-    "note": "*营业时间可能会有所变动。",
-    "website": "官方网站 →"
-  },
   "searchResults": {
     "prompt": "🔍 请选择筛选条件并点击“搜索”按钮",
     "loading": "加载中...",
@@ -124,5 +111,37 @@
       "Saturday": "周六",
       "Sunday": "周日"
     }
+  },
+  "storeDetail": {
+    "mapTitle": "地图",
+    "descriptionLabel": "商户介绍",
+    "paymentTitle": "支付方式",
+    "infoTitle": "商户信息",
+    "name": "店名",
+    "genre": "音乐类型",
+    "address": "地址",
+    "access": "交通方式",
+    "hours": "营业时间",
+    "note": "*营业时间可能会有所变动。",
+    "website": "官方网站 →",
+    "open": "营业中",
+    "closed": "已打烊",
+    "nextOpen": "下次营业：{day} {time} 起",
+    "area": "区域"
+  },
+  "areas": {
+    "shibuya": "涩谷",
+    "shinjuku": "新宿",
+    "roppongi": "六本木",
+    "ebisu": "惠比寿",
+    "ginza": "银座",
+    "ikebukuro": "池袋",
+    "nakameguro": "中目黑",
+    "daikanyama": "代官山",
+    "omotesando": "表参道",
+    "akasaka": "赤坂",
+    "akihabara": "秋叶原",
+    "ueno": "上野",
+    "other": "其他"
   }
 }

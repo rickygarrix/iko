@@ -19,6 +19,8 @@ export type Store = {
   name: string;
   genre: string;
   area: string;
+  genreTranslated?: string;
+  areaTranslated?: string;
   name_read?: string;
   entry_fee: string;
   opening_hours: string;
@@ -26,6 +28,7 @@ export type Store = {
   capacity: string;
   instagram: string | null;
   payment_methods: string[];
+  payment_method_ids: string[];      // ✅ 新しいプロパティを追加！
   address: string;
   phone: string;
   website?: string;
@@ -41,17 +44,55 @@ export type Store = {
 
 type Props = {
   id: string;
-  locale: Locale; // ← ✅ これを追加！
+  locale: Locale;
   messages: Messages["storeDetail"];
 };
 
-export default function StoreDetail({ id, messages }: Props) {
+const fetchStoreDetail = async ([, id, locale]: [string, string, string]): Promise<Store> => {
+  console.log("🪵 fetchStoreDetail", { id, locale });
+
+  const { data: storeData, error: storeError } = await supabase
+    .from("stores")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (storeError || !storeData) {
+    console.error("❌ 店舗が取得できませんでした", {
+      error: storeError,
+      id,
+      storeData,
+    });
+    throw new Error("店舗データが見つかりません");
+  }
+
+  // 翻訳を個別に取得
+  const [{ data: genreData }, { data: areaData }] = await Promise.all([
+    supabase
+      .from("genre_translations")
+      .select("name")
+      .eq("genre_id", storeData.genre_id)
+      .eq("locale", locale)
+      .single(),
+    supabase
+      .from("area_translations")
+      .select("name")
+      .eq("area_id", storeData.area_id)
+      .eq("locale", locale)
+      .single(),
+  ]);
+
+  return {
+    ...storeData,
+    genreTranslated: genreData?.name ?? storeData.genre_id,
+    areaTranslated: areaData?.name ?? storeData.area_id,
+  };
+};
+
+export default function StoreDetail({ id, locale, messages }: Props) {
   const { data: store, error, isLoading } = useSWR<Store>(
-    id ? ["store", id] : null,
-    async ([, id]) => {
-      const { data } = await supabase.from("stores").select("*").eq("id", id).single();
-      return data;
-    },
+    ["store", id, locale],
+    fetchStoreDetail,
     { revalidateOnFocus: false }
   );
 
@@ -79,6 +120,7 @@ export default function StoreDetail({ id, messages }: Props) {
   }
 
   if (error || !store) {
+    console.error("❌ 店舗が取得できませんでした", { error, id, locale });
     return (
       <div className="min-h-screen bg-[#FEFCF6] text-center pt-[100px] text-red-500">
         店舗が見つかりませんでした。

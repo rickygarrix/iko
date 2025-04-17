@@ -2,49 +2,48 @@ import { NextRequest, NextResponse } from "next/server";
 import Negotiator from "negotiator";
 import { match as matchLocale } from "@formatjs/intl-localematcher";
 
-const locales = ["ja", "en", "zh", "ko"];
-const defaultLocale = "ja";
+/* ------ 対応ロケール ------ */
+const LOCALES = ["ja", "en", "zh", "ko"] as const;
+const DEFAULT_LOCALE = "ja";
 
-// Accept-Language ヘッダーから最適なロケールを取得
-function getLocale(request: NextRequest): string {
-  const negotiatorHeaders: Record<string, string> = {};
-  request.headers.forEach((value, key) => {
-    negotiatorHeaders[key] = value;
-  });
-  const languages = new Negotiator({ headers: negotiatorHeaders }).languages();
-  return matchLocale(languages, locales, defaultLocale);
+/* ------ ユーザーの Accept-Language から優先ロケールを取得 ------ */
+function detectLocale(req: NextRequest): string {
+  const headers: Record<string, string> = {};
+  req.headers.forEach((v, k) => (headers[k] = v));
+  const langs = new Negotiator({ headers }).languages();
+  return matchLocale(langs, LOCALES, DEFAULT_LOCALE);
 }
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-  // ✅ ロケールを付けたくないパス（例：管理画面や静的な共通ページ）
-  const PUBLIC_PATHS = ["/admin", "/contact"];
-  const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
-  if (isPublic) {
+  /* ✅ ロケールを付けない公開パス（リダイレクトや rewrite 不要） */
+  const PUBLIC_PATHS = [
+    "/admin",        // 管理画面
+    "/contact",      // お問い合わせフォーム
+    "/terms",        // 利用規約（日本語表示のみでOK）
+    "/privacy"       // プライバシーポリシー（日本語表示のみでOK）
+  ];
+  if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // ✅ すでにロケール付きならスキップ
-  const pathnameIsMissingLocale = locales.every(
-    (locale) =>
-      !pathname.startsWith(`/${locale}/`) &&
-      pathname !== `/${locale}`
+  /* ✅ すでに /ja や /en 等が付いていればスルー */
+  const lacksLocale = LOCALES.every(
+    l => !pathname.startsWith(`/${l}/`) && pathname !== `/${l}`
   );
+  if (!lacksLocale) return NextResponse.next();
 
-  if (pathnameIsMissingLocale) {
-    const locale = getLocale(request);
-    const url = request.nextUrl.clone();
-    url.pathname = pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
-    return NextResponse.redirect(url);
-  }
-
-  return NextResponse.next();
+  /* ✅ それ以外 → 自動的にロケールを付与してリダイレクト */
+  const locale = detectLocale(req);
+  const url = req.nextUrl.clone();
+  url.pathname = pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
+  return NextResponse.redirect(url);
 }
 
-// ✅ 除外ルール（APIや静的ファイルもスキップ）
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
-  ],
+    // 静的ファイル・APIを除外
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"
+  ]
 };

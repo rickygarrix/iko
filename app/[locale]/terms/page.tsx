@@ -1,6 +1,16 @@
-export default function TermsPage() {
+export const generateStaticParams = async () => {
+  return ["ja", "en", "zh", "ko"].map((locale) => ({
+    locale,
+  }));
+};
+
+type Props = {
+  params: { locale: "ja" | "en" | "zh" | "ko" };
+};
+
+export default function TermsPage({ params }: Props) {
   return (
-    <div className="min-h-screen bg-white text-gray-800 p-6">
+    <div className="min-h-screen bg-white text-gray-800 p-6 pt-16">
       <div className="max-w-3xl mx-auto bg-white border border-gray-200 p-8 rounded-md shadow-md">
         <h1 className="text-3xl font-bold mb-6">利用規約</h1>
 

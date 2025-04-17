@@ -1,4 +1,3 @@
-// app/[locale]/layout.tsx
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import Header from "@/components/Header";
@@ -14,15 +13,10 @@ import en from "@/locales/en.json";
 import zh from "@/locales/zh.json";
 import ko from "@/locales/ko.json";
 
-const messagesMap: Record<Locale, Messages> = {
-  ja,
-  en,
-  zh,
-  ko,
-};
+const messagesMap: Record<Locale, Messages> = { ja, en, zh, ko };
 
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return ["ja", "en", "zh", "ko"].map((locale) => ({ locale }));
 }
 
 export default function LocaleLayout({
@@ -32,19 +26,24 @@ export default function LocaleLayout({
   children: ReactNode;
   params: { locale: string };
 }) {
-  const locale = params.locale;
+  const locale = params.locale as Locale;
 
-  if (!locales.includes(locale as Locale)) {
+  if (!locales.includes(locale)) {
     notFound();
   }
 
-  const messages = messagesMap[locale as Locale];
+  const messages = messagesMap[locale];
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <Header messages={messages.header} />
+      {/* ── ヘッダー ─────────────────────── */}
+      <Header locale={locale} messages={messages.header} />
+
+      {/* ── ページ本体 ─────────────────── */}
       {children}
-      <Footer messages={messages.footer} />
+
+      {/* ── フッター ─────────────────────── */}
+      <Footer locale={locale} messages={messages.footer} />
     </NextIntlClientProvider>
   );
 }

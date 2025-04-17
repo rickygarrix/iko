@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation"; // ← useParams もここでOK
+import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
@@ -15,7 +15,7 @@ type HomeProps = {
 
 export default function Home({ messages }: HomeProps) {
   const router = useRouter();
-  const { locale } = useParams() as { locale: string }; // ✅ Top-level で取得（🔥重要）
+  const { locale } = useParams() as { locale: string };
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
@@ -26,12 +26,10 @@ export default function Home({ messages }: HomeProps) {
   useEffect(() => {
     const fetchPreviewCount = async () => {
       let query = supabase.from("stores").select("*").eq("is_published", true);
-      if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
-      if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
+      if (selectedGenres.length > 0) query = query.in("genre_id", selectedGenres);
+      if (selectedAreas.length > 0) query = query.in("area_id", selectedAreas);
       if (selectedPayments.length > 0) {
-        query = query.or(
-          selectedPayments.map((p) => `payment_methods.cs.{${p}}`).join(",")
-        );
+        query = query.overlaps("payment_method_ids", selectedPayments);
       }
 
       const { data, error } = await query;
@@ -63,7 +61,7 @@ export default function Home({ messages }: HomeProps) {
     if (showOnlyOpen) params.append("open", "true");
     if (params.toString() === "") params.set("all", "true");
 
-    router.push(`/${locale}/search?${params.toString()}`); // ✅ ロケール付きに修正
+    router.push(`/${locale}/search?${params.toString()}`);
   };
 
   return (

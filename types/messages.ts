@@ -39,6 +39,9 @@ export type Messages = {
   payments: {
     [key: string]: string;
   };
+  areas: {
+    [key: string]: string;
+  };
   footer: {
     search: string;
     map: string;
@@ -97,5 +100,9 @@ export type Messages = {
     hours: string;
     note: string;
     website: string;
+    open: string;
+    closed: string;
+    nextOpen: string;
+    area: string;
   };
 };

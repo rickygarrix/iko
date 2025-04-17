@@ -6,7 +6,10 @@ export default function StoreInfoTable({
   store,
   messages,
 }: {
-  store: Store;
+  store: Store & {
+    genreTranslated?: string;
+    areaTranslated?: string;
+  };
   messages: Messages["storeDetail"];
 }) {
   // デバッグ出力
@@ -29,7 +32,7 @@ export default function StoreInfoTable({
           </tr>
           <tr>
             <th className="border px-4 py-4 bg-[#FDFBF7] font-normal">{messages.genre}</th>
-            <td className="border px-4 py-4">{store.genre}</td>
+            <td className="border px-4 py-4">{store.genreTranslated ?? store.genre}</td>
           </tr>
           <tr>
             <th className="border px-4 py-4 bg-[#FDFBF7] font-normal">{messages.address}</th>

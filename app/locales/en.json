@@ -115,7 +115,26 @@
     "access": "Access",
     "hours": "Opening Hours",
     "note": "*May vary depending on the day.",
-    "website": "Official Website →"
+    "website": "Official Website →",
+    "open": "Open now",
+    "closed": "Closed",
+    "nextOpen": "Next open: {day} from {time}",
+    "area": "Area"
+  },
+  "areas": {
+    "shibuya": "Shibuya",
+    "shinjuku": "Shinjuku",
+    "roppongi": "Roppongi",
+    "ebisu": "Ebisu",
+    "ginza": "Ginza",
+    "ikebukuro": "Ikebukuro",
+    "nakameguro": "Nakameguro",
+    "daikanyama": "Daikanyama",
+    "omotesando": "Omotesando",
+    "akasaka": "Akasaka",
+    "akihabara": "Akihabara",
+    "ueno": "Ueno",
+    "other": "Others"
   },
   "footer": {
     "search": "Search",

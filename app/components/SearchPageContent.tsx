@@ -18,10 +18,9 @@ export default function SearchPageContent({
   const router = useRouter();
   const pathname = usePathname();
 
-  // ✅ locale を usePathname から抽出する関数
   const getLocaleFromPathname = (pathname: string): string => {
     const segments = pathname.split("/");
-    return segments[1] || "ja"; // 例: /ja/search → ja
+    return segments[1] || "ja";
   };
 
   const locale = getLocaleFromPathname(pathname);
@@ -40,9 +39,9 @@ export default function SearchPageContent({
   ): Promise<number> => {
     let query = supabase.from("stores").select("*").eq("is_published", true);
 
-    if (selectedGenres.length > 0) query = query.in("genre", selectedGenres);
-    if (selectedAreas.length > 0) query = query.in("area", selectedAreas);
-    if (selectedPayments.length > 0) query = query.overlaps("payment_methods", selectedPayments);
+    if (selectedGenres.length > 0) query = query.in("genre_id", selectedGenres);
+    if (selectedAreas.length > 0) query = query.in("area_id", selectedAreas);
+    if (selectedPayments.length > 0) query = query.overlaps("payment_method_ids", selectedPayments);
 
     const { data, error } = await query;
 
@@ -118,6 +117,7 @@ export default function SearchPageContent({
               ...messages.searchFilter,
               genres: messages.genres,
               payments: messages.payments,
+              areas: messages.areas,
             }}
           />
         </div>
