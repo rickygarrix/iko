@@ -17,7 +17,7 @@ export default function Header({ messages }: Props) {
   const { locale } = useParams() as { locale: string };
 
   const handleHomeClick = useCallback(() => {
-    const targetPath = `/${locale}`;
+    const targetPath = `/${locale}/home`; // ← 修正点
     if (pathname !== targetPath) {
       document.body.style.opacity = "0";
       router.push(targetPath);

@@ -2,6 +2,7 @@
 .next/
 dist/
 out/
+build.log
 
 # モジュール
 node_modules/
@@ -17,6 +18,4 @@ public/instagram/
 # .gitignore に追記
 package-lock\ 2.json
 package-lock\ 3.json
-package-lock\ 4.json
-# Env files
-*.env*
+package-lock\ 4.jso

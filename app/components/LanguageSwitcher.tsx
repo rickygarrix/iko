@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
 
 export default function LanguageSwitcher() {
@@ -10,9 +10,13 @@ export default function LanguageSwitcher() {
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLocale = e.target.value;
+
+    // 安全にパスを切り替える（例: /ja/search → /en/search）
     const segments = pathname.split("/");
-    segments[1] = newLocale;
-    const newPath = segments.join("/") || "/";
+    if (segments.length > 1) {
+      segments[1] = newLocale;
+    }
+    const newPath = segments.join("/") || `/${newLocale}`;
     router.push(newPath);
   };
 

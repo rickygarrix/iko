@@ -1,3 +1,4 @@
+// app/[locale]/layout.tsx
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import Header from "@/components/Header";
@@ -5,9 +6,7 @@ import Footer from "@/components/Footer";
 import type { ReactNode } from "react";
 import type { Messages } from "@/types/messages";
 
-export const dynamic = "force-dynamic"; // 念のため入れておくと安心
-
-// 対応ロケール定義
+// 対応ロケール
 const locales = ["ja", "en", "zh", "ko"] as const;
 type Locale = (typeof locales)[number];
 
@@ -17,7 +16,6 @@ import en from "@/locales/en.json";
 import zh from "@/locales/zh.json";
 import ko from "@/locales/ko.json";
 
-// ロケール別メッセージマップ
 const messagesMap: Record<Locale, Messages> = {
   ja,
   en,
@@ -25,9 +23,7 @@ const messagesMap: Record<Locale, Messages> = {
   ko,
 };
 
-// static path対応
-
-export default async function LocaleLayout({
+export default function LocaleLayout({
   children,
   params,
 }: {
@@ -35,7 +31,6 @@ export default async function LocaleLayout({
   params: { locale: string };
 }) {
   const { locale } = params;
-
   if (!locales.includes(locale as Locale)) {
     notFound();
   }
