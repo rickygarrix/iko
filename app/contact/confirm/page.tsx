@@ -14,7 +14,6 @@ export default function ContactConfirmPage() {
   const handleSend = async () => {
     const { error } = await supabase.from("contacts").insert([
       {
-        category: contact.category,
         email: contact.email,
         name: contact.name,
         subject: contact.subject,
@@ -27,13 +26,13 @@ export default function ContactConfirmPage() {
       setError("送信に失敗しました。時間を置いて再度お試しください。");
     } else {
       console.log("送信成功");
-      resetContact(); // 送信後にstoreをクリア
+      resetContact();
       router.push("/thanks");
     }
   };
 
   const handleBack = () => {
-    router.back(); // 1つ前に戻る
+    router.back();
   };
 
   return (
@@ -42,10 +41,6 @@ export default function ContactConfirmPage() {
         <h1 className="text-2xl font-bold text-center mb-6">内容確認</h1>
 
         <div className="space-y-4 mb-8">
-          <div>
-            <p className="text-sm text-gray-500">カテゴリ</p>
-            <p className="text-lg">{contact.category}</p>
-          </div>
           <div>
             <p className="text-sm text-gray-500">メールアドレス</p>
             <p className="text-lg">{contact.email}</p>
@@ -64,14 +59,12 @@ export default function ContactConfirmPage() {
           </div>
         </div>
 
-        {/* エラーメッセージ */}
         {error && (
           <div className="text-red-500 text-sm font-semibold mb-4 text-center">
             {error}
           </div>
         )}
 
-        {/* ボタン */}
         <div className="flex flex-col gap-4">
           <button
             onClick={handleSend}

@@ -1,32 +1,23 @@
 import { getDictionary } from "@/lib/getDictionary";
-import type { Locale } from "@/i18n/config";
+import type { StoreParams } from "@/types/params";
+import { locales } from "@/types/params";
 import StoreDetailPage from "@/components/StoreDetail/StoreDetail";
 
-// static params
-export function generateStaticParams() {
-  const locales: Locale[] = ["ja", "en", "zh", "ko"];
+export function generateStaticParams(): StoreParams["params"][] {
   return locales.map((locale) => ({
     locale,
-    id: "dummy", // 実際のビルドでは使われない placeholder
+    id: "dummy", // 実際はISRで補完するかルールを追加
   }));
 }
 
-type Props = {
-  params: {
-    locale: string;
-    id: string;
-  };
-};
-
-export default async function Page({ params }: Props) {
+export default async function Page({ params }: StoreParams) {
   const { locale, id } = params;
-
-  const dict = await getDictionary(locale as Locale);
+  const dict = await getDictionary(locale);
 
   return (
     <StoreDetailPage
       id={id}
-      locale={locale as Locale}
+      locale={locale}
       messages={{
         ...dict.storeDetail,
         genre: dict.storeDetail.genre,
