@@ -68,23 +68,7 @@ export default function SearchFilter({
   const logSearchAction = async (action: "search" | "reset_search") => {
     const locale = window.location.pathname.split("/")[1] || "ja";
 
-    const payload: Record<string, unknown> = {
-      action, // ← これが Supabase に保存される key として必要！
-      locale,
-      device: navigator.userAgent.toLowerCase().includes("mobile") ? "mobile" : "pc",
-    };
-
-    if (action === "search") {
-      payload.search_conditions = {
-        genres: selectedGenres,
-        areas: selectedAreas,
-        payments: selectedPayments,
-        openOnly: showOnlyOpen,
-      };
-    }
-
-    console.log("📝 payload to Supabase:", JSON.stringify(payload, null, 2));
-    await logAction("search", {
+    await logAction(action, {
       locale,
       search_conditions: {
         genres: selectedGenres,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/utils";
@@ -85,14 +84,13 @@ export default function StoreDetail({ id, locale, messages }: Props) {
     { revalidateOnFocus: false }
   );
 
-  useEffect(() => {
-    if (id) {
-      logAction("open_store", { store_id: id, referrer_page: document.referrer || null });
-    }
-  }, [id, messages]);
-
   const handleLog = async (action: string, detail?: string) => {
-    if (id) await logAction(action, { store_id: id, ...(detail ? { detail } : {}) });
+    if (id) {
+      await logAction(action, {
+        store_id: id,
+        ...(detail ? { detail } : {}),
+      });
+    }
   };
 
   if (isLoading) {
@@ -119,7 +117,14 @@ export default function StoreDetail({ id, locale, messages }: Props) {
   return (
     <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px]">
       <div className="w-full max-w-[600px] mx-auto bg-[#FDFBF7] shadow-md rounded-lg">
-        <StoreMap store={store} messages={messages} onClick={() => handleLog("click_map")} />
+        <StoreMap
+          store={store}
+          messages={messages}
+          onClick={async () => {
+            await handleLog("click_map");
+            window.open(store.map_link || "#", "_blank", "noopener");
+          }}
+        />
         <StoreDescription store={store} messages={messages} />
         <StorePaymentTable store={store} messages={{ ...messages, payments: store.payments }} />
         <StoreInfoTable store={store} messages={messages} />
@@ -127,13 +132,19 @@ export default function StoreDetail({ id, locale, messages }: Props) {
           posts={[store.store_instagrams, store.store_instagrams2, store.store_instagrams3].filter(
             (url): url is string => Boolean(url)
           )}
-          onClickPost={(url) => handleLog("click_instagram_post", url)}
+          onClickPost={async (url) => {
+            await handleLog("click_instagram_post", url);
+            window.open(url, "_blank", "noopener");
+          }}
         />
         {store.website && messages?.website && (
           <StoreWebsiteButton
             href={store.website}
             label={messages.website}
-            onClick={() => handleLog("click_website")}
+            onClick={async () => {
+              await handleLog("click_website");
+              window.open(store.website, "_blank", "noopener");
+            }}
           />
         )}
       </div>

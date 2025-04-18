@@ -19,7 +19,7 @@ export const convertToJapaneseDay = (day: string) => {
     .replace("曜日", "");
 };
 
-// ✅ 英語で曜日を返す（翻訳対応前提）
+// ✅ 営業中判定
 export const checkIfOpen = (opening_hours: string): {
   isOpen: boolean;
   closeTime?: string;
@@ -28,9 +28,7 @@ export const checkIfOpen = (opening_hours: string): {
   const nowRaw = dayjs();
   let now = nowRaw;
 
-  if (nowRaw.hour() < 6) {
-    now = nowRaw.subtract(1, "day");
-  }
+  if (nowRaw.hour() < 6) now = nowRaw.subtract(1, "day");
 
   const today = now.format("dddd");
   const tomorrow = now.add(1, "day").format("dddd");
@@ -74,9 +72,9 @@ export const checkIfOpen = (opening_hours: string): {
   }
 
   const todayHours = hoursMap[foundKey] || [];
-  let nextOpening: { day: string; time: string } | null = null;
   let isOpen = false;
   let closeTime: string | undefined = undefined;
+  let nextOpening: { day: string; time: string } | null = null;
 
   for (const period of todayHours) {
     const [openHourStr, openMinuteStr] = period.open.split(":");
@@ -84,14 +82,13 @@ export const checkIfOpen = (opening_hours: string): {
 
     let open = now.set("hour", parseInt(openHourStr)).set("minute", parseInt(openMinuteStr));
     let close = now.set("hour", parseInt(closeHourStr)).set("minute", parseInt(closeMinuteStr));
-
     if (parseInt(closeHourStr) >= 24) {
       close = now.add(1, "day").set("hour", parseInt(closeHourStr) - 24).set("minute", parseInt(closeMinuteStr));
     }
 
     if (nowRaw.isBetween(open, close, null, "[)")) {
       isOpen = true;
-      closeTime = close.format("HH:mm"); // ← ✨ ここ追加
+      closeTime = close.format("HH:mm");
       break;
     }
   }
@@ -103,7 +100,6 @@ export const checkIfOpen = (opening_hours: string): {
     const futureHours = todayHours.filter((period) =>
       dayjs(`${now.format("YYYY-MM-DD")} ${period.open}`).isAfter(now)
     );
-
     if (futureHours.length > 0) {
       nextOpening = { day: today, time: futureHours[0].open };
     } else {
@@ -120,28 +116,34 @@ export const checkIfOpen = (opening_hours: string): {
   return { isOpen, closeTime, nextOpening };
 };
 
-// ✅ デバイス判定関数
+// ✅ デバイス判定
 export const getDeviceType = (): "pc" | "mobile" => {
   const ua = navigator.userAgent.toLowerCase();
   return ua.includes("iphone") || ua.includes("android") ? "mobile" : "pc";
 };
 
-// ✅ アクションログを保存
+// ✅ アクションログ送信（確認付き）
 export const logAction = async (
   action: string,
-  payload?: Record<string, unknown>
-) => {
-  try {
-    const baseLog = {
-      action,
-      device: getDeviceType(),
-      referrer_page: document.referrer || null,
-      ...payload, // ← localeやsearch_conditionsなどもここに含める
-    };
+  data: Record<string, unknown> // ← 変更点
+): Promise<void> => {
+  const payload = {
+    action,
+    ...data,
+    created_at: new Date().toISOString(),
+    device: getDeviceType(),
+  };
 
-    console.log("📤 Supabase Log Payload", baseLog); // デバッグ用に残してOK
-    await supabase.from("action_logs").insert([baseLog]);
-  } catch (error) {
-    console.error("❌ ログ保存エラー:", error);
+  console.log("🔍 payload", payload);
+
+  const { data: insertResult, error } = await supabase
+    .from("action_logs")
+    .insert(payload)
+    .select();
+
+  if (error) {
+    console.error("🔥 Supabaseへの挿入に失敗:", error);
+  } else {
+    console.log("📥 insert result:", insertResult);
   }
 };

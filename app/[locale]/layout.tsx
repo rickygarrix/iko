@@ -5,45 +5,48 @@ import Footer from "@/components/Footer";
 import type { ReactNode } from "react";
 import type { Messages } from "@/types/messages";
 
+export const dynamic = "force-dynamic"; // 念のため入れておくと安心
+
+// 対応ロケール定義
 const locales = ["ja", "en", "zh", "ko"] as const;
 type Locale = (typeof locales)[number];
 
+// ローカル翻訳ファイル
 import ja from "@/locales/ja.json";
 import en from "@/locales/en.json";
 import zh from "@/locales/zh.json";
 import ko from "@/locales/ko.json";
 
-const messagesMap: Record<Locale, Messages> = { ja, en, zh, ko };
+// ロケール別メッセージマップ
+const messagesMap: Record<Locale, Messages> = {
+  ja,
+  en,
+  zh,
+  ko,
+};
 
-export function generateStaticParams() {
-  return ["ja", "en", "zh", "ko"].map((locale) => ({ locale }));
-}
+// static path対応
 
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
   params,
 }: {
   children: ReactNode;
   params: { locale: string };
 }) {
-  const locale = params.locale as Locale;
+  const { locale } = params;
 
-  if (!locales.includes(locale)) {
+  if (!locales.includes(locale as Locale)) {
     notFound();
   }
 
-  const messages = messagesMap[locale];
+  const messages = messagesMap[locale as Locale];
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {/* ── ヘッダー ─────────────────────── */}
-      <Header locale={locale} messages={messages.header} />
-
-      {/* ── ページ本体 ─────────────────── */}
+      <Header locale={locale as Locale} messages={messages.header} />
       {children}
-
-      {/* ── フッター ─────────────────────── */}
-      <Footer locale={locale} messages={messages.footer} />
+      <Footer locale={locale as Locale} messages={messages.footer} />
     </NextIntlClientProvider>
   );
 }

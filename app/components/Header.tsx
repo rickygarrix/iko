@@ -57,10 +57,10 @@ export default function Header({ messages }: Props) {
         >
           <Image
             src="/header/logo.svg"
-            alt="..."
+            alt="Logo"
             width={80}
             height={24}
-            unoptimized
+            priority
           />
         </div>
 

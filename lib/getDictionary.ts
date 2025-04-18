@@ -1,7 +1,7 @@
-// lib/getDictionary.ts
+import type { Messages } from "@/types/messages";
 import type { Locale } from "@/i18n/config";
 
-export const getDictionary = async (locale: Locale) => {
+export const getDictionary = async (locale: Locale): Promise<Messages> => {
   switch (locale) {
     case "en":
       return (await import("@/locales/en.json")).default;

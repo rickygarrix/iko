@@ -1,5 +1,3 @@
-// app/[locale]/search/page.tsx
-
 import SearchContent from "@/components/SearchPageContent";
 import { notFound } from "next/navigation";
 import type { Messages } from "@/types/messages";
@@ -19,18 +17,18 @@ const messagesMap: Record<Locale, Messages> = {
   ko,
 };
 
-export default function SearchPage({
+export default async function SearchPage({
   params,
 }: {
   params: { locale?: string };
 }) {
-  const locale = params?.locale;
+  const locale = params?.locale as Locale;
 
-  if (!locale || !locales.includes(locale as Locale)) {
+  if (!locale || !locales.includes(locale)) {
     notFound();
   }
 
-  const dict = messagesMap[locale as Locale];
+  const dict = messagesMap[locale];
 
   return <SearchContent messages={dict} />;
 }

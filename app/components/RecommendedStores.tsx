@@ -151,7 +151,10 @@ export default function RecommendedStores({ messages }: Props) {
     }
     setIsLoading(true);
     try {
-      await logAction("click_recommended_store", { store_id: storeId });
+      await logAction("click_recommended_store", {
+        store_id: storeId,
+        locale, // ✅ 追加
+      });
     } catch (error) {
       console.error("🔥 アクションログ保存失敗:", error);
     }

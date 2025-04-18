@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
@@ -68,9 +68,12 @@ export default function SearchResults({
   const searchParams = useSearchParams();
   const { locale } = useParams() as { locale: string };
   const queryParams = searchParams.toString();
+
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+
+  const clickedStoreIds = useRef<Set<string>>(new Set()); // ✅ 二重送信防止
 
   const { data: stores, error, isLoading } = useSWR<TranslatedStore[]>(
     isSearchTriggered ? ["search-stores", locale] : null,
@@ -115,6 +118,10 @@ export default function SearchResults({
   }, []);
 
   const handleStoreClick = async (storeId: string) => {
+    // ✅ クリック多重防止
+    if (clickedStoreIds.current.has(storeId)) return;
+    clickedStoreIds.current.add(storeId);
+
     const currentY = window.scrollY;
     sessionStorage.setItem("searchScrollY", currentY.toString());
     setIsOverlayVisible(true);
@@ -122,8 +129,8 @@ export default function SearchResults({
     try {
       await logAction("click_search_store", {
         store_id: storeId,
-        referrer_page: pathname,
         query_params: queryParams,
+        locale,
       });
     } catch (error) {
       console.error("🔥 アクションログ保存失敗:", error);
@@ -188,7 +195,8 @@ export default function SearchResults({
           return (
             <div
               key={store.id}
-              className={`bg-[#FEFCF6] rounded-xl cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""} transition-colors duration-200`}
+              className={`bg-[#FEFCF6] rounded-xl cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""
+                } transition-colors duration-200`}
               onClick={() => handleStoreClick(store.id)}
             >
               <div className="space-y-3 pt-4">
@@ -211,7 +219,7 @@ export default function SearchResults({
                   </div>
                   <div className="flex flex-col gap-1 flex-1 text-[14px] text-[#1F1F21]">
                     <p>{store.areaTranslated} / {store.genreTranslated}</p>
-                    <p className={`font-semibold ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                    <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
                       {isOpen ? messages.open : messages.closed}
                     </p>
                     {isOpen && closeTime && (
@@ -222,8 +230,8 @@ export default function SearchResults({
                     {!isOpen && nextOpening && (
                       <p className="text-xs text-zinc-700">
                         {messages.nextOpen
-                          .replace('{day}', messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day)
-                          .replace('{time}', nextOpening.time)}
+                          .replace("{day}", messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day)
+                          .replace("{time}", nextOpening.time)}
                       </p>
                     )}
                   </div>

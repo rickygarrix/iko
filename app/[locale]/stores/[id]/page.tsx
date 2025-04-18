@@ -1,4 +1,3 @@
-// app/[locale]/stores/[id]/page.tsx
 import { getDictionary } from "@/lib/getDictionary";
 import type { Locale } from "@/i18n/config";
 import StoreDetailPage from "@/components/StoreDetail/StoreDetail";
@@ -8,28 +7,30 @@ export function generateStaticParams() {
   const locales: Locale[] = ["ja", "en", "zh", "ko"];
   return locales.map((locale) => ({
     locale,
-    id: "dummy",
+    id: "dummy", // 実際のビルドでは使われない placeholder
   }));
 }
 
 type Props = {
   params: {
-    locale: Locale;
+    locale: string;
     id: string;
   };
 };
 
 export default async function Page({ params }: Props) {
-  const dict = await getDictionary(params.locale);
+  const { locale, id } = params;
+
+  const dict = await getDictionary(locale as Locale);
 
   return (
     <StoreDetailPage
-      id={params.id}
-      locale={params.locale}
+      id={id}
+      locale={locale as Locale}
       messages={{
         ...dict.storeDetail,
         genre: dict.storeDetail.genre,
-        area: dict.searchFilter.area, // ✅ area は searchFilter 由来
+        area: dict.searchFilter.area,
         open: dict.recommend.open,
         closed: dict.recommend.closed,
         nextOpen: dict.recommend.nextOpen,

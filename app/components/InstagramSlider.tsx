@@ -7,7 +7,6 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-// 🔥 props型に onClickPost を追加
 type InstagramSliderProps = {
   posts: string[];
   onClickPost?: (url: string) => Promise<void>;
@@ -25,7 +24,7 @@ declare global {
 }
 
 export default function InstagramSlider({ posts, onClickPost }: InstagramSliderProps) {
-  // 🔥 初回だけInstagramの埋め込み用scriptを追加
+  // 初回のみInstagram埋め込みscriptを追加
   useEffect(() => {
     if (!document.getElementById("instagram-embed-script")) {
       const script = document.createElement("script");
@@ -36,7 +35,7 @@ export default function InstagramSlider({ posts, onClickPost }: InstagramSliderP
     }
   }, []);
 
-  // 🔥 postsが変わったら再度embedを再実行
+  // 投稿が変わったら埋め込みを再処理
   useEffect(() => {
     const timer = setTimeout(() => {
       window.instgrm?.Embeds.process();
@@ -45,17 +44,15 @@ export default function InstagramSlider({ posts, onClickPost }: InstagramSliderP
     return () => clearTimeout(timer);
   }, [posts]);
 
-  if (posts.length === 0) return null; // 投稿なければ非表示
+  if (posts.length === 0) return null;
 
   return (
     <div className="w-full px-4 pb-8 relative">
-      {/* Instagramセクションタイトル */}
       <p className="text-base mb-2 flex items-center gap-2 font-[#1F1F21]">
         <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded-[2px] inline-block" />
         Instagram
       </p>
 
-      {/* スライダー本体 */}
       <Swiper
         slidesPerView={1}
         spaceBetween={10}
@@ -71,18 +68,16 @@ export default function InstagramSlider({ posts, onClickPost }: InstagramSliderP
         {posts.map((url, idx) => (
           <SwiperSlide key={idx}>
             <div className="w-full aspect-square rounded-lg overflow-hidden">
-              {/* 🔥 クリックでonClickPostを呼ぶ */}
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <div
+                className="block w-full h-full cursor-pointer"
                 onClick={async (e) => {
-                  e.stopPropagation(); // swiperのタップ干渉防止
-                  if (onClickPost) {
-                    await onClickPost(url); // ログ記録
+                  e.stopPropagation();
+                  try {
+                    if (onClickPost) await onClickPost(url);
+                  } finally {
+                    window.open(url, "_blank", "noopener");
                   }
                 }}
-                className="block w-full h-full"
               >
                 <blockquote
                   className="instagram-media"
@@ -90,13 +85,12 @@ export default function InstagramSlider({ posts, onClickPost }: InstagramSliderP
                   data-instgrm-version="14"
                   style={{ width: "100%", height: "100%", margin: 0 }}
                 ></blockquote>
-              </a>
+              </div>
             </div>
           </SwiperSlide>
         ))}
       </Swiper>
 
-      {/* Swiperのボタンスタイル */}
       <style jsx global>{`
         .instagram-slider .swiper-button-prev,
         .instagram-slider .swiper-button-next {
