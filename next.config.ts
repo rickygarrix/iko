@@ -1,12 +1,21 @@
-// next.config.ts
-import withNextIntl from 'next-intl/plugin';
-import type { NextConfig } from 'next';
+const withNextIntl = require('next-intl/plugin')(
+  './i18n/request.ts' // 🌍 i18n の設定ファイルのパス（プロジェクトルートからの相対パス）
+);
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
-  images: {
-    domains: ["your-image-domain.com"],
+  experimental: {
+    appDir: true
   },
+  // 必要なら他にも設定追加可能
+  images: {
+    domains: [
+      'lh3.googleusercontent.com',
+      'blogger.googleusercontent.com',
+      'bqexmwjcmtyypzucndrb.supabase.co'
+    ]
+  }
 };
 
-export default withNextIntl('./i18n/request.ts')(nextConfig);
+module.exports = withNextIntl(nextConfig);

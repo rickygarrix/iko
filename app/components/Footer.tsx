@@ -45,12 +45,12 @@ export default function Footer({ locale, messages }: Props) {
 
         {/* 利用規約・プライバシーポリシー */}
         <div className="w-full flex justify-center items-start flex-wrap gap-2">
-          <Link href={`/${locale}/terms`} className="px-4 py-2">
+          <Link href="/terms" className="px-4 py-2">
             <div className="text-white text-xs font-light leading-none">
               {messages.terms}
             </div>
           </Link>
-          <Link href={`/${locale}/privacy`} className="px-4 py-2">
+          <Link href="/privacy" className="px-4 py-2">
             <div className="text-white text-xs font-light leading-none">
               {messages.privacy}
             </div>

@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
 import { Store } from "../../types";
 import Image from "next/image";
-import { useRouter, usePathname, useSearchParams, useParams } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { Messages } from "@/types/messages";
 
 type SearchResultsProps = {
@@ -66,14 +66,16 @@ export default function SearchResults({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { locale } = useParams() as { locale: string };
   const queryParams = searchParams.toString();
+
+  // ✅ locale を pathname から取得（useParams は使わない）
+  const locale = pathname.split("/")[1] || "ja";
 
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
 
-  const clickedStoreIds = useRef<Set<string>>(new Set()); // ✅ 二重送信防止
+  const clickedStoreIds = useRef<Set<string>>(new Set());
 
   const { data: stores, error, isLoading } = useSWR<TranslatedStore[]>(
     isSearchTriggered ? ["search-stores", locale] : null,
@@ -118,7 +120,6 @@ export default function SearchResults({
   }, []);
 
   const handleStoreClick = async (storeId: string) => {
-    // ✅ クリック多重防止
     if (clickedStoreIds.current.has(storeId)) return;
     clickedStoreIds.current.add(storeId);
 
@@ -230,7 +231,10 @@ export default function SearchResults({
                     {!isOpen && nextOpening && (
                       <p className="text-xs text-zinc-700">
                         {messages.nextOpen
-                          .replace("{day}", messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day)
+                          .replace(
+                            "{day}",
+                            messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
+                          )
                           .replace("{time}", nextOpening.time)}
                       </p>
                     )}

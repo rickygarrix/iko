@@ -6,6 +6,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/utils";
 import type { Messages } from "@/types/messages";
+import { useParams } from "next/navigation"; // ✅ 追加
 
 type Option = { id: string; name: string };
 
@@ -42,12 +43,17 @@ export default function SearchFilter({
   showTitle = true,
   messages,
 }: Props) {
+
   const [genres, setGenres] = useState<Option[]>([]);
   const [areas, setAreas] = useState<Option[]>([]);
   const [payments, setPayments] = useState<Option[]>([]);
 
+  // ✅ locale を pathname から抽出（useParams()はクライアントで使いづらいため）
+  const locale = typeof window !== "undefined"
+    ? window.location.pathname.split("/")[1] || "ja"
+    : "ja";
+
   useEffect(() => {
-    const locale = window.location.pathname.split("/")[1] || "ja";
     const fetch = async () => {
       const [{ data: genreData }, { data: areaData }, { data: paymentData }] = await Promise.all([
         supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
@@ -58,16 +64,14 @@ export default function SearchFilter({
       setGenres(genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? []);
       setAreas(areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []);
       setPayments(
-        (paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? [])
-          .filter((p) => p.id !== "other") // ← この行がポイント！
+        (paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? []).filter((p) => p.id !== "other")
       );
     };
+
     fetch();
-  }, []);
+  }, [locale]);
 
   const logSearchAction = async (action: "search" | "reset_search") => {
-    const locale = window.location.pathname.split("/")[1] || "ja";
-
     await logAction(action, {
       locale,
       search_conditions: {
@@ -94,6 +98,7 @@ export default function SearchFilter({
           </motion.div>
         )}
 
+        {/* 条件項目一覧 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -101,7 +106,7 @@ export default function SearchFilter({
           className="space-y-8"
         >
           {/* 営業時間 */}
-          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.open}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {[{ label: messages.open_all, value: false }, { label: messages.open_now, value: true }].map(({ label, value }) => (
@@ -118,10 +123,10 @@ export default function SearchFilter({
                 </label>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* ジャンル */}
-          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.genre}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {genres.map((genre) => (
@@ -142,10 +147,10 @@ export default function SearchFilter({
                 </label>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* エリア */}
-          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.area}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {areas.map((area) => (
@@ -166,10 +171,10 @@ export default function SearchFilter({
                 </label>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* 支払い方法 */}
-          <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+          <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.payment}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {payments.map((payment) => (
@@ -190,10 +195,10 @@ export default function SearchFilter({
                 </label>
               ))}
             </div>
-          </motion.div>
+          </div>
         </motion.div>
 
-        {/* ボタン */}
+        {/* 検索ボタン */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

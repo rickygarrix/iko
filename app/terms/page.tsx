@@ -1,29 +1,23 @@
-export const generateStaticParams = async () => {
-  return ["ja", "en", "zh", "ko"].map((locale) => ({
-    locale,
-  }));
-};
-
+// app/terms/page.tsx
+"use client";
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-800 p-6 pt-16">
+    <div className="min-h-screen bg-white text-gray-800 p-6 pt-[80px]">
       <div className="max-w-3xl mx-auto bg-white border border-gray-200 p-8 rounded-md shadow-md">
         <h1 className="text-3xl font-bold mb-6">利用規約</h1>
 
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">第1条（適用）</h2>
           <p className="leading-relaxed">
-            本利用規約（以下「本規約」）は、「オトナビ」（以下「本サービス」）の利用条件を定めるものです。
-            本サービスを利用するすべての方（以下「ユーザー」）に適用されます。
+            本利用規約（以下「本規約」）は、「オトナビ」（以下「本サービス」）の利用条件を定めるものであり、本サービスを利用するすべての方（以下「ユーザー」）に適用されます。
           </p>
         </section>
 
         <section className="mb-6">
           <h2 className="text-xl font-semibold mb-2">第2条（サービスの内容）</h2>
           <p className="leading-relaxed">
-            本サービスは、ナイトクラブ、ジャズバー、ライブハウスなどの情報を提供し、
-            ユーザーが店舗を検索・閲覧・評価することを目的とした情報プラットフォームです。
+            本サービスは、ナイトクラブ、ジャズバー、ライブハウスなどの情報を提供し、ユーザーが店舗を検索・閲覧・評価することを目的とした情報プラットフォームです。
           </p>
         </section>
 
@@ -45,8 +39,7 @@ export default function TermsPage() {
           <h2 className="text-xl font-semibold mb-2">第4条（免責事項）</h2>
           <p className="leading-relaxed">
             本サービスは、提供する情報の正確性・完全性について保証するものではありません。
-            ユーザーは自己の責任において情報を利用し、
-            本サービスの利用により生じた損害について、当社は一切の責任を負いません。
+            ユーザーは自己の責任において情報を利用し、本サービスの利用により生じた損害について、当社は一切の責任を負いません。
           </p>
         </section>
 

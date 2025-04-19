@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
-import { useRouter, usePathname, useParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
@@ -73,11 +73,13 @@ export default function RecommendedStores({ messages }: Props) {
   const [storesReady, setStoresReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
-  const { locale } = useParams() as { locale: string };
-  const { genreMap, areaMap } = useTranslatedNames(locale);
 
+  // 🔥 locale を usePathname から抽出
+  const locale = pathname.split("/")[1] || "ja";
+  const { genreMap, areaMap } = useTranslatedNames(locale);
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -153,7 +155,7 @@ export default function RecommendedStores({ messages }: Props) {
     try {
       await logAction("click_recommended_store", {
         store_id: storeId,
-        locale, // ✅ 追加
+        locale,
       });
     } catch (error) {
       console.error("🔥 アクションログ保存失敗:", error);
@@ -264,5 +266,4 @@ export default function RecommendedStores({ messages }: Props) {
       </div>
     </div>
   );
-
 }

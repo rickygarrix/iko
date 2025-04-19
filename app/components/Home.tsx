@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
@@ -11,11 +11,11 @@ import type { Messages } from "@/types/messages";
 
 type HomeProps = {
   messages: Messages;
+  locale: string; // ← 追加
 };
 
-export default function Home({ messages }: HomeProps) {
+export default function Home({ messages, locale }: HomeProps) {
   const router = useRouter();
-  const { locale } = useParams() as { locale: string };
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
@@ -98,6 +98,7 @@ export default function Home({ messages }: HomeProps) {
             ...messages.searchFilter,
             genres: messages.genres,
             payments: messages.payments,
+            areas: messages.areas,
           }}
         />
       </div>
