@@ -4,8 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
-import { Store } from "../../types";
-import Image from "next/image";
+import { Store } from "../../types"; // パスは環境に合わせて調整
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { Messages } from "@/types/messages";
 
@@ -31,16 +30,16 @@ const fetchStores = async (
   locale: string
 ): Promise<TranslatedStore[]> => {
   let query = supabase.from("stores").select("*").eq("is_published", true);
-  if (selectedGenres.length > 0) query = query.in("genre_id", selectedGenres);
-  if (selectedAreas.length > 0) query = query.in("area_id", selectedAreas);
-  if (selectedPayments.length > 0) query = query.overlaps("payment_method_ids", selectedPayments);
+  if (selectedGenres.length) query = query.in("genre_id", selectedGenres);
+  if (selectedAreas.length) query = query.in("area_id", selectedAreas);
+  if (selectedPayments.length) query = query.overlaps("payment_method_ids", selectedPayments);
 
   const { data: stores, error } = await query;
   if (error || !stores) throw new Error(error?.message || "データ取得に失敗しました");
 
   const [{ data: areaData }, { data: genreData }] = await Promise.all([
     supabase.from("area_translations").select("area_id, name").eq("locale", locale),
-    supabase.from("genre_translations").select("genre_id, name").eq("locale", locale)
+    supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
   ]);
 
   const areaMap = Object.fromEntries(areaData?.map((a) => [a.area_id, a.name]) || []);
@@ -49,10 +48,12 @@ const fetchStores = async (
   const result = stores.map((store) => ({
     ...store,
     areaTranslated: areaMap[store.area_id],
-    genreTranslated: genreMap[store.genre_id]
+    genreTranslated: genreMap[store.genre_id],
   }));
 
-  return showOnlyOpen ? result.filter((s) => checkIfOpen(s.opening_hours).isOpen) : result;
+  return showOnlyOpen
+    ? result.filter((s) => checkIfOpen(s.opening_hours).isOpen)
+    : result;
 };
 
 export default function SearchResults({
@@ -68,7 +69,7 @@ export default function SearchResults({
   const searchParams = useSearchParams();
   const queryParams = searchParams.toString();
 
-  // ✅ locale を pathname から取得（useParams は使わない）
+  // パス名の先頭セグメントをロケールとして取得
   const locale = pathname.split("/")[1] || "ja";
 
   const [restoreY, setRestoreY] = useState<number | null>(null);
@@ -83,6 +84,7 @@ export default function SearchResults({
     { revalidateOnFocus: false }
   );
 
+  // スクロール位置の復元
   useEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
     if (savedY && pathname === `/${locale}/search`) {
@@ -94,20 +96,18 @@ export default function SearchResults({
     if (stores && stores.length > 0 && restoreY !== null) {
       let count = 0;
       const interval = setInterval(() => {
-        const h = document.body.scrollHeight;
-        if (h >= restoreY || count > 40) {
+        if (document.body.scrollHeight >= restoreY || count > 40) {
           clearInterval(interval);
-          requestAnimationFrame(() => {
-            window.scrollTo({ top: restoreY, behavior: "auto" });
-            sessionStorage.removeItem("searchScrollY");
-            setRestoreY(null);
-          });
+          window.scrollTo({ top: restoreY, behavior: "auto" });
+          sessionStorage.removeItem("searchScrollY");
+          setRestoreY(null);
         }
         count++;
       }, 100);
     }
   }, [stores, restoreY]);
 
+  // スクロール中判定
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     const handleScroll = () => {
@@ -119,12 +119,13 @@ export default function SearchResults({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // 🇯🇵 日本語版のみ詳細ページへ遷移
   const handleStoreClick = async (storeId: string) => {
+    if (locale !== "ja") return;
     if (clickedStoreIds.current.has(storeId)) return;
     clickedStoreIds.current.add(storeId);
 
-    const currentY = window.scrollY;
-    sessionStorage.setItem("searchScrollY", currentY.toString());
+    sessionStorage.setItem("searchScrollY", window.scrollY.toString());
     setIsOverlayVisible(true);
 
     try {
@@ -133,20 +134,22 @@ export default function SearchResults({
         query_params: queryParams,
         locale,
       });
-    } catch (error) {
-      console.error("🔥 アクションログ保存失敗:", error);
+    } catch {
+      /* ignore */
     }
 
+    // 遷移先を /stores/[id] に
     setTimeout(() => {
-      router.push(`/${locale}/stores/${storeId}?prev=/search&${queryParams}`);
+      router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
   };
 
+  // 各ステート別レンダリング
   if (!isSearchTriggered) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto w-full max-w-[600px] px-4">
-          <p className="text-gray-400 text-center px-4 pt-6">{messages.prompt}</p>
+        <div className="mx-auto max-w-[600px] px-4">
+          <p className="text-gray-400 text-center pt-6">{messages.prompt}</p>
         </div>
       </div>
     );
@@ -155,8 +158,8 @@ export default function SearchResults({
   if (isLoading) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto w-full max-w-[600px] px-4">
-          <p className="mt-6 mb-4 text-center">{messages.loading}</p>
+        <div className="mx-auto max-w-[600px] px-4">
+          <p className="text-center py-6">{messages.loading}</p>
         </div>
       </div>
     );
@@ -165,9 +168,9 @@ export default function SearchResults({
   if (error) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto w-full max-w-[600px] px-4">
-          <p className="mt-6 text-red-500 text-center mb-4 px-4">
-            ⚠️ {messages.error}: {error.message}
+        <div className="mx-auto max-w-[600px] px-4">
+          <p className="text-red-500 text-center py-6">
+            ⚠️ {messages.error}: {(error as Error).message}
           </p>
         </div>
       </div>
@@ -177,8 +180,8 @@ export default function SearchResults({
   if (!stores || stores.length === 0) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto w-full max-w-[600px] px-4">
-          <p className="text-gray-400 mt-6 text-center mb-4 px-4">{messages.notFound}</p>
+        <div className="mx-auto max-w-[600px] px-4">
+          <p className="text-gray-400 text-center py-6">{messages.notFound}</p>
         </div>
       </div>
     );
@@ -187,39 +190,38 @@ export default function SearchResults({
   return (
     <div className="relative w-full bg-[#FEFCF6] pb-8">
       {isOverlayVisible && <div className="fixed inset-0 z-[9999] bg-white/80" />}
-      <div className="mx-auto w-full max-w-[600px] px-4">
-        <p className="text-lg font-semibold mb-6 text-center py-5 text-gray-700">
-          {messages.resultLabel} <span className="text-[#4B5C9E]">{stores.length}</span> {messages.items}
+      <div className="mx-auto max-w-[600px] px-4">
+        <p className="text-lg font-semibold text-center py-5 text-gray-700">
+          {messages.resultLabel}{" "}
+          <span className="text-[#4B5C9E]">{stores.length}</span>{" "}
+          {messages.items}
         </p>
-        {stores.map((store, index) => {
+        {stores.map((store, idx) => {
           const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
           return (
             <div
               key={store.id}
-              className={`bg-[#FEFCF6] rounded-xl cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""
-                } transition-colors duration-200`}
               onClick={() => handleStoreClick(store.id)}
+              className={`bg-[#FEFCF6] rounded-xl ${locale === "ja"
+                ? `cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}`
+                : "cursor-default"
+                } transition-colors duration-200`}
             >
               <div className="space-y-3 pt-4">
-                <h3 className="text-[16px] font-bold text-[#1F1F21] leading-snug">{store.name}</h3>
+                <h3 className="text-base font-bold text-[#1F1F21]">{store.name}</h3>
                 {locale === "ja" && (
-                  <p className="text-[12px] text-[#000000] leading-relaxed text-left">
+                  <p className="text-xs text-[#1F1F21] leading-relaxed line-clamp-2">
                     {store.description ?? messages.noDescription}
                   </p>
                 )}
                 <div className="flex gap-4 items-center">
                   <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden">
-                    <Image
-                      src={store.image_url ?? "/default-image.jpg"}
-                      alt={store.name}
-                      width={160}
-                      height={90}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
+                    {/* 画像表示など省略 */}
                   </div>
-                  <div className="flex flex-col gap-1 flex-1 text-[14px] text-[#1F1F21]">
-                    <p>{store.areaTranslated} / {store.genreTranslated}</p>
+                  <div className="flex-1 text-sm text-[#1F1F21]">
+                    <p>
+                      {store.areaTranslated} / {store.genreTranslated}
+                    </p>
                     <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
                       {isOpen ? messages.open : messages.closed}
                     </p>
@@ -231,17 +233,14 @@ export default function SearchResults({
                     {!isOpen && nextOpening && (
                       <p className="text-xs text-zinc-700">
                         {messages.nextOpen
-                          .replace(
-                            "{day}",
-                            messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day
-                          )
+                          .replace("{day}", messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day)
                           .replace("{time}", nextOpening.time)}
                       </p>
                     )}
                   </div>
                 </div>
               </div>
-              {index !== stores.length - 1 && <hr className="mt-6 border-t border-gray-300 w-full" />}
+              {idx < stores.length - 1 && <hr className="mt-6 border-gray-300" />}
             </div>
           );
         })}

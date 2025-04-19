@@ -20,6 +20,13 @@ function detectLocale(req: NextRequest): string {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ── 追加 ──
+  // /stores/:id へのアクセスはそのまま通す
+  if (pathname.startsWith("/stores/")) {
+    return NextResponse.next();
+  }
+  // ─────────────────
+
   // 例）/search でアクセスされたら /ja/search に強制
   if (pathname === "/search") {
     const url = request.nextUrl.clone();
@@ -27,6 +34,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // ルートにアクセスされたら、Accept-Language から最適なロケールへリダイレクト
   if (pathname === "/") {
     const locale = detectLocale(request);
     const url = request.nextUrl.clone();
@@ -38,5 +46,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // `_next/` や `api/` や 静的ファイルを除くすべてを対象
   matcher: ["/((?!_next|api|.*\\..*).*)"],
 };

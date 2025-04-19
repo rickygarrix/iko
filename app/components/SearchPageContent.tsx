@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SearchFilter from "@/components/SearchFilter";
 import SearchResults from "@/components/SearchResults";
@@ -123,14 +123,16 @@ export default function SearchPageContent({
         </div>
 
         {isSearchTriggered && (
-          <SearchResults
-            selectedGenres={selectedGenres}
-            selectedAreas={selectedAreas}
-            selectedPayments={selectedPayments}
-            showOnlyOpen={showOnlyOpen}
-            isSearchTriggered={isSearchTriggered}
-            messages={messages.searchResults}
-          />
+          <Suspense fallback={<div className="text-center py-10">検索結果を読み込み中...</div>}>
+            <SearchResults
+              selectedGenres={selectedGenres}
+              selectedAreas={selectedAreas}
+              selectedPayments={selectedPayments}
+              showOnlyOpen={showOnlyOpen}
+              isSearchTriggered={isSearchTriggered}
+              messages={messages.searchResults}
+            />
+          </Suspense>
         )}
       </div>
     </div>

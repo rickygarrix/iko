@@ -1,12 +1,22 @@
+// app/en/search/page.tsx
+export const dynamic = "force-dynamic";
+
+import { Suspense } from "react";
 import SearchContent from "@/components/SearchPageContent";
 import en from "@/locales/en.json";
 import type { Messages } from "@/types/messages";
+import type { Metadata } from "next";
+import { JSX } from "react";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: en.meta.title,
   description: en.meta.description,
 };
 
-export default function Page() {
-  return <SearchContent messages={en as Messages} />;
+export default function Page(): JSX.Element {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchContent messages={en as Messages} />
+    </Suspense>
+  );
 }
