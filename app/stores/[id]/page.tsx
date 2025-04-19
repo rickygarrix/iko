@@ -12,7 +12,7 @@ import React from "react";
 type Store = {
   id: string;
   name: string;
-  genre: string;
+  genre_id: string;
   area: string;
   opening_hours: string;
   regular_holiday: string;
@@ -25,6 +25,7 @@ type Store = {
   access: string;
   map_embed?: string;
   map_link?: string;
+  payment_method_ids: string;
   store_instagrams?: string | null;
   store_instagrams2?: string | null;
   store_instagrams3?: string | null;
@@ -74,8 +75,25 @@ export default function StoreDetailPage() {
     );
   }
 
-  // 支払い方法に表示するメソッド（「その他」は除外）
-  const methods = ["現金", "クレジットカード", "電子マネー", "コード決済", "交通系IC"];
+  // ID → 表示名のマップ
+  const paymentMethodLabels: Record<string, string> = {
+    cash: "現金",
+    credit: "クレジットカード",
+    e_money: "電子マネー",
+    code: "コード決済",
+    ic: "交通系IC",
+  };
+  const genreLabels: Record<string, string> = {
+    jazz: "ジャズ",
+    house: "ハウス",
+    techno: "テクノ",
+    edm: "EDM",
+    hiphop: "ヒップホップ",
+    pop: "ポップス",
+    rock: "ロック",
+    reggae: "レゲエ",
+    other: "その他",
+  };
 
   return (
     <div className="min-h-screen bg-[#FEFCF6] text-gray-800 pt-[48px]">
@@ -102,34 +120,35 @@ export default function StoreDetailPage() {
           </p>
         </div>
 
-        {/* 支払い方法 */}
         <div className="mb-8 px-4">
           <p className="text-base mb-2 flex items-center gap-2 text-[#1F1F21]">
             <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded inline-block" />
             支払い方法
           </p>
-          <table className="w-full border border-[#E7E7EF] text-sm text-left text-black">
+          <table className="w-full table-auto border border-[#E7E7EF] text-sm text-black">
             <tbody>
-              {methods
-                .reduce<string[][]>((rows, method, idx) => {
-                  if (idx % 2 === 0) rows.push([method]);
-                  else rows[rows.length - 1].push(method);
+              {Object.entries(paymentMethodLabels)
+                .reduce<[string, string][][]>((rows, entry, idx) => {
+                  if (idx % 2 === 0) rows.push([entry]);
+                  else rows[rows.length - 1].push(entry);
                   return rows;
                 }, [])
                 .map((pair, i) => (
-                  <tr key={i}>
-                    {pair.map((method) => (
-                      <React.Fragment key={method}>
-                        <td className="border border-[#E7E7EF] px-3 py-2 w-1/2 text-black">
-                          {method}
-                        </td>
-                        <td className="border border-[#E7E7EF] px-3 py-2 w-1/6 text-center text-black">
-                          {(store.payment_methods ?? []).includes(method)
-                            ? "◯"
-                            : "ー"}
+                  <tr key={i} className="border-t border-[#E7E7EF]">
+                    {pair.map(([id, label]) => (
+                      <React.Fragment key={id}>
+                        <td className="px-3 py-3 w-[50%]">{label}</td>
+                        <td className="px-3 py-3 w-[40px] text-center">
+                          {(store.payment_method_ids ?? []).includes(id) ? "◯" : "ー"}
                         </td>
                       </React.Fragment>
                     ))}
+                    {pair.length === 1 && (
+                      <>
+                        <td className="px-3 py-3 w-[50%]"></td>
+                        <td className="px-3 py-3 w-[40px]"></td>
+                      </>
+                    )}
                   </tr>
                 ))}
             </tbody>
@@ -154,7 +173,9 @@ export default function StoreDetailPage() {
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">
                   ジャンル
                 </th>
-                <td className="border px-4 py-4">{store.genre}</td>
+                <td className="border px-4 py-4">
+                  {genreLabels[store.genre_id] ?? store.genre_id}
+                </td>
               </tr>
               <tr>
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">
