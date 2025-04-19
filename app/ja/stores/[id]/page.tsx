@@ -1,21 +1,26 @@
+// app/en/stores/[id]/page.tsx
 import { getDictionary } from "@/lib/getDictionary";
 import StoreDetailPage from "@/components/StoreDetail/StoreDetail";
-import type { Messages } from "@/types/messages";
+import type { Metadata } from "next";
 
-type Props = {
-  params: {
-    id: string;
-  };
+type PageProps = {
+  params: { id: string };
 };
 
-export default async function Page({ params }: Props) {
-  const locale = "ja"; // 固定ロケール
-  const dict = await getDictionary(locale);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const dict = await getDictionary("ja");    // ← "ja"→"en" に変更
+  return {
+    title: dict.meta.title,
+    description: dict.meta.description,
+  };
+}
 
+export default async function Page({ params }: PageProps) {
+  const dict = await getDictionary("ja");    // ← 同じく "en"
   return (
     <StoreDetailPage
       id={params.id}
-      locale={locale}
+      locale="ja"                            // ← prop locale も "en"
       messages={{
         ...dict.storeDetail,
         genre: dict.storeDetail.genre,

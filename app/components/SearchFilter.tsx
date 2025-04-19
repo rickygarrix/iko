@@ -6,7 +6,6 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/utils";
 import type { Messages } from "@/types/messages";
-import { useParams } from "next/navigation"; // ✅ 追加
 
 type Option = { id: string; name: string };
 
