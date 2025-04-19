@@ -1,17 +1,19 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useParams } from "next/navigation";
+import type { Locale } from "@/i18n/config"; // ★ 型があるなら使う！
 
-export default function LanguageSwitcher() {
+type Props = {
+  locale: Locale;
+};
+
+export default function LanguageSwitcher({ locale }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { locale: currentLocale } = useParams() as { locale: string };
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLocale = e.target.value;
 
-    // 安全にパスを切り替える（例: /ja/search → /en/search）
     const segments = pathname.split("/");
     if (segments.length > 1) {
       segments[1] = newLocale;
@@ -23,7 +25,7 @@ export default function LanguageSwitcher() {
   return (
     <select
       onChange={handleChange}
-      value={currentLocale}
+      value={locale}
       className="w-full h-[32px] text-xs text-gray-800 border border-gray-300 rounded-md px-2 bg-white shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#4B5C9E]"
     >
       <option value="ja">日本語</option>

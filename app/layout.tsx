@@ -19,11 +19,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <Script id="ga-init" strategy="afterInteractive">
           {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-WEZPMCLCSW');
-          `}
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-WEZPMCLCSW');
+  `}
         </Script>
       </head>
       <body>{children}</body>

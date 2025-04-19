@@ -35,11 +35,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ルートは /[locale]/home にリダイレクト
+  // ルートは /[locale] にリダイレクト（/home を付けない）
   if (pathname === "/") {
     const locale = detectLocale(request);
     const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/home`;
+    url.pathname = `/${locale}`;
     return NextResponse.redirect(url);
   }
 
