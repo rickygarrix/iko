@@ -61,9 +61,36 @@ export default function SearchFilter({
       ]);
 
       setGenres(genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? []);
-      setAreas(areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []);
+
+      setGenres(
+        (genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? []).filter(
+          (g) => g.id !== "other"
+        )
+      );
+      // 並び順を固定する
+      const areaOrder = [
+        "shibuya",
+        "shinjuku",
+        "roppongi",
+        "ginza",
+        "ikebukuro",
+        "omotesando",
+        "ueno",
+        "yokohama",
+      ];
+
+      setAreas(
+        (areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []).sort(
+          (a, b) => areaOrder.indexOf(a.id) - areaOrder.indexOf(b.id)
+        )
+      );
+
+
+
       setPayments(
-        (paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? []).filter((p) => p.id !== "other")
+        (paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? []).filter(
+          (p) => p.id !== "other"
+        )
       );
     };
 

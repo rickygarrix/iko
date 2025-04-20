@@ -81,7 +81,6 @@ export default function StoreDetailPage() {
     credit: "クレジットカード",
     e_money: "電子マネー",
     code: "コード決済",
-    ic: "交通系IC",
   };
   const genreLabels: Record<string, string> = {
     jazz: "ジャズ",
@@ -120,12 +119,13 @@ export default function StoreDetailPage() {
           </p>
         </div>
 
-        <div className="mb-8 px-4">
+        {/* 支払い方法 */}
+        <div className="px-4 mb-8">
           <p className="text-base mb-2 flex items-center gap-2 text-[#1F1F21]">
             <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded inline-block" />
             支払い方法
           </p>
-          <table className="w-full table-auto border border-[#E7E7EF] text-sm text-black">
+          <table className="w-full table-fixed border border-[#E7E7EF] text-xs text-[#1F1F21] font-light">
             <tbody>
               {Object.entries(paymentMethodLabels)
                 .reduce<[string, string][][]>((rows, entry, idx) => {
@@ -134,19 +134,21 @@ export default function StoreDetailPage() {
                   return rows;
                 }, [])
                 .map((pair, i) => (
-                  <tr key={i} className="border-t border-[#E7E7EF]">
+                  <tr key={i} className="border-t border-[#E7E7EF] h-[42px]">
                     {pair.map(([id, label]) => (
                       <React.Fragment key={id}>
-                        <td className="px-3 py-3 w-[50%]">{label}</td>
-                        <td className="px-3 py-3 w-[40px] text-center">
+                        <td className="w-[160px] px-2 py-3 border-r border-[#E7E7EF] align-middle leading-[150%]">
+                          {label}
+                        </td>
+                        <td className="w-[40px] px-2 py-3 text-center align-middle border-r border-[#E7E7EF]">
                           {(store.payment_method_ids ?? []).includes(id) ? "◯" : "ー"}
                         </td>
                       </React.Fragment>
                     ))}
                     {pair.length === 1 && (
                       <>
-                        <td className="px-3 py-3 w-[50%]"></td>
-                        <td className="px-3 py-3 w-[40px]"></td>
+                        <td className="w-[160px] px-2 py-3 border-r border-[#E7E7EF]"></td>
+                        <td className="w-[40px] px-2 py-3 border-r border-[#E7E7EF]"></td>
                       </>
                     )}
                   </tr>
