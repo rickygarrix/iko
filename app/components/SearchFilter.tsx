@@ -85,6 +85,21 @@ export default function SearchFilter({
         )
       );
 
+      const genreOrder = [
+        "house",
+        "techno",
+        "edm",
+        "hiphop",
+        "pops",
+        "jazz",
+      ];
+
+      setGenres(
+        (genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? [])
+          .filter((g) => g.id !== "other")
+          .sort((a, b) => genreOrder.indexOf(a.id) - genreOrder.indexOf(b.id))
+      );
+
 
 
       setPayments(

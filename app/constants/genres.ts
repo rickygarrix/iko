@@ -1,11 +1,8 @@
 export const GENRES = [
+  { key: "EDM", label: "EDM" },
   { key: "house", label: "ハウス" },
   { key: "techno", label: "テクノ" },
-  { key: "jazz", label: "ジャズ" },
   { key: "hiphop", label: "ヒップホップ" },
-  { key: "rock", label: "ロック" },
-  { key: "pop", label: "ポップス" },
-  { key: "reggae", label: "レゲエ" },
-  { key: "EDM", label: "EDM" },
+  { key: "jazz", label: "ジャズ" },
   { key: "other", label: "その他" },
 ];
