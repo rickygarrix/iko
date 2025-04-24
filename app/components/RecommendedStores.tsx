@@ -1,4 +1,3 @@
-// app/components/RecommendedStores.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +8,48 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
 
+// ✅ AM/PM変換
+const convertToAMPM = (time24: string): string => {
+  const [hourStr, minuteStr] = time24.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+  const period = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute.toString().padStart(2, "0")} ${period}`;
+};
+
+// ✅ 表示用関数
+const formatCloseTime = (time: string, locale: string, messages: Messages["recommend"]) => {
+  const formatted = locale === "en" ? convertToAMPM(time) : time;
+  switch (locale) {
+    case "zh":
+      return `${formatted} ${messages.close}`;
+    case "ko":
+      return `${formatted}${messages.close}`;
+    case "en":
+      return messages.openUntil?.replace("{time}", formatted);
+    default:
+      return messages.openUntil?.replace("{time}", formatted);
+  }
+};
+
+const formatNextOpening = (
+  nextOpening: { day: string; time: string },
+  locale: string,
+  messages: Messages["recommend"]
+) => {
+  const formatted = locale === "en" ? convertToAMPM(nextOpening.time) : nextOpening.time;
+  const day = messages.days[nextOpening.day as keyof typeof messages.days] || nextOpening.day;
+  switch (locale) {
+    case "zh":
+    case "ko":
+    case "en":
+      return messages.nextOpen.replace("{day}", day).replace("{time}", formatted);
+    default:
+      return messages.nextOpen.replace("{day}", day).replace("{time}", formatted);
+  }
+};
+
 const useTranslatedNames = (locale: string) => {
   const [genreMap, setGenreMap] = useState<Record<string, string>>({});
   const [areaMap, setAreaMap] = useState<Record<string, string>>({});
@@ -16,29 +57,16 @@ const useTranslatedNames = (locale: string) => {
   useEffect(() => {
     const fetchTranslations = async () => {
       const [{ data: genres }, { data: areas }] = await Promise.all([
-        supabase
-          .from("genre_translations")
-          .select("genre_id, name")
-          .eq("locale", locale),
-        supabase
-          .from("area_translations")
-          .select("area_id, name")
-          .eq("locale", locale),
+        supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
+        supabase.from("area_translations").select("area_id, name").eq("locale", locale),
       ]);
-
       const gMap: Record<string, string> = {};
-      genres?.forEach((g) => {
-        gMap[g.genre_id] = g.name;
-      });
-      setGenreMap(gMap);
-
+      genres?.forEach((g) => (gMap[g.genre_id] = g.name));
       const aMap: Record<string, string> = {};
-      areas?.forEach((a) => {
-        aMap[a.area_id] = a.name;
-      });
+      areas?.forEach((a) => (aMap[a.area_id] = a.name));
+      setGenreMap(gMap);
       setAreaMap(aMap);
     };
-
     fetchTranslations();
   }, [locale]);
 
@@ -63,7 +91,7 @@ type OpeningInfo = {
 };
 
 type Props = {
-  messages: Messages["recommend"] & { openUntil?: string };
+  messages: Messages["recommend"];
 };
 
 export default function RecommendedStores({ messages }: Props) {
@@ -78,7 +106,6 @@ export default function RecommendedStores({ messages }: Props) {
   const locale = pathname.split("/")[1] || "ja";
   const { genreMap, areaMap } = useTranslatedNames(locale);
 
-  // データ取得
   useEffect(() => {
     const fetchStores = async () => {
       const { data, error } = await supabase
@@ -87,17 +114,12 @@ export default function RecommendedStores({ messages }: Props) {
         .eq("is_published", true)
         .eq("is_recommended", true)
         .limit(3);
-
-      if (error) {
-        console.error("🔥 Supabase Error:", error.message);
-      } else {
-        setStores(data || []);
-      }
+      if (error) console.error("🔥 Supabase Error:", error.message);
+      else setStores(data || []);
     };
     fetchStores();
   }, []);
 
-  // スクロール位置の復元
   useEffect(() => {
     const saved = sessionStorage.getItem("recommendedScrollY");
     if (saved && pathname === `/${locale}`) {
@@ -120,7 +142,6 @@ export default function RecommendedStores({ messages }: Props) {
     }
   }, [restoreY, stores]);
 
-  // Instagram埋め込みスクリプト
   useEffect(() => {
     if (!document.getElementById("instagram-embed-script")) {
       const script = document.createElement("script");
@@ -133,7 +154,6 @@ export default function RecommendedStores({ messages }: Props) {
     }
   }, [stores]);
 
-  // スクロール検知
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     const handleScroll = () => {
@@ -145,26 +165,17 @@ export default function RecommendedStores({ messages }: Props) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // クリック時の遷移
   const handleClick = async (storeId: string) => {
-    if (locale !== "ja") return; // 🇯🇵 以外では無効
-
-    // スクロール位置を保持
+    if (locale !== "ja") return;
     if (pathname === `/${locale}`) {
       sessionStorage.setItem("recommendedScrollY", window.scrollY.toString());
     }
     setIsLoading(true);
-
     try {
-      await logAction("click_recommended_store", {
-        store_id: storeId,
-        locale,
-      });
+      await logAction("click_recommended_store", { store_id: storeId, locale });
     } catch (e) {
       console.error("🔥 アクションログ保存失敗:", e);
     }
-
-    // `/stores/[id]` に直接遷移
     router.push(`/stores/${storeId}`);
   };
 
@@ -172,13 +183,11 @@ export default function RecommendedStores({ messages }: Props) {
     <div className="w-full bg-white flex justify-center pt-8 relative">
       {isLoading && <div className="fixed inset-0 z-[9999] bg-white/80" />}
       <div className="w-full max-w-[600px] flex flex-col mx-auto gap-2">
-        {/* タイトル */}
         <div className="w-full px-4 flex flex-col items-center gap-1">
           <h2 className="text-lg font-bold text-zinc-900">{messages.title}</h2>
           <p className="text-xs text-slate-500 font-bold">{messages.subtitle}</p>
         </div>
 
-        {/* スケルトン */}
         {!storesReady ? (
           <div style={{ height: "100vh" }} />
         ) : (
@@ -187,13 +196,9 @@ export default function RecommendedStores({ messages }: Props) {
               const { isOpen, nextOpening, closeTime } =
                 checkIfOpen(store.opening_hours) as OpeningInfo;
 
-              // 🇯🇵 だけ hover/active を適用
               const interactiveClasses =
                 locale === "ja"
-                  ? `cursor-pointer ${!isScrolling
-                    ? "hover:bg-gray-100 active:bg-gray-200"
-                    : ""
-                  }`
+                  ? `cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}`
                   : "cursor-default";
 
               return (
@@ -205,11 +210,8 @@ export default function RecommendedStores({ messages }: Props) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                 >
-                  {/* 店舗名と説明 */}
                   <div className="flex flex-col gap-2">
-                    <h3 className="text-base font-semibold text-zinc-900">
-                      {store.name}
-                    </h3>
+                    <h3 className="text-base font-semibold text-zinc-900">{store.name}</h3>
                     {locale === "ja" && (
                       <p className="text-xs font-light text-zinc-900 line-clamp-2">
                         {store.description || messages.noDescription}
@@ -217,7 +219,6 @@ export default function RecommendedStores({ messages }: Props) {
                     )}
                   </div>
 
-                  {/* 画像＋店舗情報 */}
                   <div className="flex gap-4 items-start">
                     <div className="relative w-32 h-56 rounded-lg overflow-hidden outline outline-2 outline-zinc-900">
                       {store.store_instagrams ? (
@@ -246,30 +247,19 @@ export default function RecommendedStores({ messages }: Props) {
                     </div>
                     <div className="flex flex-col gap-2 flex-1 text-sm">
                       <p className="text-zinc-900">
-                        {areaMap[store.area_id] || store.area_id} /{" "}
-                        {genreMap[store.genre_id] || store.genre_id}
+                        {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}
                       </p>
-                      <p
-                        className={`font-semibold ${isOpen ? "text-green-700" : "text-rose-700"
-                          }`}
-                      >
+                      <p className={`font-semibold ${isOpen ? "text-green-700" : "text-rose-700"}`}>
                         {isOpen ? messages.open : messages.closed}
                       </p>
                       {isOpen && closeTime && (
                         <p className="text-xs text-zinc-700">
-                          {messages.openUntil?.replace("{time}", closeTime)}
+                          {formatCloseTime(closeTime, locale, messages)}
                         </p>
                       )}
                       {!isOpen && nextOpening && (
                         <p className="text-xs text-zinc-700">
-                          {messages.nextOpen
-                            .replace(
-                              "{day}",
-                              messages.days[
-                              nextOpening.day as keyof typeof messages.days
-                              ] ?? nextOpening.day
-                            )
-                            .replace("{time}", nextOpening.time)}
+                          {formatNextOpening(nextOpening, locale, messages)}
                         </p>
                       )}
                     </div>

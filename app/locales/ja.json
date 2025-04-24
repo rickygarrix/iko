@@ -16,7 +16,7 @@
   "about": {
     "logo_alt": "オトナビのロゴ",
     "subtitle": "オトナビとは？",
-    "description": "もっと気軽に夜に音楽を楽しもう。オトナビは初心者でも安心して夜の音楽スポットを使えるよう進化し続けます。",
+    "description": "もっと気軽に音楽を楽しもう。オトナビは初心者でも安心して夜の音楽スポットを使えるよう進化し続けます。",
     "button": "お気に入りの場所を探す →"
   },
   "searchFilter": {
@@ -69,6 +69,7 @@
     "subtitle": "Recommend",
     "open": "営業中",
     "closed": "営業時間外",
+    "close": "",
     "noDescription": "店舗の詳細情報がありません。",
     "nextOpen": "次の営業：{day} {time} から",
     "openUntil": "{time} まで営業",
@@ -92,6 +93,7 @@
     "items": "件",
     "open": "営業中",
     "closed": "営業時間外",
+    "close": "",
     "noDescription": "店舗説明がありません。",
     "nextOpen": "次の営業：{day} {time} から",
     "days": {
@@ -121,6 +123,7 @@
     "website": "公式サイト →",
     "open": "営業中",
     "closed": "営業時間外",
+    "close": "",
     "nextOpen": "次の営業：{day} {time} から",
     "area": "エリア",
     "days": {

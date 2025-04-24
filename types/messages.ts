@@ -52,6 +52,8 @@ export type Messages = {
     copyright: string;
   };
   recommend: {
+    close: string;
+    openUntil: string;
     title: string;
     subtitle: string;
     open: string;
@@ -77,6 +79,8 @@ export type Messages = {
     items: string;
     open: string;
     closed: string;
+    close: string; // ✅ 追加
+    openUntil: string; // ✅ 追加
     noDescription: string;
     nextOpen: string;
     days: {

@@ -16,7 +16,7 @@
   "about": {
     "logo_alt": "Otonavi Logo",
     "subtitle": "What is Otonavi?",
-    "description": "Enjoy nighttime music more casually. Otonavi continues to evolve to make music venues accessible for beginners too.",
+    "description": "Enjoy nighttime music more casually (freely). Otonavi continues to evolve, making music venues feel welcoming even for first-timers.",
     "button": "Find your favorite place →"
   },
   "searchFilter": {
@@ -65,7 +65,7 @@
     "other": "Others"
   },
   "store": {
-    "nextOpen": "Next open: {day} from {time}"
+    "nextOpen": "Next opening: {time} {day}"
   },
   "recommend": {
     "openUntil": "Open until {time}",
@@ -73,8 +73,9 @@
     "subtitle": "Recommend",
     "open": "Open now",
     "closed": "Closed",
+    "close": "",
     "noDescription": "No store description available.",
-    "nextOpen": "Next open: {day} from {time}",
+    "nextOpen": "Next opening: {time} {day}",
     "days": {
       "Monday": "Mon",
       "Tuesday": "Tue",
@@ -95,8 +96,9 @@
     "items": "items",
     "open": "Open",
     "closed": "Closed",
+    "close": "",
     "noDescription": "No store description available.",
-    "nextOpen": "Next open: {day} from {time}",
+    "nextOpen": "Next opening: {time} {day}",
     "days": {
       "Monday": "Mon",
       "Tuesday": "Tue",
@@ -121,7 +123,8 @@
     "website": "Official Website →",
     "open": "Open now",
     "closed": "Closed",
-    "nextOpen": "Next open: {day} from {time}",
+    "close": "",
+    "nextOpen": "Next opening: {time} {day}",
     "area": "Area",
     "days": {
       "Monday": "Mon",
@@ -154,6 +157,6 @@
     "contact": "Contact",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
-    "copyright": "© オトナビ"
+    "copyright": "© Otonavi"
   }
 }

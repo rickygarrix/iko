@@ -78,6 +78,7 @@
     "subtitle": "추천",
     "open": "영업 중",
     "closed": "영업 종료",
+    "close": "에 영업 종료",
     "noDescription": "매장 설명이 없습니다.",
     "nextOpen": "다음 영업: {day} {time} 부터",
     "days": {
@@ -100,6 +101,7 @@
     "items": "건",
     "open": "영업 중",
     "closed": "영업 종료",
+    "close": "에 영업 종료",
     "noDescription": "매장 설명이 없습니다.",
     "nextOpen": "다음 영업: {day} {time} 부터",
     "days": {
@@ -129,6 +131,7 @@
     "website": "공식 사이트 →",
     "open": "영업 중",
     "closed": "영업 종료",
+    "close": "에 영업 종료",
     "nextOpen": "다음 영업: {day} {time} 부터",
     "area": "지역",
     "days": {

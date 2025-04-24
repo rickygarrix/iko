@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
-import { Store } from "../../types"; // パスは環境に合わせて調整
+import { Store } from "../../types";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { Messages } from "@/types/messages";
 
@@ -14,12 +14,45 @@ type SearchResultsProps = {
   selectedPayments: string[];
   showOnlyOpen: boolean;
   isSearchTriggered: boolean;
-  messages: Messages["searchResults"] & { openUntil?: string };
+  messages: Messages["searchResults"] & { openUntil?: string; close?: string };
 };
 
 type TranslatedStore = Store & {
   areaTranslated?: string;
   genreTranslated?: string;
+};
+
+const convertToAMPM = (time24: string): string => {
+  const [hourStr, minuteStr] = time24.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+  const period = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute.toString().padStart(2, "0")} ${period}`;
+};
+
+const formatCloseTime = (time: string, locale: string, messages: SearchResultsProps["messages"]) => {
+  const formatted = locale === "en" ? convertToAMPM(time) : time;
+  switch (locale) {
+    case "zh":
+      return `${formatted} ${messages.close}`;
+    case "ko":
+      return `${formatted}${messages.close}`;
+    case "en":
+      return messages.openUntil?.replace("{time}", formatted);
+    default:
+      return messages.openUntil?.replace("{time}", formatted);
+  }
+};
+
+const formatNextOpening = (
+  nextOpening: { day: string; time: string },
+  locale: string,
+  messages: SearchResultsProps["messages"]
+) => {
+  const formatted = locale === "en" ? convertToAMPM(nextOpening.time) : nextOpening.time;
+  const day = messages.days[nextOpening.day as keyof typeof messages.days] || nextOpening.day;
+  return messages.nextOpen.replace("{day}", day).replace("{time}", formatted);
 };
 
 const fetchStores = async (
@@ -51,9 +84,7 @@ const fetchStores = async (
     genreTranslated: genreMap[store.genre_id],
   }));
 
-  return showOnlyOpen
-    ? result.filter((s) => checkIfOpen(s.opening_hours).isOpen)
-    : result;
+  return showOnlyOpen ? result.filter((s) => checkIfOpen(s.opening_hours).isOpen) : result;
 };
 
 export default function SearchResults({
@@ -69,13 +100,10 @@ export default function SearchResults({
   const searchParams = useSearchParams();
   const queryParams = searchParams.toString();
 
-  // パス名の先頭セグメントをロケールとして取得
   const locale = pathname.split("/")[1] || "ja";
-
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
-
   const clickedStoreIds = useRef<Set<string>>(new Set());
 
   const { data: stores, error, isLoading } = useSWR<TranslatedStore[]>(
@@ -84,7 +112,6 @@ export default function SearchResults({
     { revalidateOnFocus: false }
   );
 
-  // スクロール位置の復元
   useEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
     if (savedY && pathname === `/${locale}/search`) {
@@ -107,7 +134,6 @@ export default function SearchResults({
     }
   }, [stores, restoreY]);
 
-  // スクロール中判定
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     const handleScroll = () => {
@@ -119,7 +145,6 @@ export default function SearchResults({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 🇯🇵 日本語版のみ詳細ページへ遷移
   const handleStoreClick = async (storeId: string) => {
     if (locale !== "ja") return;
     if (clickedStoreIds.current.has(storeId)) return;
@@ -138,13 +163,11 @@ export default function SearchResults({
       /* ignore */
     }
 
-    // 遷移先を /stores/[id] に
     setTimeout(() => {
       router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
   };
 
-  // 各ステート別レンダリング
   if (!isSearchTriggered) {
     return (
       <div className="w-full bg-[#FEFCF6] pb-8">
@@ -192,9 +215,7 @@ export default function SearchResults({
       {isOverlayVisible && <div className="fixed inset-0 z-[9999] bg-white/80" />}
       <div className="mx-auto max-w-[600px] px-4">
         <p className="text-lg font-semibold text-center py-5 text-gray-700">
-          {messages.resultLabel}{" "}
-          <span className="text-[#4B5C9E]">{stores.length}</span>{" "}
-          {messages.items}
+          {messages.resultLabel} <span className="text-[#4B5C9E]">{stores.length}</span> {messages.items}
         </p>
         {stores.map((store, idx) => {
           const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
@@ -202,10 +223,7 @@ export default function SearchResults({
             <div
               key={store.id}
               onClick={() => handleStoreClick(store.id)}
-              className={`bg-[#FEFCF6] rounded-xl ${locale === "ja"
-                ? `cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}`
-                : "cursor-default"
-                } transition-colors duration-200`}
+              className={`bg-[#FEFCF6] rounded-xl ${locale === "ja" ? `cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}` : "cursor-default"} transition-colors duration-200`}
             >
               <div className="space-y-3 pt-4">
                 <h3 className="text-base font-bold text-[#1F1F21]">{store.name}</h3>
@@ -227,14 +245,12 @@ export default function SearchResults({
                     </p>
                     {isOpen && closeTime && (
                       <p className="text-xs text-zinc-700">
-                        {messages.openUntil?.replace("{time}", closeTime)}
+                        {formatCloseTime(closeTime, locale, messages)}
                       </p>
                     )}
                     {!isOpen && nextOpening && (
                       <p className="text-xs text-zinc-700">
-                        {messages.nextOpen
-                          .replace("{day}", messages.days[nextOpening.day as keyof typeof messages.days] ?? nextOpening.day)
-                          .replace("{time}", nextOpening.time)}
+                        {formatNextOpening(nextOpening, locale, messages)}
                       </p>
                     )}
                   </div>

@@ -12,7 +12,7 @@
   "about": {
     "logo_alt": "Otonavi 标志",
     "subtitle": "什么是 Otonavi？",
-    "description": "更轻松地享受夜晚的音乐。Otonavi 不断进化，让初学者也能安心使用夜晚的音乐场所。",
+    "description": "在夜晚，更轻松地享受音乐。OTONAVI不断进化，只为让新手也能无忧探索夜晚的音乐场所。",
     "button": "寻找你喜欢的地方 →"
   },
   "header": {
@@ -81,6 +81,7 @@
     "subtitle": "推荐",
     "open": "营业中",
     "closed": "已打烊",
+    "close": "营业结束",
     "noDescription": "暂无店铺介绍。",
     "nextOpen": "下次营业：{day} {time} 起",
     "days": {
@@ -103,6 +104,7 @@
     "items": "件",
     "open": "营业中",
     "closed": "非营业时间",
+    "close": "营业结束",
     "noDescription": "暂无店铺介绍。",
     "nextOpen": "下次营业：{day} {time} 起",
     "days": {
@@ -129,6 +131,7 @@
     "website": "官方网站 →",
     "open": "营业中",
     "closed": "已打烊",
+    "close": "营业结束",
     "nextOpen": "下次营业：{day} {time} 起",
     "area": "区域",
     "days": {
