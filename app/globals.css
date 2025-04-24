@@ -44,7 +44,6 @@
   }
 }
 
-/* 追加：スクロール挙動の安定化 */
 html {
   background-color: #F7F5EF;
   width: 100%;
@@ -57,17 +56,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* カスタムスタイル */
+/* カスタムクラス */
 body {
   @apply bg-gray-900 text-white;
 }

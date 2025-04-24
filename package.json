@@ -13,6 +13,7 @@
     "@react-google-maps/api": "^2.20.6",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.49.1",
+    "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.7.4",
     "negotiator": "^1.0.0",
@@ -24,6 +25,7 @@
     "styled-jsx": "^5.1.6",
     "swiper": "^11.2.6",
     "swr": "^2.3.3",
+    "zod": "^3.24.3",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
