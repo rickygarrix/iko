@@ -11,6 +11,16 @@ import { JSX } from "react";
 export const metadata: Metadata = {
   title: en.meta.title,
   description: en.meta.description,
+  openGraph: {
+    title: en.meta.title,
+    description: en.meta.description,
+    url: "https://otnv.jp/en/search",
+  },
+  twitter: {
+    title: en.meta.title,
+    description: en.meta.description,
+    card: "summary",
+  },
 };
 
 export default function Page(): JSX.Element {

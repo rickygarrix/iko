@@ -1,3 +1,4 @@
+// app/ko/search/page.tsx
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
@@ -10,6 +11,16 @@ import { JSX } from "react";
 export const metadata: Metadata = {
   title: ko.meta.title,
   description: ko.meta.description,
+  openGraph: {
+    title: ko.meta.title,
+    description: ko.meta.description,
+    url: "https://otnv.jp/ko/search",
+  },
+  twitter: {
+    title: ko.meta.title,
+    description: ko.meta.description,
+    card: "summary",
+  },
 };
 
 export default function Page(): JSX.Element {
