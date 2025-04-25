@@ -7,11 +7,12 @@ import { supabase } from "@/lib/supabase";
 import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
 import RecommendedStores from "@/components/RecommendedStores";
+import { motion } from "framer-motion";
 import type { Messages } from "@/types/messages";
 
 type HomeProps = {
   messages: Messages;
-  locale: string; // ← 追加
+  locale: string;
 };
 
 export default function Home({ messages, locale }: HomeProps) {
@@ -67,10 +68,21 @@ export default function Home({ messages, locale }: HomeProps) {
   return (
     <div className="min-h-screen bg-[#F7F5EF] text-gray-800 pt-[70px]">
       <div className="text-center space-y-4">
-        <p className="text-xs font-light text-[#1F1F21] leading-none">
+        <motion.p
+          className="text-xs font-light text-[#1F1F21] leading-none"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+        >
           {messages.top.catchphrase}
-        </p>
-        <div className="relative w-[121px] h-[40px] mx-auto">
+        </motion.p>
+
+        <motion.div
+          className="relative w-[121px] h-[40px] mx-auto"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
           <Image
             src="/header/logo.svg"
             alt={`${messages.top.title} ロゴ`}
@@ -78,10 +90,16 @@ export default function Home({ messages, locale }: HomeProps) {
             className="object-contain"
             priority
           />
-        </div>
+        </motion.div>
       </div>
 
-      <div id="search-filter" className="mt-6">
+      <motion.div
+        id="search-filter"
+        className="mt-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2, duration: 0.8 }}
+      >
         <SearchFilter
           selectedGenres={selectedGenres}
           setSelectedGenres={setSelectedGenres}
@@ -101,15 +119,25 @@ export default function Home({ messages, locale }: HomeProps) {
             areas: messages.areas,
           }}
         />
-      </div>
+      </motion.div>
 
-      <div className="mt-8">
+      <motion.div
+        className="mt-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.6, duration: 0.6 }}
+      >
         <RecommendedStores messages={messages.recommend} />
-      </div>
+      </motion.div>
 
-      <div className="mt-0">
+      <motion.div
+        className="mt-0"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 2.0, duration: 0.6 }}
+      >
         <AboutSection />
-      </div>
+      </motion.div>
     </div>
   );
 }
