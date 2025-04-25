@@ -167,7 +167,7 @@ export default function RecommendedStores({ messages }: Props) {
 
               const staticMapUrl =
                 store.latitude !== null && store.longitude !== null
-                  ? `https://maps.googleapis.com/maps/api/staticmap?center=${store.latitude},${store.longitude}&zoom=16&size=160x90&scale=2&maptype=roadmap&markers=color:red%7C${store.latitude},${store.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+                  ? `https://maps.googleapis.com/maps/api/staticmap?center=${store.latitude},${store.longitude}&zoom=16&size=160x90&maptype=roadmap&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
                   : null;
 
               return (
@@ -189,23 +189,20 @@ export default function RecommendedStores({ messages }: Props) {
                   </div>
 
                   <div className="flex gap-4 items-start">
-                    <a
-                      href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative w-[160px] h-[90px] rounded-[8px] overflow-hidden outline outline-2 outline-zinc-900 block"
-                      onClick={(e) => e.stopPropagation()} // ← motion.divのクリックと分離
-                    >
+                    <div className="relative w-[160px] h-[90px] rounded-[8px] overflow-hidden outline outline-2 outline-zinc-900">
                       <Image
-                        src={staticMapUrl || store.image_url || "/default-image.jpg"}
+                        src={
+                          staticMapUrl ||
+                          store.image_url ||
+                          "/default-image.jpg"
+                        }
                         alt={store.name}
                         width={160}
                         height={90}
                         style={{ objectFit: "cover" }}
                         unoptimized
                       />
-                    </a>
-
+                    </div>
                     <div className="flex flex-col gap-2 flex-1 text-sm">
                       <p className="text-zinc-900">
                         {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}
