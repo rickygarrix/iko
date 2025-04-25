@@ -80,7 +80,7 @@ export type Messages = {
     open: string;
     closed: string;
     close: string; // ✅ 追加
-    openUntil: string; // ✅ 追加
+    openUntil: string; // ✅ 追
     noDescription: string;
     nextOpen: string;
     days: {

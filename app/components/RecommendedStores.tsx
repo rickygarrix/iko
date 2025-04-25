@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
 
-// ✅ AM/PM変換
 const convertToAMPM = (time24: string): string => {
   const [hourStr, minuteStr] = time24.split(":");
   let hour = parseInt(hourStr, 10);
@@ -18,19 +17,9 @@ const convertToAMPM = (time24: string): string => {
   return `${hour}:${minute.toString().padStart(2, "0")} ${period}`;
 };
 
-// ✅ 表示用関数
 const formatCloseTime = (time: string, locale: string, messages: Messages["recommend"]) => {
   const formatted = locale === "en" ? convertToAMPM(time) : time;
-  switch (locale) {
-    case "zh":
-      return `${formatted} ${messages.close}`;
-    case "ko":
-      return `${formatted}${messages.close}`;
-    case "en":
-      return messages.openUntil?.replace("{time}", formatted);
-    default:
-      return messages.openUntil?.replace("{time}", formatted);
-  }
+  return messages.openUntil.replace("{time}", formatted);
 };
 
 const formatNextOpening = (
@@ -40,14 +29,7 @@ const formatNextOpening = (
 ) => {
   const formatted = locale === "en" ? convertToAMPM(nextOpening.time) : nextOpening.time;
   const day = messages.days[nextOpening.day as keyof typeof messages.days] || nextOpening.day;
-  switch (locale) {
-    case "zh":
-    case "ko":
-    case "en":
-      return messages.nextOpen.replace("{day}", day).replace("{time}", formatted);
-    default:
-      return messages.nextOpen.replace("{day}", day).replace("{time}", formatted);
-  }
+  return messages.nextOpen.replace("{day}", day).replace("{time}", formatted);
 };
 
 const useTranslatedNames = (locale: string) => {
@@ -81,13 +63,8 @@ type Store = {
   opening_hours: string;
   image_url?: string | null;
   description?: string;
-  store_instagrams?: string | null;
-};
-
-type OpeningInfo = {
-  isOpen: boolean;
-  nextOpening: { day: string; time: string } | null;
-  closeTime?: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type Props = {
@@ -143,18 +120,6 @@ export default function RecommendedStores({ messages }: Props) {
   }, [restoreY, stores]);
 
   useEffect(() => {
-    if (!document.getElementById("instagram-embed-script")) {
-      const script = document.createElement("script");
-      script.id = "instagram-embed-script";
-      script.src = "https://www.instagram.com/embed.js";
-      script.async = true;
-      document.body.appendChild(script);
-    } else {
-      window.instgrm?.Embeds.process();
-    }
-  }, [stores]);
-
-  useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     const handleScroll = () => {
       setIsScrolling(true);
@@ -193,13 +158,17 @@ export default function RecommendedStores({ messages }: Props) {
         ) : (
           <div className="w-full flex flex-col items-center gap-px">
             {stores.map((store, idx) => {
-              const { isOpen, nextOpening, closeTime } =
-                checkIfOpen(store.opening_hours) as OpeningInfo;
+              const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
 
               const interactiveClasses =
                 locale === "ja"
                   ? `cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}`
                   : "cursor-default";
+
+              const staticMapUrl =
+                store.latitude !== null && store.longitude !== null
+                  ? `https://maps.googleapis.com/maps/api/staticmap?center=${store.latitude},${store.longitude}&zoom=16&size=160x90&scale=2&maptype=roadmap&markers=color:red%7C${store.latitude},${store.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+                  : null;
 
               return (
                 <motion.div
@@ -220,31 +189,23 @@ export default function RecommendedStores({ messages }: Props) {
                   </div>
 
                   <div className="flex gap-4 items-start">
-                    <div className="relative w-32 h-56 rounded-lg overflow-hidden outline outline-2 outline-zinc-900">
-                      {store.store_instagrams ? (
-                        <blockquote
-                          className="instagram-media"
-                          data-instgrm-permalink={store.store_instagrams}
-                          data-instgrm-version="14"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            margin: 0,
-                            transform: "scale(0.75)",
-                            transformOrigin: "top left",
-                          }}
-                        />
-                      ) : (
-                        <Image
-                          src={store.image_url || "/default-image.jpg"}
-                          alt={store.name}
-                          fill
-                          style={{ objectFit: "cover" }}
-                          sizes="160px"
-                          unoptimized
-                        />
-                      )}
-                    </div>
+                    <a
+                      href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative w-[160px] h-[90px] rounded-[8px] overflow-hidden outline outline-2 outline-zinc-900 block"
+                      onClick={(e) => e.stopPropagation()} // ← motion.divのクリックと分離
+                    >
+                      <Image
+                        src={staticMapUrl || store.image_url || "/default-image.jpg"}
+                        alt={store.name}
+                        width={160}
+                        height={90}
+                        style={{ objectFit: "cover" }}
+                        unoptimized
+                      />
+                    </a>
+
                     <div className="flex flex-col gap-2 flex-1 text-sm">
                       <p className="text-zinc-900">
                         {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}

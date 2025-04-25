@@ -1,5 +1,5 @@
 const withNextIntl = require('next-intl/plugin')(
-  './i18n/request.ts' // 🌍 i18n の設定ファイルのパス（プロジェクトルートからの相対パス）
+  './i18n/request.ts'
 );
 
 /** @type {import('next').NextConfig} */
@@ -8,12 +8,12 @@ const nextConfig = {
   experimental: {
     appDir: true
   },
-  // 必要なら他にも設定追加可能
   images: {
     domains: [
       'lh3.googleusercontent.com',
       'blogger.googleusercontent.com',
-      'bqexmwjcmtyypzucndrb.supabase.co'
+      'bqexmwjcmtyypzucndrb.supabase.co',
+      'maps.googleapis.com' // ← これを追加！！
     ]
   }
 };

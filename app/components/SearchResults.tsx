@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
 import { Store } from "../../types";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import type { Messages } from "@/types/messages";
 
 type SearchResultsProps = {
@@ -20,6 +21,8 @@ type SearchResultsProps = {
 type TranslatedStore = Store & {
   areaTranslated?: string;
   genreTranslated?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 const convertToAMPM = (time24: string): string => {
@@ -34,14 +37,10 @@ const convertToAMPM = (time24: string): string => {
 const formatCloseTime = (time: string, locale: string, messages: SearchResultsProps["messages"]) => {
   const formatted = locale === "en" ? convertToAMPM(time) : time;
   switch (locale) {
-    case "zh":
-      return `${formatted} ${messages.close}`;
-    case "ko":
-      return `${formatted}${messages.close}`;
-    case "en":
-      return messages.openUntil?.replace("{time}", formatted);
-    default:
-      return messages.openUntil?.replace("{time}", formatted);
+    case "zh": return `${formatted} ${messages.close}`;
+    case "ko": return `${formatted}${messages.close}`;
+    case "en": return messages.openUntil?.replace("{time}", formatted);
+    default: return messages.openUntil?.replace("{time}", formatted);
   }
 };
 
@@ -78,29 +77,20 @@ const fetchStores = async (
   const areaMap = Object.fromEntries(areaData?.map((a) => [a.area_id, a.name]) || []);
   const genreMap = Object.fromEntries(genreData?.map((g) => [g.genre_id, g.name]) || []);
 
-  const result = stores.map((store) => ({
+  return (showOnlyOpen ? stores.filter((s) => checkIfOpen(s.opening_hours).isOpen) : stores).map((store) => ({
     ...store,
     areaTranslated: areaMap[store.area_id],
     genreTranslated: genreMap[store.genre_id],
   }));
-
-  return showOnlyOpen ? result.filter((s) => checkIfOpen(s.opening_hours).isOpen) : result;
 };
 
-export default function SearchResults({
-  selectedGenres,
-  selectedAreas,
-  selectedPayments,
-  showOnlyOpen,
-  isSearchTriggered,
-  messages,
-}: SearchResultsProps) {
+export default function SearchResults({ selectedGenres, selectedAreas, selectedPayments, showOnlyOpen, isSearchTriggered, messages }: SearchResultsProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryParams = searchParams.toString();
-
   const locale = pathname.split("/")[1] || "ja";
+
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -114,9 +104,7 @@ export default function SearchResults({
 
   useEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
-    if (savedY && pathname === `/${locale}/search`) {
-      setRestoreY(parseInt(savedY, 10));
-    }
+    if (savedY && pathname === `/${locale}/search`) setRestoreY(parseInt(savedY, 10));
   }, [pathname, locale]);
 
   useEffect(() => {
@@ -146,8 +134,7 @@ export default function SearchResults({
   }, []);
 
   const handleStoreClick = async (storeId: string) => {
-    if (locale !== "ja") return;
-    if (clickedStoreIds.current.has(storeId)) return;
+    if (locale !== "ja" || clickedStoreIds.current.has(storeId)) return;
     clickedStoreIds.current.add(storeId);
 
     sessionStorage.setItem("searchScrollY", window.scrollY.toString());
@@ -159,56 +146,17 @@ export default function SearchResults({
         query_params: queryParams,
         locale,
       });
-    } catch {
-      /* ignore */
-    }
+    } catch { }
 
     setTimeout(() => {
       router.push(`/stores/${storeId}?prev=/search&${queryParams}`);
     }, 100);
   };
 
-  if (!isSearchTriggered) {
-    return (
-      <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto max-w-[600px] px-4">
-          <p className="text-gray-400 text-center pt-6">{messages.prompt}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto max-w-[600px] px-4">
-          <p className="text-center py-6">{messages.loading}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto max-w-[600px] px-4">
-          <p className="text-red-500 text-center py-6">
-            ⚠️ {messages.error}: {(error as Error).message}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!stores || stores.length === 0) {
-    return (
-      <div className="w-full bg-[#FEFCF6] pb-8">
-        <div className="mx-auto max-w-[600px] px-4">
-          <p className="text-gray-400 text-center py-6">{messages.notFound}</p>
-        </div>
-      </div>
-    );
-  }
+  if (!isSearchTriggered) return <p className="text-center py-6">{messages.prompt}</p>;
+  if (isLoading) return <p className="text-center py-6">{messages.loading}</p>;
+  if (error) return <p className="text-red-500 text-center py-6">⚠️ {messages.error}: {(error as Error).message}</p>;
+  if (!stores || stores.length === 0) return <p className="text-center py-6">{messages.notFound}</p>;
 
   return (
     <div className="relative w-full bg-[#FEFCF6] pb-8">
@@ -219,6 +167,10 @@ export default function SearchResults({
         </p>
         {stores.map((store, idx) => {
           const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
+          const staticMapUrl =
+            store.latitude !== null && store.longitude !== null
+              ? `https://maps.googleapis.com/maps/api/staticmap?center=${store.latitude},${store.longitude}&zoom=16&size=160x90&scale=2&maptype=roadmap&markers=color:red%7C${store.latitude},${store.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+              : null;
           return (
             <div
               key={store.id}
@@ -227,32 +179,29 @@ export default function SearchResults({
             >
               <div className="space-y-3 pt-4">
                 <h3 className="text-base font-bold text-[#1F1F21]">{store.name}</h3>
-                {locale === "ja" && (
-                  <p className="text-xs text-[#1F1F21] leading-relaxed line-clamp-2">
-                    {store.description ?? messages.noDescription}
-                  </p>
-                )}
+                {locale === "ja" && <p className="text-xs text-[#1F1F21] leading-relaxed line-clamp-2">{store.description ?? messages.noDescription}</p>}
                 <div className="flex gap-4 items-center">
-                  <div className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden">
-                    {/* 画像表示など省略 */}
-                  </div>
+                  <a
+                    href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden block"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Image
+                      src={staticMapUrl || "/default-image.jpg"}
+                      alt={store.name}
+                      width={160}
+                      height={90}
+                      style={{ objectFit: "cover" }}
+                      unoptimized
+                    />
+                  </a>
                   <div className="flex-1 text-sm text-[#1F1F21]">
-                    <p>
-                      {store.areaTranslated} / {store.genreTranslated}
-                    </p>
-                    <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>
-                      {isOpen ? messages.open : messages.closed}
-                    </p>
-                    {isOpen && closeTime && (
-                      <p className="text-xs text-zinc-700">
-                        {formatCloseTime(closeTime, locale, messages)}
-                      </p>
-                    )}
-                    {!isOpen && nextOpening && (
-                      <p className="text-xs text-zinc-700">
-                        {formatNextOpening(nextOpening, locale, messages)}
-                      </p>
-                    )}
+                    <p>{store.areaTranslated} / {store.genreTranslated}</p>
+                    <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>{isOpen ? messages.open : messages.closed}</p>
+                    {isOpen && closeTime && <p className="text-xs text-zinc-700">{formatCloseTime(closeTime, locale, messages)}</p>}
+                    {!isOpen && nextOpening && <p className="text-xs text-zinc-700">{formatNextOpening(nextOpening, locale, messages)}</p>}
                   </div>
                 </div>
               </div>
