@@ -83,7 +83,7 @@ export default function SearchPageContent({
     if (isSearchTriggered) {
       const timeout = setTimeout(() => {
         setIsOverlayVisible(false);
-      }, 600); // 結果が出るタイミングでオーバーレイを消す
+      }, 1000); // 結果が出るタイミングでオーバーレイを消す
       return () => clearTimeout(timeout);
     }
   }, [isSearchTriggered]);
@@ -114,7 +114,7 @@ export default function SearchPageContent({
     <div className="bg-[#F7F5EF] mt-[48px] text-gray-800 pb-0 flex justify-center relative">
       {/* ⬇ オーバーレイ（白＋少しぼかし） */}
       {isOverlayVisible && (
-        <div className="fixed inset-0 z-[9999] bg-white/80 backdrop-blur-sm transition-opacity duration-300" />
+        <div className="fixed inset-0 z-[9999] bg-white/80 backdrop-blur-sm transition-opacity duration-1000" />
       )}
 
       <div className="w-full max-w-[1400px] z-10">
