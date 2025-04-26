@@ -45,7 +45,7 @@ export default function SearchFilter({
 
   const [genres, setGenres] = useState<Option[]>([]);
   const [areas, setAreas] = useState<Option[]>([]);
-  const [payments, setPayments] = useState<Option[]>([]);
+  const [, setPayments] = useState<Option[]>([]);
 
   // ✅ locale を pathname から抽出（useParams()はクライアントで使いづらいため）
   const locale = typeof window !== "undefined"
@@ -214,29 +214,31 @@ export default function SearchFilter({
             </div>
           </div>
 
-          {/* 支払い方法 */}
-          <div>
-            <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.payment}</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {payments.map((payment) => (
-                <label key={payment.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
-                  <input
-                    type="checkbox"
-                    checked={selectedPayments.includes(payment.id)}
-                    onChange={() =>
-                      setSelectedPayments(
-                        selectedPayments.includes(payment.id)
-                          ? selectedPayments.filter((p) => p !== payment.id)
-                          : [...selectedPayments, payment.id]
-                      )
-                    }
-                    className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-[url('/icons/check.svg')] bg-center bg-no-repeat"
-                  />
-                  {payment.name}
-                </label>
-              ))}
-            </div>
-          </div>
+          {/*
+  支払い方法フィルター（Ver1では未使用、将来用）
+  <div>
+    <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.payment}</p>
+    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+      {payments.map((payment) => (
+        <label key={payment.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+          <input
+            type="checkbox"
+            checked={selectedPayments.includes(payment.id)}
+            onChange={() =>
+              setSelectedPayments(
+                selectedPayments.includes(payment.id)
+                  ? selectedPayments.filter((p) => p !== payment.id)
+                  : [...selectedPayments, payment.id]
+              )
+            }
+            className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-[url('/icons/check.svg')] bg-center bg-no-repeat"
+          />
+          {payment.name}
+        </label>
+      ))}
+    </div>
+  </div>
+*/}
         </motion.div>
 
         {/* 検索ボタン */}

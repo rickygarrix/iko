@@ -165,50 +165,71 @@ export default function SearchResults({ selectedGenres, selectedAreas, selectedP
         <p className="text-lg font-semibold text-center py-5 text-gray-700">
           {messages.resultLabel} <span className="text-[#4B5C9E]">{stores.length}</span> {messages.items}
         </p>
-        {stores.map((store, idx) => {
-          const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
-          const staticMapUrl =
-            store.latitude !== null && store.longitude !== null
-              ? `https://maps.googleapis.com/maps/api/staticmap?center=${store.latitude},${store.longitude}&zoom=16&size=160x90&scale=2&maptype=roadmap&markers=color:red%7C${store.latitude},${store.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-              : null;
-          return (
-            <div
-              key={store.id}
-              onClick={() => handleStoreClick(store.id)}
-              className={`bg-[#FEFCF6] rounded-xl ${locale === "ja" ? `cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}` : "cursor-default"} transition-colors duration-200`}
-            >
-              <div className="space-y-3 pt-4">
-                <h3 className="text-base font-bold text-[#1F1F21]">{store.name}</h3>
-                {locale === "ja" && <p className="text-xs text-[#1F1F21] leading-relaxed line-clamp-2">{store.description ?? messages.noDescription}</p>}
-                <div className="flex gap-4 items-center">
-                  <a
-                    href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-[160px] h-[90px] border-2 border-black rounded-[8px] overflow-hidden block"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Image
-                      src={staticMapUrl || "/default-image.jpg"}
-                      alt={store.name}
-                      width={160}
-                      height={90}
-                      style={{ objectFit: "cover" }}
-                      unoptimized
-                    />
-                  </a>
-                  <div className="flex-1 text-sm text-[#1F1F21]">
-                    <p>{store.areaTranslated} / {store.genreTranslated}</p>
-                    <p className={`font-semibold ${isOpen ? "text-green-600" : "text-red-500"}`}>{isOpen ? messages.open : messages.closed}</p>
-                    {isOpen && closeTime && <p className="text-xs text-zinc-700">{formatCloseTime(closeTime, locale, messages)}</p>}
-                    {!isOpen && nextOpening && <p className="text-xs text-zinc-700">{formatNextOpening(nextOpening, locale, messages)}</p>}
+
+        <div className="flex flex-col items-center gap-4">
+          {stores.map((store,) => {
+            const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
+            const staticMapUrl =
+              store.latitude !== null && store.longitude !== null
+                ? `https://maps.googleapis.com/maps/api/staticmap?center=${store.latitude},${store.longitude}&zoom=16&size=100x165&scale=2&maptype=roadmap&markers=color:red%7C${store.latitude},${store.longitude}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+                : null;
+
+            return (
+              <div
+                key={store.id}
+                onClick={() => handleStoreClick(store.id)}
+                className={`w-full max-w-[390px] p-4 bg-white flex flex-row gap-4 rounded transition-colors duration-200 ${locale === "ja" ? `cursor-pointer ${!isScrolling ? "hover:bg-gray-100 active:bg-gray-200" : ""}` : "cursor-default"}`}
+              >
+                {/* 左側：店舗情報 */}
+                <div className="flex flex-col flex-1 gap-2">
+                  <h3 className="text-base font-bold text-[#1F1F21]">{store.name}</h3>
+
+                  {locale === "ja" && (
+                    <p className="text-xs font-light text-[#1F1F21] line-clamp-2">
+                      {store.description ?? messages.noDescription}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-[#1F1F21]">
+                    {store.areaTranslated} / {store.genreTranslated}
+                  </p>
+
+                  {/* ✅ 営業中・営業時間を改行して表示 */}
+                  <div className="flex flex-col text-xs">
+                    <span className={`font-bold ${isOpen ? "text-green-700" : "text-rose-700"}`}>
+                      {isOpen ? messages.open : messages.closed}
+                    </span>
+                    <span className="text-zinc-700">
+                      {isOpen && closeTime
+                        ? formatCloseTime(closeTime, locale, messages)
+                        : nextOpening
+                          ? formatNextOpening(nextOpening, locale, messages)
+                          : ""}
+                    </span>
                   </div>
                 </div>
+
+                {/* 右側：地図 */}
+                <a
+                  href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative w-[100px] h-[165px] rounded-[4px] overflow-hidden border-2 border-[#1F1F21] block"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Image
+                    src={staticMapUrl || "/default-image.jpg"}
+                    alt={store.name}
+                    width={100}
+                    height={165}
+                    style={{ objectFit: "cover" }}
+                    unoptimized
+                  />
+                </a>
               </div>
-              {idx < stores.length - 1 && <hr className="mt-6 border-gray-300" />}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

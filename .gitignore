@@ -9,6 +9,7 @@ node_modules/
 
 # 環境変数や個人ファイル
 .env
+.env.local
 .DS_Store
 *.log
 

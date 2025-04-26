@@ -1,21 +1,19 @@
-const withNextIntl = require('next-intl/plugin')(
-  './i18n/request.ts'
-);
+import withNextIntl from 'next-intl/plugin';
+import type { NextConfig } from 'next';
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+/** @type {NextConfig} */
+const nextConfig: NextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true
-  },
   images: {
     domains: [
       'lh3.googleusercontent.com',
       'blogger.googleusercontent.com',
       'bqexmwjcmtyypzucndrb.supabase.co',
-      'maps.googleapis.com' // ← これを追加！！
+      'maps.googleapis.com'
     ]
   }
 };
 
-module.exports = withNextIntl(nextConfig);
+const config = withNextIntl('./i18n/request.ts')(nextConfig);
+
+export default config;
