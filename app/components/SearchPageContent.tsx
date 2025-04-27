@@ -30,7 +30,6 @@ export default function SearchPageContent({
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [isSearchTriggered, setIsSearchTriggered] = useState<boolean>(false);
-  const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false);
 
   const fetchPreviewCount = async (
     selectedGenres: string[],
@@ -79,18 +78,7 @@ export default function SearchPageContent({
     setIsSearchTriggered(true);
   }, [searchParams]);
 
-  useEffect(() => {
-    if (isSearchTriggered) {
-      const timeout = setTimeout(() => {
-        setIsOverlayVisible(false);
-      }, 1000); // 結果が出るタイミングでオーバーレイを消す
-      return () => clearTimeout(timeout);
-    }
-  }, [isSearchTriggered]);
-
   const handleSearch = () => {
-    setIsOverlayVisible(true);
-
     sessionStorage.setItem("filterGenres", JSON.stringify(selectedGenres));
     sessionStorage.setItem("filterAreas", JSON.stringify(selectedAreas));
     sessionStorage.setItem("filterPayments", JSON.stringify(selectedPayments));
@@ -111,13 +99,8 @@ export default function SearchPageContent({
   };
 
   return (
-    <div className="bg-[#F7F5EF] mt-[48px] text-gray-800 pb-0 flex justify-center relative">
-      {/* ⬇ オーバーレイ（白＋少しぼかし） */}
-      {isOverlayVisible && (
-        <div className="fixed inset-0 z-[9999] bg-white/80 backdrop-blur-sm transition-opacity duration-1000" />
-      )}
-
-      <div className="w-full max-w-[1400px] z-10">
+    <div className="bg-white  text-gray-800 pb-0 flex justify-center">
+      <div className="w-full ">
         <div id="search-filter">
           <SearchFilter
             selectedGenres={selectedGenres}

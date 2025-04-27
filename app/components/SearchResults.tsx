@@ -159,12 +159,13 @@ export default function SearchResults({ selectedGenres, selectedAreas, selectedP
   if (!stores || stores.length === 0) return <p className="text-center py-6">{messages.notFound}</p>;
 
   return (
-    <div className="relative w-full bg-[#FEFCF6] pb-8">
+    <div className="relative w-full  pb-8 "> {/* ← ここで全幅白背景にする */}
       {isOverlayVisible && <div className="fixed inset-0 z-[9999] bg-white/80" />}
       <div className="mx-auto max-w-[600px] px-4">
         <p className="text-lg font-semibold text-center py-5 text-gray-700">
           {messages.resultLabel} <span className="text-[#4B5C9E]">{stores.length}</span> {messages.items}
         </p>
+
 
         <div className="flex flex-col items-center gap-4">
           {stores.map((store,) => {
