@@ -158,37 +158,39 @@ export default function RecommendedStores({ messages }: Props) {
                 <motion.div
                   key={store.id}
                   onClick={() => handleClick(store.id)}
-                  className="w-full max-w-[390px] p-4 bg-white flex flex-row gap-4 rounded transition-colors duration-200 cursor-pointer hover:bg-gray-100"
+                  className="w-full max-w-[520px] p-5 bg-white flex flex-row gap-5 rounded-lg transition-colors duration-200 cursor-pointer hover:bg-gray-100"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                 >
                   {/* 左側：店舗情報 */}
-                  <div className="flex flex-col flex-1 gap-2">
-                    <h3 className="text-base font-bold text-zinc-900">{store.name}</h3>
+                  <div className="flex flex-col justify-between flex-1">
+                    <div className="flex flex-col gap-3">
+                      <h3 className="text-lg font-bold text-zinc-900">{store.name}</h3>
 
-                    {locale === "ja" && (
-                      <p className="text-xs font-light text-zinc-900 line-clamp-2">
-                        {store.description || messages.noDescription}
+                      {locale === "ja" && (
+                        <p className="text-sm font-normal text-zinc-800 leading-snug line-clamp-3">
+                          {store.description || messages.noDescription}
+                        </p>
+                      )}
+
+                      <p className="text-sm text-zinc-700">
+                        {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}
                       </p>
-                    )}
 
-                    <p className="text-xs text-zinc-900">
-                      {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}
-                    </p>
-
-                    {/* ✅ 営業ステータス（改行して分ける） */}
-                    <div className="flex flex-col text-xs">
-                      <span className={`font-bold ${isOpen ? "text-green-700" : "text-rose-700"}`}>
-                        {isOpen ? messages.open : messages.closed}
-                      </span>
-                      <span className="text-zinc-700">
-                        {isOpen && closeTime
-                          ? formatCloseTime(closeTime, locale, messages)
-                          : nextOpening
-                            ? formatNextOpening(nextOpening, locale, messages)
-                            : ""}
-                      </span>
+                      {/* ✅ 営業ステータス */}
+                      <div className="flex flex-col text-sm">
+                        <span className={`font-bold ${isOpen ? "text-green-700" : "text-rose-700"}`}>
+                          {isOpen ? messages.open : messages.closed}
+                        </span>
+                        <span className="text-zinc-700">
+                          {isOpen && closeTime
+                            ? formatCloseTime(closeTime, locale, messages)
+                            : nextOpening
+                              ? formatNextOpening(nextOpening, locale, messages)
+                              : ""}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -197,14 +199,14 @@ export default function RecommendedStores({ messages }: Props) {
                     href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="relative w-[100px] h-[165px] rounded-[4px] overflow-hidden border-2 border-[#1F1F21] block"
+                    className="relative w-[120px] h-[180px] rounded-md overflow-hidden border-2 border-[#1F1F21]  block"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Image
                       src={staticMapUrl || store.image_url || "/default-image.jpg"}
                       alt={store.name}
-                      width={100}
-                      height={165}
+                      width={120}
+                      height={180}
                       style={{ objectFit: "cover" }}
                       unoptimized
                     />

@@ -99,7 +99,7 @@ export default function SearchPageContent({
   };
 
   return (
-    <div className="bg-white  text-gray-800 pb-0 flex justify-center">
+    <div className="bg-white mt-8 text-gray-800 pb-0 flex justify-center">
       <div className="w-full ">
         <div id="search-filter">
           <SearchFilter
