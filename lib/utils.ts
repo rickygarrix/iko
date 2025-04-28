@@ -125,7 +125,7 @@ export const getDeviceType = (): "pc" | "mobile" => {
 // ✅ アクションログ送信（確認付き）
 export const logAction = async (
   action: string,
-  data: Record<string, unknown> // ← 変更点
+  data: Record<string, unknown>
 ): Promise<void> => {
   const payload = {
     action,
@@ -134,14 +134,8 @@ export const logAction = async (
     device: getDeviceType(),
   };
 
-
-  const { data: insertResult, error } = await supabase
-    .from("action_logs")
-    .insert(payload)
-    .select();
-
+  const { error } = await supabase.from("action_logs").insert([payload]);
   if (error) {
-    console.error("🔥 Supabaseへの挿入に失敗:", error);
+    console.error("🔥 アクションログ保存失敗:", error.message);
   }
-
 };

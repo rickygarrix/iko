@@ -17,7 +17,7 @@ type SearchResultsProps = {
   selectedPayments: string[];
   showOnlyOpen: boolean;
   isSearchTriggered: boolean;
-  messages: Messages["searchResults"] & { openUntil?: string; close?: string };
+  messages: Messages["searchResults"] & { genres: Record<string, string> }; // ✅ ここ
 };
 
 type TranslatedStore = Store & {
@@ -54,25 +54,26 @@ const formatNextOpening = (nextOpening: { day: string; time: string }, locale: s
 
 const fetchStores = async (selectedGenres: string[], selectedAreas: string[], selectedPayments: string[], showOnlyOpen: boolean, locale: string): Promise<TranslatedStore[]> => {
   let query = supabase.from("stores").select("*").eq("is_published", true);
-  if (selectedGenres.length) query = query.in("genre_id", selectedGenres);
+
+  if (selectedGenres.length > 0) {
+    query = query.filter("genre_ids", "cs", JSON.stringify(selectedGenres));
+  }
   if (selectedAreas.length) query = query.in("area_id", selectedAreas);
   if (selectedPayments.length) query = query.overlaps("payment_method_ids", selectedPayments);
 
   const { data: stores, error } = await query;
   if (error || !stores) throw new Error(error?.message || "データ取得に失敗しました");
 
-  const [{ data: areaData }, { data: genreData }] = await Promise.all([
-    supabase.from("area_translations").select("area_id, name").eq("locale", locale),
-    supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
-  ]);
+  const { data: areaData } = await supabase
+    .from("area_translations")
+    .select("area_id, name")
+    .eq("locale", locale);
 
   const areaMap = Object.fromEntries(areaData?.map((a) => [a.area_id, a.name]) || []);
-  const genreMap = Object.fromEntries(genreData?.map((g) => [g.genre_id, g.name]) || []);
 
   return (showOnlyOpen ? stores.filter((s) => checkIfOpen(s.opening_hours).isOpen) : stores).map((store) => ({
     ...store,
     areaTranslated: areaMap[store.area_id],
-    genreTranslated: genreMap[store.genre_id],
   }));
 };
 
@@ -187,15 +188,17 @@ export default function SearchResults({ selectedGenres, selectedAreas, selectedP
                     <h3 className="text-lg font-bold text-zinc-900">{store.name}</h3>
 
                     {store.description && (
-                      <p className="text-sm font-normal text-zinc-800 leading-snug line-clamp-3">
+                      <p className="text-sm font-normal text-zinc-800 leading-snug line-clamp-2">
                         {locale === "ja"
                           ? store.description
                           : translatedDescriptions[store.id] || store.description}
                       </p>
                     )}
 
-                    <p className="text-sm text-zinc-700">
-                      {store.areaTranslated} / {store.genreTranslated}
+                    <p className="text-sm text-zinc-700 whitespace-pre-wrap">
+                      {store.areaTranslated}
+                      {"\n"}
+                      {store.genre_ids?.map((gid: string) => messages.genres[gid] || gid).join(" / ")}
                     </p>
 
                     <div className="flex flex-col text-sm">

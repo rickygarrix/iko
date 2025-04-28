@@ -12,7 +12,7 @@ import React from "react";
 type Store = {
   id: string;
   name: string;
-  genre_id: string;
+  genre_ids: string[];
   area: string;
   opening_hours: string;
   regular_holiday: string;
@@ -76,6 +76,7 @@ export default function StoreDetailPage() {
   }
 
   // ID → 表示名のマップ
+
   const genreLabels: Record<string, string> = {
     jazz: "ジャズ",
     house: "ハウス",
@@ -114,46 +115,45 @@ export default function StoreDetailPage() {
         </div>
 
         {/*
-  支払い方法テーブル（Ver1では未使用、将来用）
-  <div className="px-4 mb-8">
-    <p className="text-base mb-2 flex items-center gap-2 text-[#1F1F21]">
-      <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded inline-block" />
-      支払い方法
-    </p>
-    <div className="w-full overflow-hidden rounded border border-[#E7E7EF]">
-      <table className="w-full table-auto text-xs text-[#1F1F21] font-light">
-        <tbody>
-          {Object.entries(paymentMethodLabels)
-            .reduce<[string, string][][]>((rows, entry, idx) => {
-              if (idx % 2 === 0) rows.push([entry]);
-              else rows[rows.length - 1].push(entry);
-              return rows;
-            }, [])
-            .map((pair, i) => (
-              <tr key={i} className="border-t border-[#E7E7EF] h-[42px]">
-                {pair.map(([id, label]) => (
-                  <React.Fragment key={id}>
-                    <td className="w-[42%] px-3 py-3 border-r border-[#E7E7EF]">
-                      {label}
-                    </td>
-                    <td className="w-[8%] px-2 py-3 text-center border-r border-[#E7E7EF]">
-                      {(store.payment_method_ids ?? []).includes(id) ? "◯" : "ー"}
-                    </td>
-                  </React.Fragment>
-                ))}
-                {pair.length === 1 && (
-                  <>
-                    <td className="w-[42%] px-3 py-3 border-r border-[#E7E7EF]"></td>
-                    <td className="w-[8%] px-2 py-3 border-r border-[#E7E7EF]"></td>
-                  </>
-                )}
-              </tr>
-            ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-*/}
+        <div className="px-4 mb-8">
+          <p className="text-base mb-2 flex items-center gap-2 text-[#1F1F21]">
+            <span className="w-[12px] h-[12px] bg-[#4B5C9E] rounded inline-block" />
+            支払い方法
+          </p>
+          <div className="w-full overflow-hidden rounded border border-[#E7E7EF]">
+            <table className="w-full table-auto text-xs text-[#1F1F21] font-light">
+              <tbody>
+                {Object.entries(paymentMethodLabels)
+                  .reduce<[string, string][][]>((rows, entry, idx) => {
+                    if (idx % 2 === 0) rows.push([entry]);
+                    else rows[rows.length - 1].push(entry);
+                    return rows;
+                  }, [])
+                  .map((pair, i) => (
+                    <tr key={i} className="border-t border-[#E7E7EF] h-[42px]">
+                      {pair.map(([id, label]) => (
+                        <React.Fragment key={id}>
+                          <td className="w-[42%] px-3 py-3 border-r border-[#E7E7EF]">
+                            {label}
+                          </td>
+                          <td className="w-[8%] px-2 py-3 text-center border-r border-[#E7E7EF]">
+                            {(store.payment_method_ids ?? []).includes(id) ? "◯" : "ー"}
+                          </td>
+                        </React.Fragment>
+                      ))}
+                      {pair.length === 1 && (
+                        <>
+                          <td className="w-[42%] px-3 py-3 border-r border-[#E7E7EF]"></td>
+                          <td className="w-[8%] px-2 py-3 border-r border-[#E7E7EF]"></td>
+                        </>
+                      )}paymentMethodLabels
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        */}
 
         {/* 店舗情報 */}
         <div className="my-10 px-4">
@@ -173,8 +173,8 @@ export default function StoreDetailPage() {
                 <th className="border bg-[#FDFBF7] px-4 py-4 text-left font-normal">
                   ジャンル
                 </th>
-                <td className="border px-4 py-4">
-                  {genreLabels[store.genre_id] ?? store.genre_id}
+                <td className="border px-4 py-4 whitespace-pre-wrap">
+                  {store.genre_ids?.map((gid) => genreLabels[gid] || gid).join(" / ")}
                 </td>
               </tr>
               <tr>

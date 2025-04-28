@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
-import { translateText } from "@/lib/translateText"; // 🔥追加
+import { translateText } from "@/lib/translateText";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -23,11 +23,7 @@ const formatCloseTime = (time: string, locale: string, messages: Messages["recom
   return messages.openUntil.replace("{time}", formatted);
 };
 
-const formatNextOpening = (
-  nextOpening: { day: string; time: string },
-  locale: string,
-  messages: Messages["recommend"]
-) => {
+const formatNextOpening = (nextOpening: { day: string; time: string }, locale: string, messages: Messages["recommend"]) => {
   const formatted = locale === "en" ? convertToAMPM(nextOpening.time) : nextOpening.time;
   const day = messages.days[nextOpening.day as keyof typeof messages.days] || nextOpening.day;
   return messages.nextOpen.replace("{day}", day).replace("{time}", formatted);
@@ -59,7 +55,7 @@ const useTranslatedNames = (locale: string) => {
 type Store = {
   id: string;
   name: string;
-  genre_id: string;
+  genre_ids: string[]; // ⭐️複数ジャンル対応！
   area_id: string;
   opening_hours: string;
   image_url?: string | null;
@@ -101,7 +97,6 @@ export default function RecommendedStores({ messages }: Props) {
   useEffect(() => {
     const translateAllDescriptions = async () => {
       if (locale === "ja") return;
-
       const translations: Record<string, string> = {};
       for (const store of stores) {
         if (store.description) {
@@ -110,13 +105,12 @@ export default function RecommendedStores({ messages }: Props) {
             translations[store.id] = translated;
           } catch (err) {
             console.error("翻訳エラー:", err);
-            translations[store.id] = store.description; // エラー時fallback
+            translations[store.id] = store.description;
           }
         }
       }
       setTranslatedDescriptions(translations);
     };
-
     translateAllDescriptions();
   }, [stores, locale]);
 
@@ -190,15 +184,17 @@ export default function RecommendedStores({ messages }: Props) {
                       <h3 className="text-lg font-bold text-zinc-900">{store.name}</h3>
 
                       {store.description && (
-                        <p className="text-sm font-normal text-zinc-800 leading-snug line-clamp-3">
+                        <p className="text-sm font-normal text-zinc-800 leading-snug line-clamp-2">
                           {locale === "ja"
                             ? store.description
                             : translatedDescriptions[store.id] || store.description}
                         </p>
                       )}
 
-                      <p className="text-sm text-zinc-700">
-                        {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}
+                      <p className="text-sm text-zinc-700 whitespace-pre-wrap">
+                        {areaMap[store.area_id] || store.area_id}
+                        {"\n"}
+                        {store.genre_ids?.map((gid) => genreMap[gid] || gid).join(" / ")}
                       </p>
 
                       <div className="flex flex-col text-sm">

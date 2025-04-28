@@ -1,18 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { checkIfOpen } from "@/lib/utils";
 import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
 import RecommendedStores from "@/components/RecommendedStores";
+import Image from "next/image";
 import { motion } from "framer-motion";
+import useSWR from "swr";
 import type { Messages } from "@/types/messages";
 
 type HomeProps = {
   messages: Messages;
   locale: string;
+};
+
+const fetchPreviewCount = async (
+  selectedGenres: string[],
+  selectedAreas: string[],
+  selectedPayments: string[],
+  showOnlyOpen: boolean
+): Promise<number> => {
+  let query = supabase.from("stores").select("*").eq("is_published", true);
+
+  if (selectedGenres.length > 0) {
+    query = query.filter("genre_ids", "cs", JSON.stringify(selectedGenres)); // ✅ genre_ids用
+  }
+  if (selectedAreas.length > 0) {
+    query = query.in("area_id", selectedAreas);
+  }
+  if (selectedPayments.length > 0) {
+    query = query.overlaps("payment_method_ids", selectedPayments);
+  }
+
+  const { data, error } = await query;
+  if (error || !data) {
+    console.error("🔥 Supabase Error:", error?.message);
+    return 0;
+  }
+
+  const filtered = showOnlyOpen
+    ? data.filter((store) => checkIfOpen(store.opening_hours).isOpen)
+    : data;
+
+  return filtered.length;
 };
 
 export default function Home({ messages, locale }: HomeProps) {
@@ -22,37 +55,13 @@ export default function Home({ messages, locale }: HomeProps) {
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
-  const [previewCount, setPreviewCount] = useState<number>(0);
 
-  useEffect(() => {
-    const fetchPreviewCount = async () => {
-      let query = supabase.from("stores").select("*").eq("is_published", true);
-      if (selectedGenres.length > 0) query = query.in("genre_id", selectedGenres);
-      if (selectedAreas.length > 0) query = query.in("area_id", selectedAreas);
-      if (selectedPayments.length > 0) {
-        query = query.overlaps("payment_method_ids", selectedPayments);
-      }
-
-      const { data, error } = await query;
-      if (error) {
-        console.error("プレビュー件数の取得に失敗:", error.message);
-        setPreviewCount(0);
-      } else {
-        const filtered = data || [];
-        if (showOnlyOpen) {
-          const { checkIfOpen } = await import("@/lib/utils");
-          const opened = filtered.filter((store) =>
-            checkIfOpen(store.opening_hours).isOpen
-          );
-          setPreviewCount(opened.length);
-        } else {
-          setPreviewCount(filtered.length);
-        }
-      }
-    };
-
-    fetchPreviewCount();
-  }, [selectedGenres, selectedAreas, selectedPayments, showOnlyOpen]);
+  const { data: previewCount } = useSWR(
+    ["previewCountHome", selectedGenres, selectedAreas, selectedPayments, showOnlyOpen],
+    ([, selectedGenres, selectedAreas, selectedPayments, showOnlyOpen]) =>
+      fetchPreviewCount(selectedGenres, selectedAreas, selectedPayments, showOnlyOpen),
+    { revalidateOnFocus: false }
+  );
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -110,7 +119,7 @@ export default function Home({ messages, locale }: HomeProps) {
           showOnlyOpen={showOnlyOpen}
           setShowOnlyOpen={setShowOnlyOpen}
           handleSearch={handleSearch}
-          previewCount={previewCount}
+          previewCount={previewCount ?? 0}
           showTitle={false}
           messages={{
             ...messages.searchFilter,

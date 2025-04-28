@@ -39,9 +39,15 @@ export default function SearchPageContent({
   ): Promise<number> => {
     let query = supabase.from("stores").select("*").eq("is_published", true);
 
-    if (selectedGenres.length > 0) query = query.in("genre_id", selectedGenres);
-    if (selectedAreas.length > 0) query = query.in("area_id", selectedAreas);
-    if (selectedPayments.length > 0) query = query.overlaps("payment_method_ids", selectedPayments);
+    if (selectedGenres.length > 0) {
+      query = query.filter("genre_ids", "cs", JSON.stringify(selectedGenres)); // ✅ overlapsじゃなくて filter("cs", JSON.stringify())
+    }
+    if (selectedAreas.length > 0) {
+      query = query.in("area_id", selectedAreas);
+    }
+    if (selectedPayments.length > 0) {
+      query = query.overlaps("payment_method_ids", selectedPayments);
+    }
 
     const { data, error } = await query;
 
@@ -56,7 +62,6 @@ export default function SearchPageContent({
 
     return filtered.length;
   };
-
   const { data: previewCount } = useSWR(
     ["previewCount", selectedGenres, selectedAreas, selectedPayments, showOnlyOpen],
     ([, selectedGenres, selectedAreas, selectedPayments, showOnlyOpen]) =>
@@ -130,7 +135,10 @@ export default function SearchPageContent({
               selectedPayments={selectedPayments}
               showOnlyOpen={showOnlyOpen}
               isSearchTriggered={isSearchTriggered}
-              messages={messages.searchResults}
+              messages={{
+                ...messages.searchResults,
+                genres: messages.genres, // ✅ genresを追加
+              }}
             />
           </Suspense>
         )}

@@ -22,11 +22,11 @@ export type Messages = {
 export type Store = {
   id: string;
   name: string;
-  genre: string;
-  area: string;
-  capacity: number;
-  payment_methods: string[];
+  genre_ids: string[]; // ⭐複数ジャンル対応！（配列）
+  area_id: string;
   opening_hours: string;
   image_url?: string | null;
   description?: string;
+  latitude: number | null;
+  longitude: number | null;
 };
