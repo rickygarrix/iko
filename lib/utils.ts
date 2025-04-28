@@ -134,7 +134,6 @@ export const logAction = async (
     device: getDeviceType(),
   };
 
-  console.log("🔍 payload", payload);
 
   const { data: insertResult, error } = await supabase
     .from("action_logs")
@@ -143,7 +142,6 @@ export const logAction = async (
 
   if (error) {
     console.error("🔥 Supabaseへの挿入に失敗:", error);
-  } else {
-    console.log("📥 insert result:", insertResult);
   }
+
 };
