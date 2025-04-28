@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
+import { translateText } from "@/lib/translateText"; // 🔥追加
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -73,6 +74,7 @@ type Props = {
 
 export default function RecommendedStores({ messages }: Props) {
   const [stores, setStores] = useState<Store[]>([]);
+  const [translatedDescriptions, setTranslatedDescriptions] = useState<Record<string, string>>({});
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [storesReady, setStoresReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,6 +99,28 @@ export default function RecommendedStores({ messages }: Props) {
   }, []);
 
   useEffect(() => {
+    const translateAllDescriptions = async () => {
+      if (locale === "ja") return;
+
+      const translations: Record<string, string> = {};
+      for (const store of stores) {
+        if (store.description) {
+          try {
+            const translated = await translateText(store.description, locale);
+            translations[store.id] = translated;
+          } catch (err) {
+            console.error("翻訳エラー:", err);
+            translations[store.id] = store.description; // エラー時fallback
+          }
+        }
+      }
+      setTranslatedDescriptions(translations);
+    };
+
+    translateAllDescriptions();
+  }, [stores, locale]);
+
+  useEffect(() => {
     const saved = sessionStorage.getItem("recommendedScrollY");
     if (saved && pathname === `/${locale}`) {
       setRestoreY(parseInt(saved, 10));
@@ -117,8 +141,6 @@ export default function RecommendedStores({ messages }: Props) {
       setStoresReady(true);
     }
   }, [restoreY, stores]);
-
-
 
   const handleClick = async (storeId: string) => {
     if (locale !== "ja") return;
@@ -163,14 +185,15 @@ export default function RecommendedStores({ messages }: Props) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                 >
-                  {/* 左側：店舗情報 */}
                   <div className="flex flex-col justify-between flex-1">
                     <div className="flex flex-col gap-3">
                       <h3 className="text-lg font-bold text-zinc-900">{store.name}</h3>
 
-                      {locale === "ja" && (
+                      {store.description && (
                         <p className="text-sm font-normal text-zinc-800 leading-snug line-clamp-3">
-                          {store.description || messages.noDescription}
+                          {locale === "ja"
+                            ? store.description
+                            : translatedDescriptions[store.id] || store.description}
                         </p>
                       )}
 
@@ -178,7 +201,6 @@ export default function RecommendedStores({ messages }: Props) {
                         {areaMap[store.area_id] || store.area_id} / {genreMap[store.genre_id] || store.genre_id}
                       </p>
 
-                      {/* ✅ 営業ステータス */}
                       <div className="flex flex-col text-sm">
                         <span className={`font-bold ${isOpen ? "text-green-700" : "text-rose-700"}`}>
                           {isOpen ? messages.open : messages.closed}
@@ -194,12 +216,11 @@ export default function RecommendedStores({ messages }: Props) {
                     </div>
                   </div>
 
-                  {/* 右側：マップ画像 */}
                   <a
                     href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="relative w-[120px] h-[180px] rounded-md overflow-hidden border-2 border-[#1F1F21]  block"
+                    className="relative w-[120px] h-[180px] rounded-md overflow-hidden border-2 border-[#1F1F21] block"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Image

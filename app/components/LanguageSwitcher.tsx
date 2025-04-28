@@ -14,6 +14,8 @@ export default function LanguageSwitcher({ locale }: Props) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
 
+  const isStoreDetailPage = pathname.startsWith("/stores/"); // ⭐ここだけ追記！
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLocale = e.target.value;
     setIsLoading(true);
@@ -38,7 +40,7 @@ export default function LanguageSwitcher({ locale }: Props) {
         <select
           onChange={handleChange}
           value={locale}
-          disabled={isLoading}
+          disabled={isLoading || isStoreDetailPage} // ⭐ここで無効化！
           className="w-full h-[32px] text-xs text-gray-800 border border-gray-300 rounded-md pl-2 pr-8 bg-white shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#4B5C9E] hover:bg-gray-100"
         >
           <option value="ja">日本語</option>
