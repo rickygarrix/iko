@@ -8,6 +8,7 @@ import Skeleton from "@/components/Skeleton";
 import MapEmbed from "@/components/MapEmbed";
 import InstagramSlider from "@/components/InstagramSlider";
 import React from "react";
+import { sendGAEvent } from "@/lib/ga";
 
 type Store = {
   id: string;
@@ -100,6 +101,9 @@ export default function StoreDetailPage() {
               href={store.map_link || "#"}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                sendGAEvent("click_map", { store_id: store.id, store_name: store.name });
+              }}
             >
               <MapEmbed src={store.map_embed} title={`${store.name}の地図`} />
             </a>
@@ -225,6 +229,13 @@ export default function StoreDetailPage() {
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full max-w-[358px] h-[48px] bg-black text-white rounded-lg hover:bg-gray-800 flex items-center justify-center mx-auto"
+              onClick={() => {
+                sendGAEvent("click_official_website", {
+                  store_id: store.id,
+                  store_name: store.name,
+                  website_url: store.website,
+                });
+              }}
             >
               公式サイト →
             </a>

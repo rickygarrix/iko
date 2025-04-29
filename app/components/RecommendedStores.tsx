@@ -8,6 +8,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Messages } from "@/types/messages";
+import { sendGAEvent } from "@/lib/ga";
 
 const convertToAMPM = (time24: string): string => {
   const [hourStr, minuteStr] = time24.split(":");
@@ -217,7 +218,15 @@ export default function RecommendedStores({ messages }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="relative w-[120px] h-[180px] rounded-md overflow-hidden border-2 border-[#1F1F21] block"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sendGAEvent("click_recommend_map", {
+                        store_id: store.id,
+                        store_name: store.name,
+                        latitude: store.latitude ?? undefined,
+                        longitude: store.longitude ?? undefined,
+                      });
+                    }}
                   >
                     <Image
                       src={staticMapUrl || store.image_url || "/default-image.jpg"}

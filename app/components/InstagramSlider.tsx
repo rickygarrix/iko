@@ -6,6 +6,7 @@ import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import { sendGAEvent } from "@/lib/ga";
 
 type InstagramSliderProps = {
   posts: string[];
@@ -73,6 +74,11 @@ export default function InstagramSlider({ posts, onClickPost }: InstagramSliderP
                 onClick={async (e) => {
                   e.stopPropagation();
                   try {
+                    // GAイベント送信を追加！！
+                    sendGAEvent("click_instagram", {
+                      instagram_url: url,
+                    });
+
                     if (onClickPost) await onClickPost(url);
                   } finally {
                     window.open(url, "_blank", "noopener");

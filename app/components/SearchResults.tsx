@@ -10,6 +10,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import type { Messages } from "@/types/messages";
+import { sendGAEvent } from "@/lib/ga";
 
 type SearchResultsProps = {
   selectedGenres: string[];
@@ -221,7 +222,15 @@ export default function SearchResults({ selectedGenres, selectedAreas, selectedP
                   target="_blank"
                   rel="noopener noreferrer"
                   className="relative w-[120px] h-[180px] rounded-md overflow-hidden border-2 border-[#1F1F21] block"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sendGAEvent("click_searchresult_map", {
+                      store_id: store.id,
+                      store_name: store.name,
+                      latitude: store.latitude ?? undefined,
+                      longitude: store.longitude ?? undefined,
+                    });
+                  }}
                 >
                   <Image
                     src={staticMapUrl || "/default-image.jpg"}
