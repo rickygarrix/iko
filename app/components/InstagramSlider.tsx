@@ -73,14 +73,20 @@ export default function InstagramSlider({ posts, onClickPost }: InstagramSliderP
                 className="block w-full h-full cursor-pointer"
                 onClick={async (e) => {
                   e.stopPropagation();
+
                   try {
-                    // GAイベント送信を追加！！
+                    // GAイベント送信 → 少しだけ待つ（300ms）
                     sendGAEvent("click_instagram", {
                       instagram_url: url,
                     });
+                    await new Promise((resolve) => setTimeout(resolve, 300));
 
-                    if (onClickPost) await onClickPost(url);
+                    // （もしonClickPostがあるなら実行）
+                    if (onClickPost) {
+                      await onClickPost(url);
+                    }
                   } finally {
+                    // その後インスタに遷移
                     window.open(url, "_blank", "noopener");
                   }
                 }}

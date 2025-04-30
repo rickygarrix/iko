@@ -24,6 +24,7 @@ export const checkIfOpen = (opening_hours: string): {
   isOpen: boolean;
   closeTime?: string;
   nextOpening: { day: string; time: string } | null;
+  unknown?: boolean;
 } => {
   const nowRaw = dayjs();
   let now = nowRaw;
@@ -37,6 +38,16 @@ export const checkIfOpen = (opening_hours: string): {
   const jpTomorrow = convertToJapaneseDay(tomorrow);
 
   const hoursMap: { [key: string]: { open: string; close: string }[] } = {};
+
+  // ⭐️ 営業時間が空だったら early return
+  if (!opening_hours || opening_hours.trim() === "") {
+    return {
+      isOpen: false,
+      closeTime: undefined,
+      nextOpening: null,
+      unknown: true, // ← 追加
+    };
+  }
 
   opening_hours.split("\n").forEach((line) => {
     const match = line.match(/^(.+?曜)\s*(.+)$/);
