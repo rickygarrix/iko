@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== アニメーション定義 ===== */
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -32,6 +34,8 @@
   animation: fade-in-slow 1.2s ease-out forwards;
 }
 
+/* ===== カラーモード用ルート変数 ===== */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -44,23 +48,43 @@
   }
 }
 
+/* ===== 基本スタイル ===== */
+
 html {
   background-color: #F7F5EF;
+  /* カスタム背景色（ライトモードベース） */
   width: 100%;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 body {
+  @apply bg-gray-900 text-white;
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
 }
 
-/* カスタムクラス */
-body {
-  @apply bg-gray-900 text-white;
-}
+/* ===== 汎用クラス ===== */
 
 .container {
   @apply max-w-7xl mx-auto px-4;
 }
+
+/* ===== スクロールバー非表示（必要に応じて） ===== */
+/*
+::-webkit-scrollbar {
+  display: none;
+}
+*/
+
+/* ===== Swiper カスタム（必要に応じて） ===== */
+/*
+.swiper-slide {
+  @apply transition-transform duration-300 ease-in-out;
+}
+.swiper-slide-active {
+  @apply scale-105;
+}
+*/

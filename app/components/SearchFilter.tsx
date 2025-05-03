@@ -42,32 +42,30 @@ export default function SearchFilter({
   showTitle = true,
   messages,
 }: Props) {
-
   const [genres, setGenres] = useState<Option[]>([]);
   const [areas, setAreas] = useState<Option[]>([]);
   const [, setPayments] = useState<Option[]>([]);
-
-  // ✅ locale を pathname から抽出（useParams()はクライアントで使いづらいため）
-  const locale = typeof window !== "undefined"
-    ? window.location.pathname.split("/")[1] || "ja"
-    : "ja";
+  const [locale, setLocale] = useState("ja");
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const pathLocale = window.location.pathname.split("/")[1] || "ja";
+      setLocale(pathLocale);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!locale) return;
+
     const fetch = async () => {
-      const [{ data: genreData }, { data: areaData }, { data: paymentData }] = await Promise.all([
-        supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
-        supabase.from("area_translations").select("area_id, name").eq("locale", locale),
-        supabase.from("payment_method_translations").select("payment_method_id, name").eq("locale", locale),
-      ]);
+      const [{ data: genreData }, { data: areaData }, { data: paymentData }] =
+        await Promise.all([
+          supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
+          supabase.from("area_translations").select("area_id, name").eq("locale", locale),
+          supabase.from("payment_method_translations").select("payment_method_id, name").eq("locale", locale),
+        ]);
 
-      setGenres(genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? []);
-
-      setGenres(
-        (genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? []).filter(
-          (g) => g.id !== "other"
-        )
-      );
-      // 並び順を固定する
+      const genreOrder = ["house", "techno", "edm", "hiphop", "pops", "jazz"];
       const areaOrder = [
         "shibuya",
         "shinjuku",
@@ -79,28 +77,17 @@ export default function SearchFilter({
         "yokohama",
       ];
 
-      setAreas(
-        (areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []).sort(
-          (a, b) => areaOrder.indexOf(a.id) - areaOrder.indexOf(b.id)
-        )
-      );
-
-      const genreOrder = [
-        "house",
-        "techno",
-        "edm",
-        "hiphop",
-        "pops",
-        "jazz",
-      ];
-
       setGenres(
         (genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? [])
           .filter((g) => g.id !== "other")
           .sort((a, b) => genreOrder.indexOf(a.id) - genreOrder.indexOf(b.id))
       );
 
-
+      setAreas(
+        (areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []).sort(
+          (a, b) => areaOrder.indexOf(a.id) - areaOrder.indexOf(b.id)
+        )
+      );
 
       setPayments(
         (paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? []).filter(
@@ -139,14 +126,14 @@ export default function SearchFilter({
           </motion.div>
         )}
 
-        {/* 条件項目一覧 */}
+        {/* 条件項目セクション */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="space-y-8"
         >
-          {/* 営業時間 */}
+          {/* 営業中フィルター */}
           <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.open}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -166,7 +153,7 @@ export default function SearchFilter({
             </div>
           </div>
 
-          {/* ジャンル */}
+          {/* ジャンルフィルター */}
           <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.genre}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -190,7 +177,7 @@ export default function SearchFilter({
             </div>
           </div>
 
-          {/* エリア */}
+          {/* エリアフィルター */}
           <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.area}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -213,35 +200,9 @@ export default function SearchFilter({
               ))}
             </div>
           </div>
-
-          {/*
-  支払い方法フィルター（Ver1では未使用、将来用）
-  <div>
-    <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.payment}</p>
-    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-      {payments.map((payment) => (
-        <label key={payment.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
-          <input
-            type="checkbox"
-            checked={selectedPayments.includes(payment.id)}
-            onChange={() =>
-              setSelectedPayments(
-                selectedPayments.includes(payment.id)
-                  ? selectedPayments.filter((p) => p !== payment.id)
-                  : [...selectedPayments, payment.id]
-              )
-            }
-            className="appearance-none w-[20px] h-[20px] rounded-[4px] border border-[#1F1F21] bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] bg-[url('/icons/check.svg')] bg-center bg-no-repeat"
-          />
-          {payment.name}
-        </label>
-      ))}
-    </div>
-  </div>
-*/}
         </motion.div>
 
-        {/* 検索ボタン */}
+        {/* ボタン */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

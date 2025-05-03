@@ -19,7 +19,18 @@ export const convertToJapaneseDay = (day: string) => {
     .replace("曜日", "");
 };
 
-// ✅ 営業中判定
+// ✅ 本日の営業時間だけを抜き出して表示（吹き出し用）
+export const getTodayHoursText = (opening_hours: string): string => {
+  const now = new Date();
+  const jpDay = ["日", "月", "火", "水", "木", "金", "土"][now.getDay()];
+  const todayLine = opening_hours
+    .split("\n")
+    .find((line) => line.startsWith(jpDay));
+  if (!todayLine || todayLine.includes("休み")) return "休み";
+  return todayLine.replace(/^.+曜\s*/, "").trim();
+};
+
+// ✅ 現在営業中かどうかの判定と次回営業情報
 export const checkIfOpen = (opening_hours: string): {
   isOpen: boolean;
   closeTime?: string;
@@ -28,7 +39,6 @@ export const checkIfOpen = (opening_hours: string): {
 } => {
   const nowRaw = dayjs();
   let now = nowRaw;
-
   if (nowRaw.hour() < 6) now = nowRaw.subtract(1, "day");
 
   const today = now.format("dddd");
@@ -39,13 +49,12 @@ export const checkIfOpen = (opening_hours: string): {
 
   const hoursMap: { [key: string]: { open: string; close: string }[] } = {};
 
-  // ⭐️ 営業時間が空だったら early return
   if (!opening_hours || opening_hours.trim() === "") {
     return {
       isOpen: false,
       closeTime: undefined,
       nextOpening: null,
-      unknown: true, // ← 追加
+      unknown: true,
     };
   }
 

@@ -1,6 +1,13 @@
 "use client";
 
-const GENRES = ["Jazz", "House", "Techno", "EDM"];
+const GENRES = [
+  "jazz",
+  "house",
+  "techno",
+  "EDM",
+  "hipHop",
+  "pop",
+];
 
 type SearchFiltersProps = {
   showOnlyOpen: boolean;
@@ -27,6 +34,8 @@ export default function SearchFilters({
         display: "flex",
         flexDirection: "column",
         gap: "5px",
+        maxHeight: "70vh",
+        overflowY: "auto",
       }}
     >
       <label>

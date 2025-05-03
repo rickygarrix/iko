@@ -11,7 +11,7 @@ export default function LogoutPage() {
   useEffect(() => {
     const logout = async () => {
       await supabase.auth.signOut();
-      router.push("/login"); // ログインページへ戻す
+      router.push("/");
     };
     logout();
   }, [router]);

@@ -70,10 +70,27 @@ export default function SearchPageContent({
   );
 
   useEffect(() => {
-    const genres = searchParams.get("genre")?.split(",") || [];
-    const areas = searchParams.get("area")?.split(",") || [];
-    const payments = searchParams.get("payment")?.split(",") || [];
-    const open = searchParams.get("open") === "true";
+    const genresParam = searchParams.get("genre");
+    const areasParam = searchParams.get("area");
+    const paymentsParam = searchParams.get("payment");
+    const openParam = searchParams.get("open");
+
+    const genres =
+      genresParam?.split(",") ??
+      JSON.parse(sessionStorage.getItem("filterGenres") || "[]");
+    const areas =
+      areasParam?.split(",") ??
+      JSON.parse(sessionStorage.getItem("filterAreas") || "[]");
+    const payments =
+      paymentsParam?.split(",") ??
+      JSON.parse(sessionStorage.getItem("filterPayments") || "[]");
+    const open =
+      openParam !== null
+        ? openParam === "true"
+        : JSON.parse(sessionStorage.getItem("filterOpen") || "false");
+
+    // 👇 ここに追記
+    console.log("初期読み込み", { genres, areas, payments, open });
 
     setSelectedGenres(genres);
     setSelectedAreas(areas);
@@ -81,7 +98,7 @@ export default function SearchPageContent({
     setShowOnlyOpen(open);
 
     setIsSearchTriggered(true);
-  }, [searchParams]);
+  }, []);
 
   const handleSearch = () => {
     sessionStorage.setItem("filterGenres", JSON.stringify(selectedGenres));

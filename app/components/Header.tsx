@@ -3,9 +3,12 @@
 import { usePathname, useRouter } from "next/navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import Overlay from "@/components/Overlay";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Messages } from "@/types/messages";
+import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 type Props = {
   locale: "ja" | "en" | "zh" | "ko";
@@ -15,7 +18,15 @@ type Props = {
 export default function Header({ locale, messages }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const [showOverlay, setShowOverlay] = useState(false); // ✅ 追加！
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUser(data.user);
+      else setUser(null);
+    });
+  }, []);
 
   const handleHomeClick = useCallback(() => {
     const targetPath = `/${locale}`;
@@ -42,22 +53,36 @@ export default function Header({ locale, messages }: Props) {
 
       setTimeout(() => {
         router.push(targetPath);
-
-        // 👇 overlayがそのまま残らないように対処
         setTimeout(() => {
-          setShowOverlay(false); // ← 追加！
-        }, 800); // 表示切り替えが完了する頃
+          setShowOverlay(false);
+        }, 800);
+      }, 100);
+    }
+  }, [pathname, router, locale]);
+
+  const handleMapClick = useCallback(() => {
+    if (locale !== "ja") return;
+
+    const targetPath = `/map`;
+    if (pathname === targetPath) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setShowOverlay(true);
+      setTimeout(() => {
+        router.push(targetPath);
+        setTimeout(() => {
+          setShowOverlay(false);
+        }, 800);
       }, 100);
     }
   }, [pathname, router, locale]);
 
   return (
     <>
-      {showOverlay && <Overlay />} {/* ✅ オーバーレイ表示 */}
+      {showOverlay && <Overlay />}
 
       <header className="fixed top-0 left-0 z-50 w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
         <div className="w-full max-w-[600px] px-4 h-[48px] flex justify-between items-center">
-          {/* ロゴ */}
           <div
             onClick={handleHomeClick}
             className="w-20 h-6 relative cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
@@ -71,7 +96,6 @@ export default function Header({ locale, messages }: Props) {
             />
           </div>
 
-          {/* 言語切り替え＋ナビゲーション */}
           <div className="flex items-center gap-2">
             <div className="w-[80px]">
               <LanguageSwitcher locale={locale} />
@@ -94,7 +118,13 @@ export default function Header({ locale, messages }: Props) {
               </span>
             </button>
 
-            <div className="w-12 h-12 inline-flex flex-col justify-center items-center gap-1 opacity-50 cursor-not-allowed">
+            <div
+              onClick={handleMapClick}
+              className={`w-12 h-12 inline-flex flex-col justify-center items-center gap-1 transition-transform duration-200 ${locale === "ja"
+                ? "hover:scale-105 active:scale-95 cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
+                }`}
+            >
               <div className="w-6 h-6 relative">
                 <Image
                   src="/header/pin.svg"
@@ -107,6 +137,34 @@ export default function Header({ locale, messages }: Props) {
                 {messages.map}
               </span>
             </div>
+
+            {/* ログイン状態による切り替え */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                {user.user_metadata?.avatar_url && (
+                  <Link href="/mypage">
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="avatar"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  </Link>
+                )}
+                <Link
+                  href="/logout"
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  ログアウト
+                </Link>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                ログイン
+              </Link>
+            )}
           </div>
         </div>
       </header>
