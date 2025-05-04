@@ -137,19 +137,25 @@ export default function SearchFilter({
           <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.open}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-              {[{ label: messages.open_all, value: false }, { label: messages.open_now, value: true }].map(({ label, value }) => (
-                <label key={label} className="relative flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
-                  <input
-                    type="radio"
-                    name="openingHours"
-                    checked={showOnlyOpen === value}
-                    onChange={() => setShowOnlyOpen(value)}
-                    className="peer appearance-none w-[20px] h-[20px] border border-[#1F1F21] rounded-full bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21] relative"
-                  />
-                  <span className="pointer-events-none absolute left-[6px] top-[6px] w-[8px] h-[8px] rounded-full bg-white hidden peer-checked:block" />
-                  {label}
-                </label>
-              ))}
+              {[{ label: messages.open_all, value: false }, { label: messages.open_now, value: true }]
+                .map(({ label, value }) => (
+                  <label
+                    key={String(value)}
+                    className="relative flex items-center gap-2 cursor-pointer"
+                  >
+                    <div className="relative w-[20px] h-[20px]">
+                      <input
+                        type="radio"
+                        name="openingHours"
+                        checked={showOnlyOpen === value}
+                        onChange={() => setShowOnlyOpen(value)}
+                        className="peer appearance-none w-full h-full border border-[#1F1F21] rounded-full bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21]"
+                      />
+                      <span className="pointer-events-none absolute top-1/2 left-1/2 w-[8px] h-[8px] rounded-full bg-white hidden peer-checked:block transform -translate-x-1/2 -translate-y-1/2 z-0" />
+                    </div>
+                    {label}
+                  </label>
+                ))}
             </div>
           </div>
 

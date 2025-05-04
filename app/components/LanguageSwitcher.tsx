@@ -14,12 +14,14 @@ export default function LanguageSwitcher({ locale }: Props) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
 
-  const isStoreDetailPage = pathname.startsWith("/stores/"); // ⭐ここだけ追記！
+  // 地図ページ or 店舗詳細ページなら無効化
+  const isDisabled = pathname === "/map" || pathname.startsWith("/stores/");
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLocale = e.target.value;
     setIsLoading(true);
 
+    // `/ja/xxx` → `/en/xxx` などに置き換え
     const segments = pathname.split("/");
     if (segments.length > 1) {
       segments[1] = newLocale;
@@ -40,8 +42,8 @@ export default function LanguageSwitcher({ locale }: Props) {
         <select
           onChange={handleChange}
           value={locale}
-          disabled={isLoading || isStoreDetailPage} // ⭐ここで無効化！
-          className="w-full h-[32px] text-xs text-gray-800 border border-gray-300 rounded-md pl-2 pr-8 bg-white shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#4B5C9E] hover:bg-gray-100"
+          disabled={isLoading || isDisabled}
+          className="w-full h-[32px] text-xs text-gray-800 border border-gray-300 rounded-md pl-2 pr-8 bg-white shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#4B5C9E] hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <option value="ja">日本語</option>
           <option value="en">EN</option>

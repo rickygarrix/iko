@@ -7,6 +7,7 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import SearchFilters from "@/components/SearchFilters";
 import Header from "@/components/Header";
@@ -21,7 +22,7 @@ dayjs.locale("ja");
 
 const containerStyle = {
   width: "100vw",
-  height: "100vh",
+  height: "calc(100vh - 48px)",
 };
 
 type Props = {
@@ -181,7 +182,14 @@ export function MapPageWithLayout({ locale, messages }: Props) {
                 key={store.id}
                 position={{ lat: store.latitude!, lng: store.longitude! }}
                 label={{ text: store.name, fontSize: "12px", color: "#000", fontWeight: "bold" }}
-                onClick={() => setActiveStoreId(store.id)}
+                onClick={() => {
+                  setActiveStoreId(store.id);
+                  const targetIndex = filteredStores.findIndex((s) => s.id === store.id);
+                  const targetEl = cardRefs.current[targetIndex];
+                  if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+                  }
+                }}
                 icon={{
                   url: "/map-pin.png",
                   scaledSize: new window.google.maps.Size(
@@ -209,56 +217,62 @@ export function MapPageWithLayout({ locale, messages }: Props) {
           </GoogleMap>
         )}
 
-        {isFilterOpen && (
-          <div className="fixed inset-0 bg-black/40 z-[9999] flex justify-center items-start pt-12 px-4">
-            <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-4">
-              <SearchFilters
-                showOnlyOpen={showOnlyOpen}
-                selectedGenres={selectedGenres}
-                onToggleOpen={handleToggleOpen}
-                onToggleGenre={handleToggleGenre}
-              />
-              <div className="flex justify-center mt-4">
-                <button
-                  onClick={() => setIsFilterOpen(false)}
-                  className="text-sm text-gray-600 underline"
-                >
-                  閉じる
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* 現在地へ戻るボタン */}
         <button
           onClick={handleRecenter}
-          className="fixed bottom-[260px] right-4 z-50 bg-white text-sm px-4 py-2 rounded-full shadow-md border border-gray-300"
+          className="fixed bottom-[200px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center"
         >
-          現在地へ戻る
+          <Image src="/map/location.svg" alt="現在地" width={20} height={20} />
         </button>
 
-        {/* 条件検索 */}
-        <button
-          onClick={() => setIsFilterOpen(true)}
-          className="fixed bottom-[200px] right-4 z-50 bg-white text-sm px-4 py-2 rounded-full shadow-md border border-gray-300"
-        >
-          条件検索
-        </button>
+        {/* 検索・営業中フィルター UI（ヘッダー下） */}
+        <div className="absolute top-[60px] left-4 z-50 flex items-center gap-2">
+          {/* 検索アイコン（ジャンルパネルトグル） */}
+          <button
+            onClick={() => setIsFilterOpen((prev) => !prev)}
+            className="w-10 h-10 rounded-full border border-gray-300 shadow flex items-center justify-center bg-white"
+            style={{
+              border: "none",           // ✅ 不要なボーダーを削除
+              outline: "none",          // ✅ フォーカス時の枠も消す
+              boxShadow: "none",        // ✅ 影も無効化
+            }}
+          >
+            <Image src="/map/search.svg" alt="検索" width={20} height={20} />
+          </button>
+
+          {/* 営業中チェック */}
+          <label className="text-sm flex items-center gap-1 bg-white px-2 py-1 rounded shadow border">
+            <input type="checkbox" checked={showOnlyOpen} onChange={handleToggleOpen} />
+            営業中
+          </label>
+        </div>
+
+        {/* 検索条件パネル */}
+        {isFilterOpen && (
+          <div className="absolute top-[110px] left-[20px] z-50">
+            <SearchFilters
+              showOnlyOpen={showOnlyOpen}
+              selectedGenres={selectedGenres}
+              onToggleOpen={handleToggleOpen}
+              onToggleGenre={handleToggleGenre}
+            />
+          </div>
+        )}
 
         {activeStoreId && (
           <div
             id="cardSlider"
-            className="absolute bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-16 overflow-x-auto flex gap-6 snap-x snap-mandatory"
+            className="absolute bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-4 overflow-x-auto flex gap-4 snap-x snap-mandatory"
           >
             {filteredStores.map((store, index) => (
               <div
                 key={store.id}
                 data-id={store.id}
-                ref={(el: HTMLDivElement | null) => {
+                ref={(el) => {
                   cardRefs.current[index] = el;
                 }}
-                className={`min-w-[85%] max-w-[85%] bg-white border rounded-lg p-4 cursor-pointer snap-center shadow-md transition-transform ${store.id === activeStoreId ? "border-blue-500 scale-105" : ""
+                className={`w-[260px] sm:w-[300px] md:w-[320px] lg:w-[360px] flex-shrink-0 bg-white border rounded-lg p-4 cursor-pointer snap-center shadow-md transition-transform ${store.id === activeStoreId ? "border-blue-500 scale-105" : ""
                   }`}
                 onClick={() => router.push(`/stores/${store.id}`)}
               >
@@ -287,10 +301,6 @@ export function MapPageWithLayout({ locale, messages }: Props) {
                       return (
                         <>
                           <span className="text-red-600 font-semibold">営業時間外</span>
-                          <br />
-                          {status.nextOpening
-                            ? `次回営業: ${convertToJapaneseDay(status.nextOpening.day)} ${status.nextOpening.time}〜`
-                            : "次回営業情報なし"}
                         </>
                       );
                     }

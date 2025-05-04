@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 
@@ -86,84 +88,100 @@ export default function PostsPage() {
   };
 
   return (
-    <main className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">投稿一覧</h1>
-      {posts.length === 0 && <p>まだ投稿がありません</p>}
-      <div className="space-y-6">
-        {posts.map((post) => (
-          <div key={post.id} className="border rounded-lg p-4 shadow bg-white">
-            {post.image_url && (
-              <div className="relative w-full h-64 mb-4">
-                <Image src={post.image_url} alt="投稿画像" fill className="object-cover rounded" unoptimized />
-              </div>
-            )}
-            <p className="mb-2 text-black">{post.content}</p>
-            <p className="text-sm text-gray-500">
-              @{post.user_name || "匿名"} - {new Date(post.created_at).toLocaleString()}
-            </p>
-            <div className="flex items-center gap-4 mt-2 text-sm">
-              <button onClick={() => handleLike(post.id)} className="text-red-500">
-                ❤️ {post.likes?.length || 0} いいね
-              </button>
-              <button onClick={() => setShowCommentModal(post.id)} className="text-blue-600">
-                💬 コメント
-              </button>
-            </div>
+    <div className="min-h-screen bg-[#FEFCF6] flex flex-col">
+      <Header locale="ja" messages={{ search: "検索", map: "地図" }} />
 
-            {showCommentModal === post.id && (
-              <div className="mt-4 bg-gray-100 p-4 rounded">
-                <textarea
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="コメントを書く"
-                  className="w-full border rounded p-2 mb-2"
-                />
-                <div className="text-right">
-                  <button onClick={() => handleCommentSubmit(post.id)} className="text-sm text-white bg-blue-600 px-3 py-1 rounded">
-                    投稿
-                  </button>
+      <main className="flex-1 pt-[80px] max-w-2xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">投稿一覧</h1>
+        {posts.length === 0 && <p>まだ投稿がありません</p>}
+        <div className="space-y-6">
+          {posts.map((post) => (
+            <div key={post.id} className="border rounded-lg p-4 shadow bg-white">
+              {post.image_url && (
+                <div className="relative w-full h-64 mb-4">
+                  <Image src={post.image_url} alt="投稿画像" fill className="object-cover rounded" unoptimized />
                 </div>
+              )}
+              <p className="mb-2 text-black">{post.content}</p>
+              <p className="text-sm text-gray-500">
+                @{post.user_name || "匿名"} - {new Date(post.created_at).toLocaleString()}
+              </p>
+              <div className="flex items-center gap-4 mt-2 text-sm">
+                <button onClick={() => handleLike(post.id)} className="text-red-500">
+                  ❤️ {post.likes?.length || 0} いいね
+                </button>
+                <button onClick={() => setShowCommentModal(post.id)} className="text-blue-600">
+                  💬 コメント
+                </button>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
 
-      {/* 投稿ボタン */}
-      <button
-        onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl"
-      >
-        ＋
-      </button>
+              {showCommentModal === post.id && (
+                <div className="mt-4 bg-gray-100 p-4 rounded">
+                  <textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="コメントを書く"
+                    className="w-full border rounded p-2 mb-2"
+                  />
+                  <div className="text-right">
+                    <button onClick={() => handleCommentSubmit(post.id)} className="text-sm text-white bg-blue-600 px-3 py-1 rounded">
+                      投稿
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
 
-      {/* 投稿モーダル */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl">
-            <h2 className="text-lg font-bold mb-4">新規投稿</h2>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={4}
-              placeholder="投稿内容を入力"
-              className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
-            />
-            <input type="file" accept="image/*" onChange={handleImageChange} className="mb-4" />
-            {previewUrl && <Image src={previewUrl} alt="preview" width={300} height={200} className="mb-4 rounded" />}
-            <div className="flex justify-between">
-              <button onClick={() => setShowModal(false)} className="text-gray-500">キャンセル</button>
-              <button
-                onClick={handleSubmit}
-                className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-                disabled={loading}
-              >
-                {loading ? "投稿中..." : "投稿する"}
-              </button>
+        {/* 投稿ボタン */}
+        <button
+          onClick={() => setShowModal(true)}
+          className="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl"
+        >
+          ＋
+        </button>
+
+        {/* 投稿モーダル */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+            <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl">
+              <h2 className="text-lg font-bold mb-4">新規投稿</h2>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={4}
+                placeholder="投稿内容を入力"
+                className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
+              />
+              <input type="file" accept="image/*" onChange={handleImageChange} className="mb-4" />
+              {previewUrl && <Image src={previewUrl} alt="preview" width={300} height={200} className="mb-4 rounded" />}
+              <div className="flex justify-between">
+                <button onClick={() => setShowModal(false)} className="text-gray-500">キャンセル</button>
+                <button
+                  onClick={handleSubmit}
+                  className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                  disabled={loading}
+                >
+                  {loading ? "投稿中..." : "投稿する"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </main>
+        )}
+      </main>
+
+      <Footer
+        locale="ja"
+        messages={{
+          search: "検索",
+          map: "地図",
+          contact: "お問い合わせ",
+          terms: "利用規約",
+          privacy: "プライバシー",
+          copyright: "© 2025 Otonavi",
+        }}
+      />
+    </div>
   );
 }

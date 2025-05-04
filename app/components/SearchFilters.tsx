@@ -25,22 +25,18 @@ export default function SearchFilters({
   return (
     <div
       style={{
-        position: "absolute",
-        top: 20,
-        left: 20,
-        backgroundColor: "#FFA500",
+        backgroundColor: "white",
         padding: "10px",
         borderRadius: "10px",
         display: "flex",
         flexDirection: "column",
-        gap: "5px",
+        gap: "8px",
+        minWidth: "160px",   // ✅ 幅を拡張
         maxHeight: "70vh",
         overflowY: "auto",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.15)", // optional: 影を柔らかく
       }}
     >
-      <label>
-        <input type="checkbox" checked={showOnlyOpen} onChange={onToggleOpen} /> 営業中
-      </label>
       {GENRES.map((genre) => (
         <label key={genre}>
           <input

@@ -33,9 +33,14 @@ export default function Footer({ locale, messages }: Props) {
               {messages.search}
             </div>
           </Link>
-          <div className="px-4 py-2 text-white text-sm font-light leading-tight">
-            {messages.map}
-          </div>
+
+          {/* ← 修正ここ */}
+          <Link href={`/map`} className="px-4 py-2">
+            <div className="text-white text-sm font-light leading-tight">
+              {messages.map}
+            </div>
+          </Link>
+
           <Link href={`/contact`} className="px-4 py-2">
             <div className="text-white text-sm font-light leading-tight">
               {messages.contact}

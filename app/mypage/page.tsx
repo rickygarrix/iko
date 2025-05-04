@@ -79,7 +79,7 @@ export default function MyPage() {
   return (
     <div className="min-h-screen bg-[#FEFCF6] flex flex-col">
       <Header locale="ja" messages={{ search: "検索", map: "地図" }} />
-      <main className="flex-1 p-8">
+      <main className="flex-1 pt-[80px] p-8">
         <h1 className="text-xl font-bold mb-6">マイページ</h1>
         <div className="space-y-6 max-w-md mx-auto">
           <div>
