@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import SearchFilters from "@/components/SearchFilters";
 import Header from "@/components/Header";
-import { checkIfOpen, getTodayHoursText } from "@/lib/utils";
+import { checkIfOpen, getTodayHoursText, convertToJapaneseDay } from "@/lib/utils";
 import type { Store } from "@/types/store";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/types/messages";
@@ -29,6 +29,8 @@ type Props = {
   messages: Messages;
 };
 
+
+
 export function MapPageWithLayout({ locale, messages }: Props) {
   const router = useRouter();
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -41,6 +43,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeStoreId, setActiveStoreId] = useState<string | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [genreTranslations, setGenreTranslations] = useState<Record<string, string>>({});
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
@@ -60,6 +63,29 @@ export function MapPageWithLayout({ locale, messages }: Props) {
         () => setMapCenter({ lat: 35.681236, lng: 139.767125 })
       );
     }
+  }, []);
+  useEffect(() => {
+    const fetchGenreTranslations = async () => {
+      const { data, error } = await supabase
+        .from("genre_translations")
+        .select("genre_id, name")
+        .eq("locale", "ja"); // ← ここを固定に
+
+      if (error) {
+        console.error("ジャンル翻訳の取得エラー:", error);
+        return;
+      }
+
+      const map: Record<string, string> = {};
+      data?.forEach((item) => {
+        map[item.genre_id] = item.name;
+      });
+
+      setGenreTranslations(map);
+      console.log("取得されたジャンル翻訳:", map);
+    };
+
+    fetchGenreTranslations();
   }, []);
 
   useEffect(() => {
@@ -135,9 +161,17 @@ export function MapPageWithLayout({ locale, messages }: Props) {
       <div className="pt-[48px] relative min-h-screen">
         {isLoaded && (
           <GoogleMap
-            mapContainerStyle={containerStyle}
+            mapContainerStyle={{ ...containerStyle, zIndex: 0 }}
             center={mapCenter}
             zoom={13}
+            options={{
+              fullscreenControl: false,
+              mapTypeControl: false,
+              streetViewControl: false,
+              zoomControl: false,
+              scaleControl: false,
+              gestureHandling: "greedy",
+            }}
             onLoad={(map) => {
               mapRef.current = map;
             }}
@@ -196,16 +230,18 @@ export function MapPageWithLayout({ locale, messages }: Props) {
           </div>
         )}
 
+        {/* 現在地へ戻るボタン */}
         <button
           onClick={handleRecenter}
-          className="absolute bottom-4 right-4 z-50 bg-white text-sm px-4 py-2 rounded-full shadow-md border border-gray-300"
+          className="fixed bottom-[260px] right-4 z-50 bg-white text-sm px-4 py-2 rounded-full shadow-md border border-gray-300"
         >
           現在地へ戻る
         </button>
 
+        {/* 条件検索 */}
         <button
           onClick={() => setIsFilterOpen(true)}
-          className="absolute top-4 right-4 z-50 bg-white text-sm px-4 py-2 rounded-full shadow-md border border-gray-300"
+          className="fixed bottom-[200px] right-4 z-50 bg-white text-sm px-4 py-2 rounded-full shadow-md border border-gray-300"
         >
           条件検索
         </button>
@@ -213,7 +249,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
         {activeStoreId && (
           <div
             id="cardSlider"
-            className="absolute bottom-0 left-0 right-0 z-40 bg-white shadow-lg px-4 pb-6 pt-3 overflow-x-auto flex gap-4 snap-x snap-mandatory"
+            className="absolute bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-16 overflow-x-auto flex gap-6 snap-x snap-mandatory"
           >
             {filteredStores.map((store, index) => (
               <div
@@ -222,16 +258,43 @@ export function MapPageWithLayout({ locale, messages }: Props) {
                 ref={(el: HTMLDivElement | null) => {
                   cardRefs.current[index] = el;
                 }}
-                className={`min-w-[360px] max-w-[360px] bg-white border rounded-lg p-4 cursor-pointer snap-center shadow-md transition-transform ${store.id === activeStoreId ? "border-blue-500 scale-105" : ""
+                className={`min-w-[85%] max-w-[85%] bg-white border rounded-lg p-4 cursor-pointer snap-center shadow-md transition-transform ${store.id === activeStoreId ? "border-blue-500 scale-105" : ""
                   }`}
                 onClick={() => router.push(`/stores/${store.id}`)}
               >
-                <h3 className="font-bold text-lg mb-1">{store.name}</h3>
-                <p className="text-sm text-gray-600 mb-1">
-                  {todayLabel}の営業時間: {getTodayHoursText(store.opening_hours || "")}
+                <h3 className="text-[16px] font-semibold text-[#1F1F21] mb-1">{store.name}</h3>
+                <p className="text-[12px] font-light text-[#1F1F21] leading-[150%] mb-2 line-clamp-3">
+                  {store.description || "店舗紹介文はまだありません。"}
                 </p>
-                <p className="text-sm text-gray-700">
-                  {store.genre_ids?.join(" / ") || "ジャンル不明"}
+                <p className="text-sm text-gray-700 mb-1">
+                  {store.genre_ids && store.genre_ids.length > 0
+                    ? store.genre_ids.map((id) => genreTranslations[id] || id).join(" / ")
+                    : "ジャンル不明"}
+                </p>
+                <p className="text-sm text-black">
+                  {(() => {
+                    const status = checkIfOpen(store.opening_hours || "");
+
+                    if (status.isOpen) {
+                      return (
+                        <>
+                          <span className="text-green-600 font-semibold">営業中</span>
+                          <br />
+                          {status.closeTime && `${status.closeTime} まで営業`}
+                        </>
+                      );
+                    } else {
+                      return (
+                        <>
+                          <span className="text-red-600 font-semibold">営業時間外</span>
+                          <br />
+                          {status.nextOpening
+                            ? `次回営業: ${convertToJapaneseDay(status.nextOpening.day)} ${status.nextOpening.time}〜`
+                            : "次回営業情報なし"}
+                        </>
+                      );
+                    }
+                  })()}
                 </p>
               </div>
             ))}

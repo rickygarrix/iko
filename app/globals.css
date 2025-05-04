@@ -66,13 +66,29 @@ body {
   line-height: 1.6;
 }
 
-/* ===== 汎用クラス ===== */
+/* ===== 汎用コンテナ ===== */
 
 .container {
   @apply max-w-7xl mx-auto px-4;
 }
 
-/* ===== スクロールバー非表示（必要に応じて） ===== */
+/* ===== Google Maps UI 非表示 ===== */
+
+.gm-fullscreen-control {
+  display: none !important;
+}
+
+.gm-bundled-control {
+  display: none !important;
+  /* 必要に応じて：バンドルコントロール全体非表示 */
+}
+
+.gmnoprint {
+  display: none !important;
+  /* 印刷不可領域も含めて完全非表示 */
+}
+
+/* ===== スクロールバー非表示（必要に応じて有効化） ===== */
 /*
 ::-webkit-scrollbar {
   display: none;

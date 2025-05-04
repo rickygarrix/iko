@@ -15,4 +15,5 @@ export type Store = {
   image_url?: string;
   is_published: boolean;
   created_at?: string;
+  description?: string;
 };
