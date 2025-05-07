@@ -88,11 +88,24 @@ export function MapPageWithLayout({ locale, messages }: Props) {
             const position = { lat: pos.coords.latitude, lng: pos.coords.longitude };
             setUserLocation(position);
             setMapCenter(position);
+            sessionStorage.setItem("userLocation", JSON.stringify(position)); // 🔸追加
           },
           () => {
             setMapCenter(DEFAULT_CENTER);
           }
         );
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const savedLocation = sessionStorage.getItem("userLocation");
+    if (savedLocation) {
+      try {
+        const parsed = JSON.parse(savedLocation);
+        setUserLocation(parsed);
+      } catch {
+        sessionStorage.removeItem("userLocation");
       }
     }
   }, []);
@@ -187,12 +200,15 @@ export function MapPageWithLayout({ locale, messages }: Props) {
   const handleToggleOpen = () => setShowOnlyOpen((prev) => !prev);
 
   const handleRecenter = () => {
-    if (userLocation && mapRef.current) {
+    if (!userLocation) {
+      alert("現在地が取得できていません");
+      return;
+    }
+    if (mapRef.current) {
       mapRef.current.panTo(userLocation);
       mapRef.current.setZoom(13);
     }
   };
-
   const handleClickStore = (store: Store, index: number) => {
     const now = Date.now();
     const last = clickTimestamps.current[store.id] || 0;
