@@ -107,10 +107,6 @@ export default function Header({ locale, messages }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* 言語スイッチャー */}
-            <div className="w-[80px]">
-              <LanguageSwitcher locale={effectiveLocale} />
-            </div>
 
             {/* 投稿 */}
             <Link

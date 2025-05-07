@@ -9,31 +9,52 @@ import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
 
+type Post = {
+  id: string;
+  body: string;
+  image_url: string;
+  created_at: string;
+  post_likes: { id: string }[];
+  post_tag_values: { tag_category_id: string; value: number }[];
+};
+
+type Store = {
+  id: string;
+  name: string;
+};
+
 export default function PostsPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [posts, setPosts] = useState<any[]>([]);
-  const [likes, setLikes] = useState<any[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [showCommentModal, setShowCommentModal] = useState<string | null>(null);
-  const [content, setContent] = useState("");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [storeId, setStoreId] = useState<string>("");
+  const [body, setBody] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [commentText, setCommentText] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [tags, setTags] = useState<Record<string, number>>({}); // key: tag_category_id
 
   const router = useRouter();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-  }, []);
-
-  useEffect(() => {
     fetchPosts();
+    fetchStores();
   }, []);
 
   const fetchPosts = async () => {
-    const { data: posts } = await supabase.from("posts").select("*, comments(*), likes(*)").order("created_at", { ascending: false });
-    setPosts(posts || []);
+    const { data } = await supabase
+      .from("posts")
+      .select("*, post_likes(*), post_tag_values(*)")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false });
+    if (data) setPosts(data);
+  };
+
+  const fetchStores = async () => {
+    const { data } = await supabase.from("stores").select("id, name");
+    if (data) setStores(data);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,45 +66,66 @@ export default function PostsPage() {
   };
 
   const handleSubmit = async () => {
-    if (!content) return;
+    if (!body || !storeId || !user) return;
     setLoading(true);
-    let imageUrl = "";
 
+    let imageUrl = "";
     if (image) {
-      const filePath = `posts/${uuidv4()}`;
-      const { data, error } = await supabase.storage.from("post_images").upload(filePath, image);
+      const path = `posts/${uuidv4()}`;
+      const { error } = await supabase.storage.from("post_images").upload(path, image);
       if (!error) {
-        imageUrl = supabase.storage.from("post_images").getPublicUrl(filePath).data.publicUrl;
+        imageUrl = supabase.storage.from("post_images").getPublicUrl(path).data.publicUrl;
       }
     }
 
-    const { error } = await supabase.from("posts").insert([{ content, image_url: imageUrl, user_id: user?.id }]);
-    if (!error) {
-      setContent("");
+    const { data: insertedPosts, error } = await supabase.from("posts").insert([
+      {
+        user_id: user.id,
+        store_id: storeId,
+        body,
+        image_url: imageUrl,
+        is_public: true,
+      },
+    ]).select("id");
+
+    if (insertedPosts && insertedPosts.length > 0) {
+      const postId = insertedPosts[0].id;
+      // タグを保存
+      const tagInserts = Object.entries(tags).map(([tag_category_id, value]) => ({
+        post_id: postId,
+        tag_category_id,
+        value,
+      }));
+      if (tagInserts.length > 0) {
+        await supabase.from("post_tag_values").insert(tagInserts);
+      }
+
+      // リセット
+      setBody("");
       setImage(null);
       setPreviewUrl(null);
+      setTags({});
       setShowModal(false);
       fetchPosts();
     }
+
     setLoading(false);
   };
 
   const handleLike = async (postId: string) => {
     if (!user) return;
-    const existing = await supabase.from("likes").select("*").eq("post_id", postId).eq("user_id", user.id).single();
-    if (existing.data) {
-      await supabase.from("likes").delete().eq("id", existing.data.id);
-    } else {
-      await supabase.from("likes").insert({ post_id: postId, user_id: user.id });
-    }
-    fetchPosts();
-  };
+    const { data: existing } = await supabase
+      .from("post_likes")
+      .select("*")
+      .eq("post_id", postId)
+      .eq("user_id", user.id)
+      .single();
 
-  const handleCommentSubmit = async (postId: string) => {
-    if (!commentText.trim() || !user) return;
-    await supabase.from("comments").insert({ post_id: postId, user_id: user.id, content: commentText });
-    setCommentText("");
-    setShowCommentModal(null);
+    if (existing) {
+      await supabase.from("post_likes").delete().eq("id", existing.id);
+    } else {
+      await supabase.from("post_likes").insert({ post_id: postId, user_id: user.id });
+    }
     fetchPosts();
   };
 
@@ -102,42 +144,21 @@ export default function PostsPage() {
                   <Image src={post.image_url} alt="投稿画像" fill className="object-cover rounded" unoptimized />
                 </div>
               )}
-              <p className="mb-2 text-black">{post.content}</p>
-              <p className="text-sm text-gray-500">
-                @{post.user_name || "匿名"} - {new Date(post.created_at).toLocaleString()}
-              </p>
+              <p className="mb-2 text-black">{post.body}</p>
+              <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleString()}</p>
               <div className="flex items-center gap-4 mt-2 text-sm">
                 <button onClick={() => handleLike(post.id)} className="text-red-500">
-                  ❤️ {post.likes?.length || 0} いいね
-                </button>
-                <button onClick={() => setShowCommentModal(post.id)} className="text-blue-600">
-                  💬 コメント
+                  ❤️ {post.post_likes?.length || 0} いいね
                 </button>
               </div>
-
-              {showCommentModal === post.id && (
-                <div className="mt-4 bg-gray-100 p-4 rounded">
-                  <textarea
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    placeholder="コメントを書く"
-                    className="w-full border rounded p-2 mb-2"
-                  />
-                  <div className="text-right">
-                    <button onClick={() => handleCommentSubmit(post.id)} className="text-sm text-white bg-blue-600 px-3 py-1 rounded">
-                      投稿
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>
 
         {/* 投稿ボタン */}
         <button
-          onClick={() => setShowModal(true)}
-          className="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl"
+          onClick={() => router.push("/posts/new")}
+          className="fixed bottom-60 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl z-50"
         >
           ＋
         </button>
@@ -147,16 +168,29 @@ export default function PostsPage() {
           <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg w-full max-w-md shadow-xl">
               <h2 className="text-lg font-bold mb-4">新規投稿</h2>
+
+              <select value={storeId} onChange={(e) => setStoreId(e.target.value)} className="w-full border rounded p-2 mb-4 text-black">
+                <option value="">店舗を選択</option>
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>{store.name}</option>
+                ))}
+              </select>
+
               <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
                 rows={4}
                 placeholder="投稿内容を入力"
                 className="w-full border border-gray-300 rounded p-2 mb-4 text-black"
               />
               <input type="file" accept="image/*" onChange={handleImageChange} className="mb-4" />
               {previewUrl && <Image src={previewUrl} alt="preview" width={300} height={200} className="mb-4 rounded" />}
-              <div className="flex justify-between">
+
+              {/* タグスライダー（仮実装） */}
+              <p className="text-sm mb-2">雰囲気（1:おとなしめ～5:盛り上がり）</p>
+              <input type="range" min="1" max="5" value={tags["mood"] || 3} onChange={(e) => setTags({ ...tags, mood: +e.target.value })} />
+
+              <div className="flex justify-between mt-4">
                 <button onClick={() => setShowModal(false)} className="text-gray-500">キャンセル</button>
                 <button
                   onClick={handleSubmit}
