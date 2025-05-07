@@ -22,7 +22,6 @@ export default function Header({ locale, messages }: Props) {
   const [showOverlay, setShowOverlay] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  // /map 専用の補完処理：ロケールがURLに含まれていない場合は "ja" にフォールバック
   const extractedLocale =
     pathname.startsWith("/ja") ? "ja" :
       pathname.startsWith("/en") ? "en" :
@@ -31,7 +30,6 @@ export default function Header({ locale, messages }: Props) {
             pathname === "/map" ? "ja" : "ja";
 
   const effectiveLocale = locale || extractedLocale;
-
   const isMapPage = pathname === "/map";
 
   useEffect(() => {
@@ -72,6 +70,12 @@ export default function Header({ locale, messages }: Props) {
   const handleMapClick = useCallback(() => {
     if (effectiveLocale !== "ja") return;
 
+    // 🔥 sessionStorage の復元情報をクリア
+    sessionStorage.removeItem("mapCenter");
+    sessionStorage.removeItem("mapZoom");
+    sessionStorage.removeItem("activeStoreId");
+    sessionStorage.removeItem("cardScrollLeft");
+
     const targetPath = "/map";
     if (pathname === targetPath) {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -89,7 +93,6 @@ export default function Header({ locale, messages }: Props) {
   return (
     <>
       {showOverlay && <Overlay />}
-
       <header className="fixed top-0 left-0 z-50 w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
         <div className="w-full max-w-[600px] px-4 h-[48px] flex justify-between items-center">
           {/* ロゴ */}
@@ -115,7 +118,7 @@ export default function Header({ locale, messages }: Props) {
             >
               <div className="w-6 h-6 relative">
                 <Image
-                  src="/header/post.svg" // アイコン画像は適宜 `/public/header/post.svg` に配置
+                  src="/header/post.svg"
                   alt="投稿"
                   fill
                   className="object-contain"
@@ -148,8 +151,8 @@ export default function Header({ locale, messages }: Props) {
             <div
               onClick={handleMapClick}
               className={`w-12 h-12 inline-flex flex-col justify-center items-center gap-1 transition-transform duration-200 ${effectiveLocale === "ja"
-                ? "hover:scale-105 active:scale-95 cursor-pointer"
-                : "opacity-50 cursor-not-allowed"
+                  ? "hover:scale-105 active:scale-95 cursor-pointer"
+                  : "opacity-50 cursor-not-allowed"
                 }`}
             >
               <div className="w-6 h-6 relative">

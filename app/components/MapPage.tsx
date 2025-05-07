@@ -27,6 +27,7 @@ const containerStyle = {
 
 const DEFAULT_CENTER = { lat: 35.681236, lng: 139.767125 };
 
+
 type Props = {
   locale: Locale;
   messages: Messages;
@@ -47,6 +48,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
   const [genreTranslations, setGenreTranslations] = useState<Record<string, string>>({});
   const clickTimestamps = useRef<Record<string, number>>({});
   const hasRestoredFromSessionRef = useRef(false);
+  const [hasInitialized, setHasInitialized] = useState(false); // 初期化完了フラグ
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
@@ -59,25 +61,39 @@ export function MapPageWithLayout({ locale, messages }: Props) {
     const savedActiveId = sessionStorage.getItem("activeStoreId");
     const savedScrollLeft = sessionStorage.getItem("cardScrollLeft");
 
-    if (savedCenter) {
+    if (savedCenter && savedZoom && savedActiveId) {
       try {
         const parsed = JSON.parse(savedCenter);
         setMapCenter(parsed);
         hasRestoredFromSessionRef.current = true;
-      } catch { }
-    }
-
-    if (savedZoom) {
-      setTimeout(() => mapRef.current?.setZoom(Number(savedZoom)), 500);
-    }
-
-    if (savedActiveId) setActiveStoreId(savedActiveId);
-
-    if (savedScrollLeft) {
-      setTimeout(() => {
-        const el = document.getElementById("cardSlider");
-        if (el) el.scrollLeft = parseInt(savedScrollLeft, 10);
-      }, 500);
+        if (savedZoom) {
+          setTimeout(() => mapRef.current?.setZoom(Number(savedZoom)), 500);
+        }
+        if (savedActiveId) setActiveStoreId(savedActiveId);
+        if (savedScrollLeft) {
+          setTimeout(() => {
+            const el = document.getElementById("cardSlider");
+            if (el) el.scrollLeft = parseInt(savedScrollLeft, 10);
+          }, 500);
+        }
+      } catch {
+        // セッション破損などの安全処理
+        sessionStorage.clear();
+      }
+    } else {
+      // ブラウザバックでない ⇒ 現在地取得
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const position = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setUserLocation(position);
+            setMapCenter(position);
+          },
+          () => {
+            setMapCenter(DEFAULT_CENTER);
+          }
+        );
+      }
     }
   }, []);
 
@@ -94,9 +110,13 @@ export function MapPageWithLayout({ locale, messages }: Props) {
         (pos) => {
           const position = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setUserLocation(position);
-          setMapCenter(position); // ✅ 現在地を中心にセット
+          setMapCenter(position); // ✅ 初期中心は現在地
+          setHasInitialized(true); // ✅ 初期化完了フラグを立てる
         },
-        () => setMapCenter(DEFAULT_CENTER)
+        () => {
+          setMapCenter(DEFAULT_CENTER);
+          setHasInitialized(true); // ✅ 失敗時も初期化フラグを立てる
+        }
       );
     }
   }, []);
@@ -113,6 +133,19 @@ export function MapPageWithLayout({ locale, messages }: Props) {
         setGenreTranslations(map);
       });
   }, []);
+
+  useEffect(() => {
+    if (hasInitialized && userLocation && filteredStores.length > 0 && !activeStoreId) {
+      const closest = filteredStores.reduce((prev, curr) => {
+        const prevDist = Math.hypot(prev.latitude! - userLocation.lat, prev.longitude! - userLocation.lng);
+        const currDist = Math.hypot(curr.latitude! - userLocation.lat, curr.longitude! - userLocation.lng);
+        return currDist < prevDist ? curr : prev;
+      });
+      setActiveStoreId(closest.id);
+      const index = filteredStores.findIndex((s) => s.id === closest.id);
+      cardRefs.current[index]?.scrollIntoView({ behavior: "smooth", inline: "start" });
+    }
+  }, [hasInitialized, userLocation, filteredStores]);
 
   useEffect(() => {
     supabase
