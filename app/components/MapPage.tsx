@@ -294,7 +294,8 @@ export function MapPageWithLayout({ locale, messages }: Props) {
                 ref={(el) => {
                   cardRefs.current[index] = el;
                 }}
-                className={`w-[260px] sm:w-[300px] md:w-[320px] lg:w-[360px] flex-shrink-0 bg-white border rounded-lg p-4 cursor-pointer snap-center shadow-md transition-transform ${store.id === activeStoreId ? "border-blue-500 scale-105" : ""}`}
+                className={`w-[260px] sm:w-[300px] md:w-[320px] lg:w-[360px] flex-shrink-0 bg-white border rounded-lg p-4 cursor-pointer snap-center shadow-md transition-transform ${store.id === activeStoreId ? "scale-105" : ""
+                  }`}
                 onClick={() => handleClickStore(store, index)}
               >
                 <h3 className="text-[16px] font-semibold text-[#1F1F21] mb-1">{store.name}</h3>

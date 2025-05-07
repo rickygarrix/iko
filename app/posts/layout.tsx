@@ -1,3 +1,4 @@
+// app/posts/layout.tsx
 export default function PostsLayout({
   children,
   modal,
