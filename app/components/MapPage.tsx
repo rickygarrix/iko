@@ -13,8 +13,6 @@ import SearchFilters from "@/components/SearchFilters";
 import Header from "@/components/Header";
 import { checkIfOpen } from "@/lib/utils";
 import type { Store } from "@/types/store";
-import type { Locale } from "@/i18n/config";
-import type { Messages } from "@/types/messages";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
 
@@ -27,18 +25,12 @@ const containerStyle = {
 
 const DEFAULT_CENTER = { lat: 35.681236, lng: 139.767125 };
 
-
-type Props = {
-  locale: Locale;
-  messages: Messages;
-};
-
-export function MapPageWithLayout({ locale, messages }: Props) {
+export function MapPageWithLayout() {
   const router = useRouter();
   const mapRef = useRef<google.maps.Map | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [filteredStores, setFilteredStores] = useState<Store[]>([]);
-  const [mapCenter, setMapCenter] = useState({ lat: 35.681236, lng: 139.767125 });
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showOnlyOpen, setShowOnlyOpen] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -48,20 +40,19 @@ export function MapPageWithLayout({ locale, messages }: Props) {
   const [genreTranslations, setGenreTranslations] = useState<Record<string, string>>({});
   const clickTimestamps = useRef<Record<string, number>>({});
   const hasRestoredFromSessionRef = useRef(false);
-  const [hasInitialized, setHasInitialized] = useState(false); // 初期化完了フラグ
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
   });
 
-  // sessionStorage から復元
   useEffect(() => {
     const savedCenter = sessionStorage.getItem("mapCenter");
     const savedZoom = sessionStorage.getItem("mapZoom");
     const savedActiveId = sessionStorage.getItem("activeStoreId");
     const savedScrollLeft = sessionStorage.getItem("cardScrollLeft");
 
-    if (savedCenter && savedZoom && savedActiveId) {
+    if (savedCenter) {
       try {
         const parsed = JSON.parse(savedCenter);
         setMapCenter(parsed);
@@ -77,22 +68,18 @@ export function MapPageWithLayout({ locale, messages }: Props) {
           }, 500);
         }
       } catch {
-        // セッション破損などの安全処理
         sessionStorage.clear();
       }
     } else {
-      // ブラウザバックでない ⇒ 現在地取得
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const position = { lat: pos.coords.latitude, lng: pos.coords.longitude };
             setUserLocation(position);
             setMapCenter(position);
-            sessionStorage.setItem("userLocation", JSON.stringify(position)); // 🔸追加
+            sessionStorage.setItem("userLocation", JSON.stringify(position));
           },
-          () => {
-            setMapCenter(DEFAULT_CENTER);
-          }
+          () => setMapCenter(DEFAULT_CENTER)
         );
       }
     }
@@ -102,8 +89,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
     const savedLocation = sessionStorage.getItem("userLocation");
     if (savedLocation) {
       try {
-        const parsed = JSON.parse(savedLocation);
-        setUserLocation(parsed);
+        setUserLocation(JSON.parse(savedLocation));
       } catch {
         sessionStorage.removeItem("userLocation");
       }
@@ -113,7 +99,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
   useEffect(() => {
     if (userLocation && mapRef.current) {
       mapRef.current.panTo(userLocation);
-      mapRef.current.setZoom(13); // 好きな初期ズームに調整
+      mapRef.current.setZoom(13);
     }
   }, [userLocation]);
 
@@ -123,12 +109,12 @@ export function MapPageWithLayout({ locale, messages }: Props) {
         (pos) => {
           const position = { lat: pos.coords.latitude, lng: pos.coords.longitude };
           setUserLocation(position);
-          setMapCenter(position); // ✅ 初期中心は現在地
-          setHasInitialized(true); // ✅ 初期化完了フラグを立てる
+          setMapCenter(position);
+          setHasInitialized(true);
         },
         () => {
           setMapCenter(DEFAULT_CENTER);
-          setHasInitialized(true); // ✅ 失敗時も初期化フラグを立てる
+          setHasInitialized(true);
         }
       );
     }
@@ -140,25 +126,13 @@ export function MapPageWithLayout({ locale, messages }: Props) {
       .select("genre_id, name")
       .eq("locale", "ja")
       .then(({ data, error }) => {
-        if (error) return;
-        const map: Record<string, string> = {};
-        data?.forEach((item) => (map[item.genre_id] = item.name));
-        setGenreTranslations(map);
+        if (!error && data) {
+          const map: Record<string, string> = {};
+          data.forEach((item) => (map[item.genre_id] = item.name));
+          setGenreTranslations(map);
+        }
       });
   }, []);
-
-  useEffect(() => {
-    if (hasInitialized && userLocation && filteredStores.length > 0 && !activeStoreId) {
-      const closest = filteredStores.reduce((prev, curr) => {
-        const prevDist = Math.hypot(prev.latitude! - userLocation.lat, prev.longitude! - userLocation.lng);
-        const currDist = Math.hypot(curr.latitude! - userLocation.lat, curr.longitude! - userLocation.lng);
-        return currDist < prevDist ? curr : prev;
-      });
-      setActiveStoreId(closest.id);
-      const index = filteredStores.findIndex((s) => s.id === closest.id);
-      cardRefs.current[index]?.scrollIntoView({ behavior: "smooth", inline: "start" });
-    }
-  }, [hasInitialized, userLocation, filteredStores]);
 
   useEffect(() => {
     supabase
@@ -181,7 +155,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
   }, [stores, selectedGenres, showOnlyOpen]);
 
   useEffect(() => {
-    if (userLocation && filteredStores.length > 0 && !activeStoreId) {
+    if (hasInitialized && userLocation && filteredStores.length > 0 && !activeStoreId) {
       const closest = filteredStores.reduce((prev, curr) => {
         const prevDist = Math.hypot(prev.latitude! - userLocation.lat, prev.longitude! - userLocation.lng);
         const currDist = Math.hypot(curr.latitude! - userLocation.lat, curr.longitude! - userLocation.lng);
@@ -191,7 +165,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
       const index = filteredStores.findIndex((s) => s.id === closest.id);
       cardRefs.current[index]?.scrollIntoView({ behavior: "smooth", inline: "start" });
     }
-  }, [userLocation, filteredStores]);
+  }, [hasInitialized, userLocation, filteredStores]);
 
   const handleToggleGenre = (genre: string) => {
     setSelectedGenres((prev) => (prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]));
@@ -204,11 +178,10 @@ export function MapPageWithLayout({ locale, messages }: Props) {
       alert("現在地が取得できていません");
       return;
     }
-    if (mapRef.current) {
-      mapRef.current.panTo(userLocation);
-      mapRef.current.setZoom(13);
-    }
+    mapRef.current?.panTo(userLocation);
+    mapRef.current?.setZoom(13);
   };
+
   const handleClickStore = (store: Store, index: number) => {
     const now = Date.now();
     const last = clickTimestamps.current[store.id] || 0;
@@ -230,7 +203,13 @@ export function MapPageWithLayout({ locale, messages }: Props) {
 
   return (
     <>
-      <Header locale={locale} messages={messages.header} />
+      <Header
+        locale="ja"
+        messages={{
+          search: "検索",
+          map: "地図",
+        }}
+      />
       <div className="pt-[48px] relative h-[100dvh] flex flex-col overflow-hidden">
         {isLoaded && (
           <GoogleMap
@@ -246,7 +225,12 @@ export function MapPageWithLayout({ locale, messages }: Props) {
               <Marker
                 key={store.id}
                 position={{ lat: store.latitude!, lng: store.longitude! }}
-                label={{ text: store.name, fontSize: "12px", fontWeight: "bold", color: "#000" }}
+                label={{
+                  text: store.name,
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  color: "#000",
+                }}
                 icon={{
                   url: "/map-pin.png",
                   scaledSize: new google.maps.Size(activeStoreId === store.id ? 60 : 40, activeStoreId === store.id ? 60 : 40),
@@ -257,19 +241,33 @@ export function MapPageWithLayout({ locale, messages }: Props) {
             {userLocation && (
               <Marker
                 position={userLocation}
-                icon={{ path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#4285F4", fillOpacity: 1, strokeWeight: 2, strokeColor: "#fff" }}
+                icon={{
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 8,
+                  fillColor: "#4285F4",
+                  fillOpacity: 1,
+                  strokeWeight: 2,
+                  strokeColor: "#fff",
+                }}
               />
             )}
           </GoogleMap>
         )}
 
-        {/* UIコンポーネント */}
-        <button onClick={handleRecenter} className="fixed bottom-[200px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center">
+        {/* 現在地ボタン */}
+        <button
+          onClick={handleRecenter}
+          className="fixed bottom-[200px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center"
+        >
           <Image src="/map/location.svg" alt="現在地" width={20} height={20} />
         </button>
 
+        {/* フィルター */}
         <div className="absolute top-[60px] left-4 z-50 flex items-center gap-2">
-          <button onClick={() => setIsFilterOpen((prev) => !prev)} className="w-10 h-10 rounded-full shadow flex items-center justify-center bg-white">
+          <button
+            onClick={() => setIsFilterOpen((prev) => !prev)}
+            className="w-10 h-10 rounded-full shadow flex items-center justify-center bg-white"
+          >
             <Image src="/map/search.svg" alt="検索" width={20} height={20} />
           </button>
           <label className="text-sm flex items-center gap-1 bg-white px-2 py-1 rounded shadow border text-black font-medium">
@@ -280,13 +278,21 @@ export function MapPageWithLayout({ locale, messages }: Props) {
 
         {isFilterOpen && (
           <div className="absolute top-[110px] left-[20px] z-50">
-            <SearchFilters showOnlyOpen={showOnlyOpen} selectedGenres={selectedGenres} onToggleOpen={handleToggleOpen} onToggleGenre={handleToggleGenre} />
+            <SearchFilters
+              showOnlyOpen={showOnlyOpen}
+              selectedGenres={selectedGenres}
+              onToggleOpen={handleToggleOpen}
+              onToggleGenre={handleToggleGenre}
+            />
           </div>
         )}
 
         {/* 店舗カード */}
         {activeStoreId && (
-          <div id="cardSlider" className="absolute bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-4 overflow-x-auto flex gap-4 snap-x snap-mandatory">
+          <div
+            id="cardSlider"
+            className="absolute bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-4 overflow-x-auto flex gap-4 snap-x snap-mandatory"
+          >
             {filteredStores.map((store, index) => (
               <div
                 key={store.id}
@@ -309,9 +315,21 @@ export function MapPageWithLayout({ locale, messages }: Props) {
                   {(() => {
                     const status = checkIfOpen(store.opening_hours || "");
                     if (status.isOpen) {
-                      return <><span className="text-green-600 font-semibold">営業中</span><br />{status.closeTime && `${status.closeTime} まで営業`}</>;
+                      return (
+                        <>
+                          <span className="text-green-600 font-semibold">営業中</span>
+                          <br />
+                          {status.closeTime && `${status.closeTime} まで営業`}
+                        </>
+                      );
                     } else {
-                      return <><span className="text-red-600 font-semibold">営業時間外</span><br />{status.nextOpening && `次の営業：${status.nextOpening.day} ${status.nextOpening.time} から`}</>;
+                      return (
+                        <>
+                          <span className="text-red-600 font-semibold">営業時間外</span>
+                          <br />
+                          {status.nextOpening && `次の営業：${status.nextOpening.day} ${status.nextOpening.time} から`}
+                        </>
+                      );
                     }
                   })()}
                 </p>
