@@ -64,13 +64,24 @@ export default function PostsPage() {
             <div key={post.id} className="border rounded-lg p-4 shadow bg-white">
               {post.image_url && (
                 <div className="relative w-full h-64 mb-4">
-                  <Image src={post.image_url} alt="投稿画像" fill className="object-cover rounded" unoptimized />
+                  <Image
+                    src={post.image_url}
+                    alt="投稿画像"
+                    fill
+                    className="object-cover rounded"
+                    unoptimized
+                  />
                 </div>
               )}
               <p className="mb-2 text-black">{post.body}</p>
-              <p className="text-sm text-gray-500">{new Date(post.created_at).toLocaleString()}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(post.created_at).toLocaleString()}
+              </p>
               <div className="flex items-center gap-4 mt-2 text-sm">
-                <button onClick={() => handleLike(post.id)} className="text-red-500">
+                <button
+                  onClick={() => handleLike(post.id)}
+                  className="text-red-500"
+                >
                   ❤️ {post.post_likes?.length || 0} いいね
                 </button>
               </div>

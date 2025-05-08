@@ -38,12 +38,12 @@ export default function SearchFilters({
       }}
     >
       {GENRES.map((genre) => (
-        <label key={genre}>
+        <label key={genre} className="text-black font-medium flex items-center gap-2">
           <input
             type="checkbox"
             checked={selectedGenres.includes(genre)}
             onChange={() => onToggleGenre(genre)}
-          />{" "}
+          />
           {genre}
         </label>
       ))}

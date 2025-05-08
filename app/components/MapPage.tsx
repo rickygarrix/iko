@@ -231,7 +231,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
   return (
     <>
       <Header locale={locale} messages={messages.header} />
-      <div className="pt-[48px] relative min-h-screen">
+      <div className="pt-[48px] relative h-[100dvh] flex flex-col overflow-hidden">
         {isLoaded && (
           <GoogleMap
             mapContainerStyle={containerStyle}
@@ -272,7 +272,7 @@ export function MapPageWithLayout({ locale, messages }: Props) {
           <button onClick={() => setIsFilterOpen((prev) => !prev)} className="w-10 h-10 rounded-full shadow flex items-center justify-center bg-white">
             <Image src="/map/search.svg" alt="検索" width={20} height={20} />
           </button>
-          <label className="text-sm flex items-center gap-1 bg-white px-2 py-1 rounded shadow border">
+          <label className="text-sm flex items-center gap-1 bg-white px-2 py-1 rounded shadow border text-black font-medium">
             <input type="checkbox" checked={showOnlyOpen} onChange={handleToggleOpen} />
             営業中
           </label>
