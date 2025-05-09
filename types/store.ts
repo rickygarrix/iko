@@ -1,10 +1,12 @@
+// types/store.ts
+
 export type Store = {
   id: string;
   name: string;
   address: string;
   latitude: number;
   longitude: number;
-  genre_ids: string[]; // 複数ジャンル対応
+  genre_ids: string[];
   area_id?: string;
   entry_fee?: string;
   opening_hours?: string;
@@ -16,4 +18,9 @@ export type Store = {
   is_published: boolean;
   created_at?: string;
   description?: string;
+};
+
+// ✅ これを追記
+export type TranslatedStore = Store & {
+  areaTranslated?: string;
 };

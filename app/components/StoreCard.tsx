@@ -41,7 +41,7 @@ export type StoreCardProps = {
     description?: string;
     genre_ids: string[];
     areaTranslated?: string;
-    opening_hours: string;
+    opening_hours?: string; // ← ここを optional に！
     image_url?: string | null;
     latitude: number | null;
     longitude: number | null;
@@ -68,7 +68,8 @@ export default function StoreCard({
   onMapClick,
   delay = 0,
 }: StoreCardProps) {
-  const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours);
+  const { isOpen, nextOpening, closeTime } =
+    checkIfOpen(store.opening_hours ?? ""); // ← 空文字でフォールバック
 
   const staticMapUrl =
     store.latitude !== null && store.longitude !== null

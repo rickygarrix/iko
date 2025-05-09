@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
 import { translateText } from "@/lib/translateText";
-import { Store } from "../../types";
+import { Store } from "@/types/store";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import StoreCard from "@/components/StoreCard";
 import type { Messages } from "@/types/messages";

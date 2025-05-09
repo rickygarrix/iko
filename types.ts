@@ -30,3 +30,36 @@ export type Store = {
   latitude: number | null;
   longitude: number | null;
 };
+
+export type TagCategory = {
+  id: string;
+  key: string;
+  label: string;
+  min_label: string;
+  max_label: string;
+};
+
+// 投稿データ（Supabase `posts` テーブルに対応）
+export type Post = {
+  id: string;
+  body: string;
+  created_at: string;
+  user_id: string;
+  user?: {
+    id: string;
+    name?: string;
+    avatar_url?: string;
+  } | null;
+  store?: {
+    name: string;
+  };
+  post_tag_values?: {
+    value: number;
+    tag_category: {
+      key: string;
+      label: string;
+      min_label: string;
+      max_label: string;
+    };
+  }[];
+};
