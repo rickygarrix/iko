@@ -188,7 +188,13 @@ export default function StorePostPage() {
 
       <main className="flex-1 pt-6 px-4 sm:px-6 relative">
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            if (!user) {
+              alert("ログインしてください");
+              return;
+            }
+            setShowModal(true);
+          }}
           className="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl z-50"
         >
           ＋
