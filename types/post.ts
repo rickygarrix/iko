@@ -9,7 +9,7 @@ export type Post = {
     name?: string;
     avatar_url?: string;
   } | null;
-  store?: { name: string };
+  store?: { id: string; name: string }; // ← ここに id を追加！
   post_tag_values?: {
     value: number;
     tag_category: {
