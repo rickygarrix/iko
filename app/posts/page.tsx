@@ -2,106 +2,139 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import Image from "next/image";
+import type { User } from "@supabase/supabase-js";
+import NewPostModal from "@/components/NewPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { User } from "@supabase/supabase-js";
-import NewPostModal from "@/components/NewPostModal";
+
+type Store = {
+  id: string;
+  name: string;
+};
+
+type TagCategory = {
+  id: string;
+  key: string;
+  label: string;
+  min_label: string;
+  max_label: string;
+};
 
 type Post = {
   id: string;
   body: string;
-  image_url: string;
   created_at: string;
-  post_likes: { id: string }[];
-  post_tag_values: { tag_category_id: string; value: number }[];
+  store?: { name: string };
+  post_tag_values?: {
+    value: number;
+    tag_category: {
+      key: string;
+      label: string;
+      min_label: string;
+      max_label: string;
+    };
+  }[];
 };
 
-export default function PostsPage() {
+export default function StorePostPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [tagCategories, setTagCategories] = useState<TagCategory[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    fetchStores();
+    fetchTagCategories();
     fetchPosts();
   }, []);
 
-  const fetchPosts = async () => {
-    const { data } = await supabase
-      .from("posts")
-      .select("*, post_likes(*), post_tag_values(*)")
-      .eq("is_public", true)
-      .order("created_at", { ascending: false });
-    if (data) setPosts(data);
+  const fetchStores = async () => {
+    const { data, error } = await supabase.from("stores").select("id, name");
+    if (!error && data) setStores(data);
   };
 
-  const handleLike = async (postId: string) => {
-    if (!user) return;
-    const { data: existing } = await supabase
-      .from("post_likes")
-      .select("*")
-      .eq("post_id", postId)
-      .eq("user_id", user.id)
-      .single();
+  const fetchTagCategories = async () => {
+    const { data, error } = await supabase.from("tag_categories").select("*");
+    if (!error && data) setTagCategories(data);
+  };
 
-    if (existing) {
-      await supabase.from("post_likes").delete().eq("id", existing.id);
-    } else {
-      await supabase.from("post_likes").insert({ post_id: postId, user_id: user.id });
+  const fetchPosts = async () => {
+    const { data, error } = await supabase
+      .from("posts")
+      .select(`
+        id,
+        body,
+        created_at,
+        store:stores ( name ),
+        post_tag_values (
+          value,
+          tag_category:tag_categories (
+            key,
+            label,
+            min_label,
+            max_label
+          )
+        )
+      `)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setPosts(data as unknown as Post[]);
     }
-    fetchPosts();
   };
 
   return (
-    <div className="min-h-screen bg-[#FEFCF6] flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <Header locale="ja" messages={{ search: "検索", map: "地図" }} />
-      <main className="flex-1 pt-[80px] max-w-2xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">投稿一覧</h1>
-        {posts.length === 0 && <p>まだ投稿がありません</p>}
-        <div className="space-y-6">
-          {posts.map((post) => (
-            <div key={post.id} className="border rounded-lg p-4 shadow bg-white">
-              {post.image_url && (
-                <div className="relative w-full h-64 mb-4">
-                  <Image
-                    src={post.image_url}
-                    alt="投稿画像"
-                    fill
-                    className="object-cover rounded"
-                    unoptimized
-                  />
-                </div>
-              )}
-              <p className="mb-2 text-black">{post.body}</p>
-              <p className="text-sm text-gray-500">
-                {new Date(post.created_at).toLocaleString()}
-              </p>
-              <div className="flex items-center gap-4 mt-2 text-sm">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  className="text-red-500"
-                >
-                  ❤️ {post.post_likes?.length || 0} いいね
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
 
+      <main className="flex-1 p-6 max-w-xl mx-auto relative">
+        {/* フローティングボタン */}
         <button
           onClick={() => setShowModal(true)}
-          className="fixed bottom-60 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl z-50"
+          className="fixed bottom-6 right-6 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg text-2xl z-50"
         >
           ＋
         </button>
 
-        {showModal && (
+        {showModal && user && (
           <NewPostModal
+            stores={stores}
+            tagCategories={tagCategories}
+            user={user}
             onClose={() => setShowModal(false)}
             onPosted={fetchPosts}
           />
         )}
+
+        {/* 投稿一覧 */}
+        <h2 className="text-lg font-semibold mt-8">投稿一覧</h2>
+        <ul className="mt-2 space-y-4 mb-16"> {/* ← 下に余白追加 */}
+          {posts.map((post) => (
+            <li
+              key={post.id}
+              className="bg-white border p-4 rounded shadow mx-auto w-full max-w-md"
+            >
+              <p className="text-sm text-gray-700 mb-1">
+                店舗：{post.store?.name ?? "（不明）"}
+              </p>
+              <p className="mb-2">{post.body}</p>
+              <div className="text-sm text-gray-600 space-y-1 mb-2">
+                {post.post_tag_values?.map((tag) => (
+                  <p key={tag.tag_category.key}>
+                    {tag.tag_category.label}：{tag.value}（
+                    {tag.tag_category.min_label}〜{tag.tag_category.max_label}）
+                  </p>
+                ))}
+              </div>
+              <small className="text-gray-500">
+                {new Date(post.created_at).toLocaleString()}
+              </small>
+            </li>
+          ))}
+        </ul>
       </main>
 
       <Footer
