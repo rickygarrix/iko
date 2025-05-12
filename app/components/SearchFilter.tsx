@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/utils";
@@ -33,7 +32,6 @@ export default function SearchFilter({
   setSelectedGenres,
   selectedAreas,
   setSelectedAreas,
-  selectedPayments,
   setSelectedPayments,
   showOnlyOpen,
   setShowOnlyOpen,
@@ -44,68 +42,43 @@ export default function SearchFilter({
 }: Props) {
   const [genres, setGenres] = useState<Option[]>([]);
   const [areas, setAreas] = useState<Option[]>([]);
-  const [, setPayments] = useState<Option[]>([]);
-  const [locale, setLocale] = useState("ja");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const pathLocale = window.location.pathname.split("/")[1] || "ja";
-      setLocale(pathLocale);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!locale) return;
-
     const fetch = async () => {
-      const [{ data: genreData }, { data: areaData }, { data: paymentData }] =
-        await Promise.all([
-          supabase.from("genre_translations").select("genre_id, name").eq("locale", locale),
-          supabase.from("area_translations").select("area_id, name").eq("locale", locale),
-          supabase.from("payment_method_translations").select("payment_method_id, name").eq("locale", locale),
-        ]);
+      const [{ data: genreData }, { data: areaData }] = await Promise.all([
+        supabase.from("genre_translations").select("genre_id, name").eq("locale", "ja"),
+        supabase.from("area_translations").select("area_id, name").eq("locale", "ja"),
+      ]);
 
       const genreOrder = ["house", "techno", "edm", "hiphop", "pops", "jazz"];
       const areaOrder = [
-        "shibuya",
-        "shinjuku",
-        "roppongi",
-        "ginza",
-        "ikebukuro",
-        "omotesando",
-        "ueno",
-        "yokohama",
+        "shibuya", "shinjuku", "roppongi", "ginza", "ikebukuro", "omotesando", "ueno", "yokohama"
       ];
 
       setGenres(
-        (genreData?.map((g) => ({ id: g.genre_id, name: g.name })) ?? [])
+        (genreData ?? [])
+          .map((g) => ({ id: g.genre_id, name: g.name }))
           .filter((g) => g.id !== "other")
           .sort((a, b) => genreOrder.indexOf(a.id) - genreOrder.indexOf(b.id))
       );
 
       setAreas(
-        (areaData?.map((a) => ({ id: a.area_id, name: a.name })) ?? []).sort(
-          (a, b) => areaOrder.indexOf(a.id) - areaOrder.indexOf(b.id)
-        )
-      );
-
-      setPayments(
-        (paymentData?.map((p) => ({ id: p.payment_method_id, name: p.name })) ?? []).filter(
-          (p) => p.id !== "other"
-        )
+        (areaData ?? [])
+          .map((a) => ({ id: a.area_id, name: a.name }))
+          .sort((a, b) => areaOrder.indexOf(a.id) - areaOrder.indexOf(b.id))
       );
     };
 
     fetch();
-  }, [locale]);
+  }, []);
 
   const logSearchAction = async (action: "search" | "reset_search") => {
     await logAction(action, {
-      locale,
+      locale: "ja",
       search_conditions: {
         genres: selectedGenres,
         areas: selectedAreas,
-        payments: selectedPayments,
+        payments: [],
         openOnly: showOnlyOpen,
       },
     });
@@ -115,34 +88,20 @@ export default function SearchFilter({
     <div className="w-full flex justify-center bg-[#F7F5EF] pt-[48px] pb-12">
       <div className="w-full max-w-[600px] px-6 text-[#1F1F21] text-[14px] font-normal space-y-10">
         {showTitle && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
+          <div className="text-center">
             <h2 className="text-[18px] font-bold leading-[26px] mb-1">{messages.title}</h2>
             <p className="text-sm text-[#4B5C9E]">{messages.search}</p>
-          </motion.div>
+          </div>
         )}
 
-        {/* 条件項目セクション */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-8"
-        >
-          {/* 営業中フィルター */}
+        <div className="space-y-8">
+          {/* 営業時間フィルター */}
           <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.open}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {[{ label: messages.open_all, value: false }, { label: messages.open_now, value: true }]
                 .map(({ label, value }) => (
-                  <label
-                    key={String(value)}
-                    className="relative flex items-center gap-2 cursor-pointer"
-                  >
+                  <label key={String(value)} className="flex items-center gap-2 cursor-pointer">
                     <div className="relative w-[20px] h-[20px]">
                       <input
                         type="radio"
@@ -151,7 +110,7 @@ export default function SearchFilter({
                         onChange={() => setShowOnlyOpen(value)}
                         className="peer appearance-none w-full h-full border border-[#1F1F21] rounded-full bg-white checked:bg-[#4B5C9E] checked:border-[#1F1F21]"
                       />
-                      <span className="pointer-events-none absolute top-1/2 left-1/2 w-[8px] h-[8px] rounded-full bg-white hidden peer-checked:block transform -translate-x-1/2 -translate-y-1/2 z-0" />
+                      <span className="absolute top-1/2 left-1/2 w-[8px] h-[8px] rounded-full bg-white hidden peer-checked:block transform -translate-x-1/2 -translate-y-1/2" />
                     </div>
                     {label}
                   </label>
@@ -159,12 +118,12 @@ export default function SearchFilter({
             </div>
           </div>
 
-          {/* ジャンルフィルター */}
+          {/* ジャンル */}
           <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.genre}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {genres.map((genre) => (
-                <label key={genre.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+                <label key={genre.id} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedGenres.includes(genre.id)}
@@ -183,12 +142,12 @@ export default function SearchFilter({
             </div>
           </div>
 
-          {/* エリアフィルター */}
+          {/* エリア */}
           <div>
             <p className="text-[16px] font-bold leading-[24px] mb-2">{messages.area}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               {areas.map((area) => (
-                <label key={area.id} className="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+                <label key={area.id} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedAreas.includes(area.id)}
@@ -206,15 +165,10 @@ export default function SearchFilter({
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* ボタン */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
-          className="flex justify-center gap-4 mt-12"
-        >
+        <div className="flex justify-center gap-4 mt-12">
           <button
             onClick={async () => {
               await logSearchAction("reset_search");
@@ -231,7 +185,6 @@ export default function SearchFilter({
           <button
             onClick={async (e) => {
               e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "auto" });
               await logSearchAction("search");
               handleSearch();
             }}
@@ -242,7 +195,7 @@ export default function SearchFilter({
             </div>
             {messages.search}（{previewCount}{messages.items}）
           </button>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

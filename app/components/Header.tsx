@@ -1,15 +1,14 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import Overlay from "@/components/Overlay";
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Messages } from "@/types/messages";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import type { Messages } from "@/types/messages";
 import type { Locale } from "@/i18n/config";
+import Overlay from "@/components/Overlay";
 
 type Props = {
   locale?: Locale;
@@ -18,6 +17,7 @@ type Props = {
 
 export default function Header({ locale, messages }: Props) {
   const pathname = usePathname();
+  if (!pathname) return null;
   const router = useRouter();
   const [showOverlay, setShowOverlay] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -27,10 +27,10 @@ export default function Header({ locale, messages }: Props) {
       pathname.startsWith("/en") ? "en" :
         pathname.startsWith("/zh") ? "zh" :
           pathname.startsWith("/ko") ? "ko" :
-            pathname === "/map" ? "ja" : "ja";
+            pathname === "/map" ? "ja" :
+              "ja";
 
   const effectiveLocale = locale || extractedLocale;
-  const isMapPage = pathname === "/map";
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -42,11 +42,10 @@ export default function Header({ locale, messages }: Props) {
     const targetPath = effectiveLocale === "ja" ? "/ja" : `/${effectiveLocale}`;
     if (pathname !== targetPath) {
       document.body.style.opacity = "0";
-      router.push(targetPath);
-      setTimeout(() => window.scrollTo({ top: 0 }), 50);
       setTimeout(() => {
+        router.push(targetPath);
         document.body.style.opacity = "1";
-      }, 200);
+      }, 0);
     } else {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -60,17 +59,14 @@ export default function Header({ locale, messages }: Props) {
       setShowOverlay(true);
       setTimeout(() => {
         router.push(targetPath);
-        setTimeout(() => {
-          setShowOverlay(false);
-        }, 800);
+        setShowOverlay(false);
       }, 100);
     }
   }, [pathname, router, effectiveLocale]);
 
-  const handleMapClick = useCallback(() => {
+  const handleMapClick = useCallback(async () => {
     if (effectiveLocale !== "ja") return;
 
-    // 🔥 sessionStorage の復元情報をクリア
     sessionStorage.removeItem("mapCenter");
     sessionStorage.removeItem("mapZoom");
     sessionStorage.removeItem("activeStoreId");
@@ -81,19 +77,15 @@ export default function Header({ locale, messages }: Props) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       setShowOverlay(true);
-      setTimeout(() => {
-        router.push(targetPath);
-        setTimeout(() => {
-          setShowOverlay(false);
-        }, 800);
-      }, 100);
+      await router.push(targetPath);
+      setShowOverlay(false);
     }
   }, [pathname, router, effectiveLocale]);
 
   return (
     <>
       {showOverlay && <Overlay />}
-      <header className="fixed top-0 left-0 z-50 w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
+      <header className="fixed top-0 left-0 h-[48px] z-[1000] w-full bg-white shadow-[0px_0px_4px_0px_rgba(0,0,0,0.1)] flex justify-center">
         <div className="w-full max-w-[600px] px-4 h-[48px] flex justify-between items-center">
           {/* ロゴ */}
           <div
@@ -110,7 +102,6 @@ export default function Header({ locale, messages }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-
             {/* 投稿 */}
             <Link
               href="/posts"
@@ -151,8 +142,8 @@ export default function Header({ locale, messages }: Props) {
             <div
               onClick={handleMapClick}
               className={`w-12 h-12 inline-flex flex-col justify-center items-center gap-1 transition-transform duration-200 ${effectiveLocale === "ja"
-                  ? "hover:scale-105 active:scale-95 cursor-pointer"
-                  : "opacity-50 cursor-not-allowed"
+                ? "hover:scale-105 active:scale-95 cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
                 }`}
             >
               <div className="w-6 h-6 relative">

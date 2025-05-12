@@ -13,15 +13,43 @@ type SearchFiltersProps = {
   showOnlyOpen: boolean;
   selectedGenres: string[];
   onToggleOpen: () => void;
+  handleSearch: () => void;
   onToggleGenre: (genre: string) => void;
 };
 
-export default function SearchFilters({
-  showOnlyOpen,
-  selectedGenres,
-  onToggleOpen,
-  onToggleGenre,
-}: SearchFiltersProps) {
+type Props = {
+  showOnlyOpen: boolean;
+  selectedGenres: string[];
+  onToggleOpen: () => void; // ←追加
+  onToggleGenre: (genre: string) => void; // ←追加
+  handleSearch: () => void;
+  previewCount: number;
+  messages: {
+    title: string;
+    search: string;
+    reset: string;
+    items: string;
+    open: string;
+    open_all: string;
+    open_now: string;
+    genre: string;
+    area: string;
+    genres: Record<string, string>;
+    payments: Record<string, string>;
+    areas: Record<string, string>;
+  };
+};
+
+export default function SearchFilters(props: Props) {
+  const {
+    showOnlyOpen,
+    selectedGenres,
+    onToggleOpen,
+    onToggleGenre,
+    handleSearch,
+    previewCount,
+    messages,
+  } = props;
   return (
     <div
       style={{

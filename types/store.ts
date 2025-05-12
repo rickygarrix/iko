@@ -18,6 +18,7 @@ export type Store = {
   is_published: boolean;
   created_at?: string;
   description?: string;
+  payment_method_ids?: string[]; // Supabaseのテーブルにある場合
 };
 
 // ✅ これを追記

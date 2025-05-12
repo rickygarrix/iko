@@ -1,55 +1,68 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import type { Post } from "@/types/post";
 import Image from "next/image";
-import EditPostModal from "@/components/EditPostModal"; // ← 追記
+import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-type Post = {
-  id: string;
-  body: string;
-  created_at: string;
-  user_id: string; // ← ★追加
-  store?: { id: string; name: string };
-  post_tag_values?: {
-    value: number;
-    tag_category: {
-      key: string;
-      label: string;
-      min_label: string;
-      max_label: string;
-    };
-  }[];
-};
-
 export default function MyPage() {
+  const { data: session, status } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [instagram, setInstagram] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
-  const [editingPost, setEditingPost] = useState<Post | null>(null); // ← 追記
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [nameError, setNameError] = useState("");
 
   useEffect(() => {
     const fetchUserAndPosts = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) return;
+      const { data: supaUser } = await supabase.auth.getUser();
+      if (supaUser?.user) {
+        setUser(supaUser.user);
+        setName(supaUser.user.user_metadata?.name || "");
+        setInstagram(supaUser.user.user_metadata?.instagram || "");
+        setAvatarUrl(supaUser.user.user_metadata?.avatar_url || null);
+        fetchPosts(supaUser.user.id);
+        return;
+      }
 
-      setUser(data.user);
-      setName(data.user.user_metadata?.name || "");
-      setInstagram(data.user.user_metadata?.instagram || "");
-      setAvatarUrl(data.user.user_metadata?.avatar_url || null);
+      if (session?.user?.id) {
+        const userId = session.user.id;
+        setUser({
+          id: userId,
+          aud: "authenticated",
+          role: "authenticated",
+          email: session.user.email ?? "",
+          user_metadata: {
+            name: session.user.name ?? "",
+            avatar_url: session.user.image ?? "",
+          },
+          app_metadata: {
+            provider: "line",
+          },
+          created_at: "",
+        });
+        setName(session.user.name || "");
+        setAvatarUrl(session.user.image || null);
+        fetchPosts(userId);
+      }
+    };
 
-      const { data: posts, error: postError } = await supabase
+    const fetchPosts = async (userId: string) => {
+      const { data: posts, error } = await supabase
         .from("posts")
         .select(`
           id,
           body,
           created_at,
+          user_id,
           store:stores!posts_store_id_fkey (
             id,
             name
@@ -64,41 +77,48 @@ export default function MyPage() {
             )
           )
         `)
-        .eq("user_id", data.user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
-      if (postError) {
-        console.error("投稿取得エラー:", postError.message);
+      if (error) {
+        console.error("投稿取得エラー:", error.message);
         return;
       }
 
-      const enrichedPosts: Post[] = (posts ?? []).map((post: any) => {
+      const normalizedPosts: Post[] = (posts ?? []).map((post: any) => {
         const store = Array.isArray(post.store) ? post.store[0] : post.store;
         return {
-          ...post,
+          id: post.id,
+          body: post.body,
+          created_at: post.created_at,
+          user_id: post.user_id,
           store: store ? { id: store.id, name: store.name } : undefined,
-          post_tag_values: post.post_tag_values?.map((tag: any) => {
-            const cat = tag.tag_category || {};
-            return {
-              value: tag.value,
-              tag_category: {
-                key: String(cat.key ?? ""),
-                label: String(cat.label ?? ""),
-                min_label: String(cat.min_label ?? ""),
-                max_label: String(cat.max_label ?? ""),
-              },
-            };
-          }),
+          post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
+            value: tag.value,
+            tag_category: {
+              key: tag.tag_category?.key ?? "",
+              label: tag.tag_category?.label ?? "",
+              min_label: tag.tag_category?.min_label ?? "",
+              max_label: tag.tag_category?.max_label ?? "",
+            },
+          })),
         };
       });
 
-      setMyPosts(enrichedPosts);
+      setMyPosts(normalizedPosts);
     };
 
     fetchUserAndPosts();
-  }, []);
+  }, [session]);
 
   const handleSave = async () => {
+    if (!name.trim()) {
+      setNameError("名前を入力してください");
+      return;
+    } else {
+      setNameError("");
+    }
+
     const updates = { name, instagram, avatar_url: avatarUrl };
     const { error } = await supabase.auth.updateUser({ data: updates });
 
@@ -117,7 +137,6 @@ export default function MyPage() {
       alert("削除に失敗しました");
       console.error(error);
     } else {
-      // 再取得
       const updated = myPosts.filter((p) => p.id !== postId);
       setMyPosts(updated);
     }
@@ -139,14 +158,13 @@ export default function MyPage() {
     }
   };
 
-  if (!user) {
+  if (status === "loading" || !user) {
     return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>;
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FEFCF6]">
       <Header locale="ja" messages={{ search: "検索", map: "地図" }} />
-
       <main className="flex-1 p-8 pt-[80px]">
         <h1 className="text-xl font-bold mb-6">マイページ</h1>
 
@@ -172,12 +190,15 @@ export default function MyPage() {
           <div>
             <p className="font-semibold mb-1">名前</p>
             {isEditing ? (
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
+              <>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                />
+                {nameError && <p className="text-red-500 text-sm mt-1">{nameError}</p>}
+              </>
             ) : (
               <p>{name || "（未設定）"}</p>
             )}
@@ -281,7 +302,6 @@ export default function MyPage() {
           }}
         />
       )}
-
       <Footer
         locale="ja"
         messages={{

@@ -1,12 +1,13 @@
 import "./globals.css";
 import Script from "next/script";
-import type { ReactNode } from "react";
+import { ReactNode } from "react";
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"; // 👈 追加
 
 export const metadata = {
   title: "Otonavi",
   description: "夜の音楽ナビ",
   icons: {
-    icon: "/favicon.ico?v=2", // キャッシュバスター付き
+    icon: "/favicon.ico?v=2",
   },
 };
 
@@ -19,7 +20,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="icon" href="/favicon.ico?v=2" />
         <title>Otonavi - 夜の音楽ナビ</title>
 
-        {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-WEZPMCLCSW"
           strategy="afterInteractive"
@@ -33,7 +33,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           `}
         </Script>
       </head>
-      <body>{children}</body>
+      <body>
+        <SessionProviderWrapper>{children}</SessionProviderWrapper>
+      </body>
     </html>
   );
 }

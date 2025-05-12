@@ -35,7 +35,7 @@
       ],
       "@/types/*": [
         "./types/*"
-      ] // ✅ ←これを追加
+      ]
     },
     "plugins": [
       {
@@ -43,14 +43,16 @@
       }
     ],
     "types": [
-      "next"
-    ]
+      "next",
+      "next-auth"
+    ] // ← ✅ next-auth を追加！
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "types/next-auth.d.ts" // ← ✅ ここも明示的に追加！
   ],
   "exclude": [
     "node_modules"

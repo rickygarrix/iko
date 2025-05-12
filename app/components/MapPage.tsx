@@ -9,12 +9,14 @@ import {
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import SearchFilters from "@/components/SearchFilters";
+import SearchFilter from "@/components/SearchFilter";
 import Header from "@/components/Header";
 import { checkIfOpen } from "@/lib/utils";
 import type { Store } from "@/types/store";
 import dayjs from "dayjs";
 import "dayjs/locale/ja";
+import SlideDownModal from "@/components/SlideDownModal";
+import clsx from "clsx";
 
 dayjs.locale("ja");
 
@@ -41,6 +43,24 @@ export function MapPageWithLayout() {
   const clickTimestamps = useRef<Record<string, number>>({});
   const hasRestoredFromSessionRef = useRef(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+  const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [areaTranslations, setAreaTranslations] = useState<Record<string, string>>({});
+  const [paymentTranslations, setPaymentTranslations] = useState<Record<string, string>>({});
+  const [tempSelectedGenres, setTempSelectedGenres] = useState<string[]>([]);
+  const [tempShowOnlyOpen, setTempShowOnlyOpen] = useState(false);
+  const [tempSelectedAreas, setTempSelectedAreas] = useState<string[]>([]);
+  const [tempSelectedPayments, setTempSelectedPayments] = useState<string[]>([]);
+  const previewCount = stores.filter((store) => {
+    const genreMatch = tempSelectedGenres.length === 0 || tempSelectedGenres.some((g) => store.genre_ids?.includes(g));
+    const areaMatch = tempSelectedAreas.length === 0 || tempSelectedAreas.includes(store.area_id ?? "");
+    const paymentMatch =
+      tempSelectedPayments.length === 0 ||
+      tempSelectedPayments.some((id) => store.payment_method_ids?.includes(id));
+    const isOpen = store.opening_hours ? checkIfOpen(store.opening_hours).isOpen : false;
+    const openMatch = !tempShowOnlyOpen || isOpen;
+    return genreMatch && areaMatch && paymentMatch && openMatch && store.latitude && store.longitude;
+  }).length;
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
@@ -83,6 +103,41 @@ export function MapPageWithLayout() {
         );
       }
     }
+  }, []);
+
+  useEffect(() => {
+    if (isFilterOpen) {
+      setTempSelectedGenres(selectedGenres);
+      setTempSelectedAreas(selectedAreas);
+      setTempSelectedPayments(selectedPayments);
+      setTempShowOnlyOpen(showOnlyOpen);
+    }
+  }, [isFilterOpen]);
+
+  useEffect(() => {
+    supabase
+      .from("area_translations")
+      .select("area_id, name")
+      .eq("locale", "ja")
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((item) => (map[item.area_id] = item.name));
+          setAreaTranslations(map);
+        }
+      });
+
+    supabase
+      .from("payment_method_translations")
+      .select("payment_method_id, name")
+      .eq("locale", "ja")
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((item) => (map[item.payment_method_id] = item.name));
+          setPaymentTranslations(map);
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -257,41 +312,83 @@ export function MapPageWithLayout() {
         {/* 現在地ボタン */}
         <button
           onClick={handleRecenter}
-          className="fixed bottom-[200px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center"
+          className={clsx(
+            "fixed bottom-[200px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center transition-all duration-300",
+            isFilterOpen && "brightness-75 saturate-0 pointer-events-none"
+          )}
         >
           <Image src="/map/location.svg" alt="現在地" width={20} height={20} />
         </button>
 
         {/* フィルター */}
-        <div className="absolute top-[60px] left-4 z-50 flex items-center gap-2">
-          <button
-            onClick={() => setIsFilterOpen((prev) => !prev)}
-            className="w-10 h-10 rounded-full shadow flex items-center justify-center bg-white"
-          >
-            <Image src="/map/search.svg" alt="検索" width={20} height={20} />
-          </button>
-          <label className="text-sm flex items-center gap-1 bg-white px-2 py-1 rounded shadow border text-black font-medium">
-            <input type="checkbox" checked={showOnlyOpen} onChange={handleToggleOpen} />
-            営業中
-          </label>
-        </div>
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          className={clsx(
+            "fixed bottom-[260px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center transition-all duration-300",
+            isFilterOpen && "brightness-75 saturate-0 pointer-events-none"
+          )}
+        >
+          <Image src="/header/search.svg" alt="検索" width={20} height={20} />
+        </button>
 
-        {isFilterOpen && (
-          <div className="absolute top-[110px] left-[20px] z-50">
-            <SearchFilters
-              showOnlyOpen={showOnlyOpen}
-              selectedGenres={selectedGenres}
-              onToggleOpen={handleToggleOpen}
-              onToggleGenre={handleToggleGenre}
-            />
-          </div>
-        )}
+
+        <SlideDownModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+          <SearchFilter
+            selectedGenres={tempSelectedGenres}
+            setSelectedGenres={setTempSelectedGenres}
+            selectedAreas={tempSelectedAreas}
+            setSelectedAreas={setTempSelectedAreas}
+            selectedPayments={tempSelectedPayments}
+            setSelectedPayments={setTempSelectedPayments}
+            showOnlyOpen={tempShowOnlyOpen}
+            setShowOnlyOpen={setTempShowOnlyOpen}
+            handleSearch={() => {
+              setSelectedGenres(tempSelectedGenres);
+              setSelectedAreas(tempSelectedAreas);
+              setSelectedPayments(tempSelectedPayments);
+              setShowOnlyOpen(tempShowOnlyOpen);
+
+              const filtered = stores.filter((store) => {
+                const genreMatch = tempSelectedGenres.length === 0 || tempSelectedGenres.some((g) => store.genre_ids?.includes(g));
+                const areaMatch = tempSelectedAreas.length === 0 || tempSelectedAreas.includes(store.area_id ?? "");
+                const paymentMatch =
+                  tempSelectedPayments.length === 0 ||
+                  tempSelectedPayments.some((id) => store.payment_method_ids?.includes(id));
+                const isOpen = store.opening_hours ? checkIfOpen(store.opening_hours).isOpen : false;
+                const openMatch = !tempShowOnlyOpen || isOpen;
+                return genreMatch && areaMatch && paymentMatch && openMatch && store.latitude && store.longitude;
+              });
+
+              setFilteredStores(filtered);
+              setIsFilterOpen(false);
+            }}
+            previewCount={previewCount}
+            messages={{
+              title: "条件で探す",
+              search: "検索",
+              reset: "リセット",
+              items: "件",
+              open: "営業時間",
+              open_all: "営業時間外含む",
+              open_now: "営業中のみ",
+              genre: "ジャンル",
+              area: "エリア",
+              payment: "支払い方法", // ← ★これを追加
+              genres: genreTranslations,
+              areas: {}, // 今回使わないけど型を満たすため空でOK
+              payments: {},
+            }}
+          />
+        </SlideDownModal>
 
         {/* 店舗カード */}
         {activeStoreId && (
           <div
             id="cardSlider"
-            className="absolute bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-4 overflow-x-auto flex gap-4 snap-x snap-mandatory"
+            className={clsx(
+              "absolute bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-4 overflow-x-auto flex gap-4 snap-x snap-mandatory transition-all duration-300",
+              isFilterOpen && "brightness-[.7] saturate-50 pointer-events-none"
+            )}
           >
             {filteredStores.map((store, index) => (
               <div
