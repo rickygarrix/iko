@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import React from "react";
 import {
   GoogleMap,
   Marker,
@@ -17,6 +18,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/ja";
 import SlideDownModal from "@/components/SlideDownModal";
 import clsx from "clsx";
+import { OverlayView } from "@react-google-maps/api";
 
 dayjs.locale("ja");
 
@@ -26,6 +28,17 @@ const containerStyle = {
 };
 
 const DEFAULT_CENTER = { lat: 35.681236, lng: 139.767125 };
+
+const AREA_COORDS: Record<string, { lat: number; lng: number }> = {
+  shibuya: { lat: 35.658034, lng: 139.701636 },
+  shinjuku: { lat: 35.690921, lng: 139.700258 },
+  roppongi: { lat: 35.662834, lng: 139.731547 },
+  ginza: { lat: 35.671732, lng: 139.765172 },
+  ikebukuro: { lat: 35.728926, lng: 139.71038 },
+  omotesando: { lat: 35.664935, lng: 139.712753 },
+  ueno: { lat: 35.713768, lng: 139.777254 },
+  yokohama: { lat: 35.466188, lng: 139.622715 },
+};
 
 export function MapPageWithLayout() {
   const router = useRouter();
@@ -277,21 +290,31 @@ export function MapPageWithLayout() {
             }}
           >
             {filteredStores.map((store, index) => (
-              <Marker
-                key={store.id}
-                position={{ lat: store.latitude!, lng: store.longitude! }}
-                label={{
-                  text: store.name,
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  color: "#000",
-                }}
-                icon={{
-                  url: "/map-pin.png",
-                  scaledSize: new google.maps.Size(activeStoreId === store.id ? 60 : 40, activeStoreId === store.id ? 60 : 40),
-                }}
-                onClick={() => handleClickStore(store, index)}
-              />
+              <React.Fragment key={store.id}>
+                <Marker
+                  position={{ lat: store.latitude!, lng: store.longitude! }}
+                  icon={{
+                    url: activeStoreId === store.id ? "/map/selectpin.svg" : "/map/pin.svg",
+                    scaledSize: activeStoreId === store.id
+                      ? new google.maps.Size(40, 40) // 選択中ピンは小さめ
+                      : new google.maps.Size(52, 52), // 通常ピンは少し大きめ
+                    anchor: activeStoreId === store.id
+                      ? new google.maps.Point(20, 40)
+                      : new google.maps.Point(26, 52),
+                    labelOrigin: activeStoreId === store.id
+                      ? new google.maps.Point(20, 50)
+                      : new google.maps.Point(26, 64),
+                  }}
+                  label={{
+                    text: store.name,
+                    color: "#000",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    className: "map-label",
+                  }}
+                  onClick={() => handleClickStore(store, index)}
+                />
+              </React.Fragment>
             ))}
             {userLocation && (
               <Marker
@@ -309,26 +332,26 @@ export function MapPageWithLayout() {
           </GoogleMap>
         )}
 
+        {/* 検索ボタン */}
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          className={clsx(
+            "fixed bottom-[300px] right-4 z-1000 w-[56px] h-[56px] rounded-[16px] bg-white border border-gray-300 shadow-[0_2px_4px_rgba(0,0,0,0.25)] flex items-center justify-center",
+            isFilterOpen && "brightness-75 saturate-0 pointer-events-none"
+          )}
+        >
+          <Image src="/header/search.svg" alt="検索" width={24} height={24} />
+        </button>
+
         {/* 現在地ボタン */}
         <button
           onClick={handleRecenter}
           className={clsx(
-            "fixed bottom-[200px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center transition-all duration-300",
+            "fixed bottom-[230px] right-4 z-1000 w-[56px] h-[56px] rounded-[16px] bg-white border border-gray-300 shadow-[0_2px_4px_rgba(0,0,0,0.25)] flex items-center justify-center",
             isFilterOpen && "brightness-75 saturate-0 pointer-events-none"
           )}
         >
-          <Image src="/map/location.svg" alt="現在地" width={20} height={20} />
-        </button>
-
-        {/* フィルター */}
-        <button
-          onClick={() => setIsFilterOpen(true)}
-          className={clsx(
-            "fixed bottom-[260px] right-4 z-50 w-12 h-12 bg-white rounded-full shadow-md border border-gray-300 flex items-center justify-center transition-all duration-300",
-            isFilterOpen && "brightness-75 saturate-0 pointer-events-none"
-          )}
-        >
-          <Image src="/header/search.svg" alt="検索" width={20} height={20} />
+          <Image src="/map/location.svg" alt="現在地" width={24} height={24} />
         </button>
 
 
@@ -348,18 +371,47 @@ export function MapPageWithLayout() {
               setSelectedPayments(tempSelectedPayments);
               setShowOnlyOpen(tempShowOnlyOpen);
 
+              // 🎯 検索結果フィルタリング
               const filtered = stores.filter((store) => {
-                const genreMatch = tempSelectedGenres.length === 0 || tempSelectedGenres.some((g) => store.genre_ids?.includes(g));
-                const areaMatch = tempSelectedAreas.length === 0 || tempSelectedAreas.includes(store.area_id ?? "");
+                const genreMatch =
+                  tempSelectedGenres.length === 0 ||
+                  tempSelectedGenres.some((g) => store.genre_ids?.includes(g));
+                const areaMatch =
+                  tempSelectedAreas.length === 0 || tempSelectedAreas.includes(store.area_id ?? "");
                 const paymentMatch =
                   tempSelectedPayments.length === 0 ||
                   tempSelectedPayments.some((id) => store.payment_method_ids?.includes(id));
-                const isOpen = store.opening_hours ? checkIfOpen(store.opening_hours).isOpen : false;
+                const isOpen = store.opening_hours
+                  ? checkIfOpen(store.opening_hours).isOpen
+                  : false;
                 const openMatch = !tempShowOnlyOpen || isOpen;
-                return genreMatch && areaMatch && paymentMatch && openMatch && store.latitude && store.longitude;
+                return genreMatch && areaMatch && paymentMatch && openMatch;
               });
 
               setFilteredStores(filtered);
+
+              // 📍 中心とズームを調整
+              if (mapRef.current) {
+                if (tempSelectedAreas.length === 1) {
+                  // ⭐ エリアが1つだけのときはその駅に寄る
+                  const coord = AREA_COORDS[tempSelectedAreas[0]];
+                  if (coord) {
+                    setMapCenter(coord);
+                    mapRef.current.panTo(coord);
+                    mapRef.current.setZoom(15);
+                  }
+                } else if (filtered.length > 0) {
+                  // ⭐ 複数 or 全体対象時は該当店舗の範囲にズームアウト
+                  const bounds = new window.google.maps.LatLngBounds();
+                  filtered.forEach((store) => {
+                    if (store.latitude && store.longitude) {
+                      bounds.extend(new window.google.maps.LatLng(store.latitude, store.longitude));
+                    }
+                  });
+                  mapRef.current.fitBounds(bounds);
+                }
+              }
+
               setIsFilterOpen(false);
             }}
             previewCount={previewCount}

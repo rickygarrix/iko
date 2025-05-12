@@ -78,6 +78,14 @@ body {
   display: none !important;
 }
 
+.map-label {
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px 1px 0 #fff,
+    1px 1px 0 #fff;
+}
+
 .gm-bundled-control {
   display: none !important;
   /* 必要に応じて：バンドルコントロール全体非表示 */
