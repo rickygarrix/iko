@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -11,6 +12,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import useSWR from "swr";
 import type { Messages } from "@/types/messages";
+import SearchFloatingButton from "@/components/SearchFloatingButton";
 
 type HomeProps = {
   messages: Messages;
@@ -146,6 +148,12 @@ export default function Home({ messages, locale }: HomeProps) {
         transition={{ delay: 0.5, duration: 0.6 }}
       >
         <AboutSection />
+
+        <SearchFloatingButton
+          messages={messages.searchFilter}
+          genres={messages.genres}
+          areas={messages.areas}
+        />
       </motion.div>
     </div>
   );
