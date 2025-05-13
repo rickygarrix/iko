@@ -146,16 +146,26 @@ export default function MyPage() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    // 安全なファイル名に変換（例：timestamp + 拡張子）
+    const ext = file.name.split('.').pop(); // jpg, png など
+    const fileName = `${Date.now()}.${ext}`; // 例: 1715587352398.jpg
+    const filePath = `${user.id}/${fileName}`;
+
     const { data, error } = await supabase.storage
       .from("avatars")
-      .upload(`${user.id}/${file.name}`, file, { upsert: true });
+      .upload(filePath, file, { upsert: true });
 
-    if (error) {
+    if (error || !data) {
+      console.error("Upload error:", error);
       alert("画像のアップロードに失敗しました");
-    } else {
-      const url = supabase.storage.from("avatars").getPublicUrl(data.path).data.publicUrl;
-      setAvatarUrl(url);
+      return;
     }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+    setAvatarUrl(publicUrl);
   };
 
   if (status === "loading" || !user) {

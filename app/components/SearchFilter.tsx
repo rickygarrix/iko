@@ -89,8 +89,8 @@ export default function SearchFilter({
       <div className="w-full max-w-[600px] px-6 text-[#1F1F21] text-[14px] font-normal space-y-10">
         {showTitle && (
           <div className="text-center">
-            <h2 className="text-[18px] font-bold leading-[26px] mb-1">{messages.title}</h2>
-            <p className="text-sm text-[#4B5C9E]">{messages.search}</p>
+            {/* <h2 className="text-[18px] font-bold leading-[26px] mb-1">{messages.title}</h2> */}
+            {/* <p className="text-sm text-[#4B5C9E]">{messages.search}</p> */}
           </div>
         )}
 

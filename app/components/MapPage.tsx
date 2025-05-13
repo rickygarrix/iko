@@ -425,9 +425,9 @@ export function MapPageWithLayout() {
               open_now: "営業中のみ",
               genre: "ジャンル",
               area: "エリア",
-              payment: "支払い方法", // ← ★これを追加
+              payment: "支払い方法",
               genres: genreTranslations,
-              areas: {}, // 今回使わないけど型を満たすため空でOK
+              areas: {},
               payments: {},
             }}
           />

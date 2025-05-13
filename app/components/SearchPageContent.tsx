@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SearchResults from "@/components/SearchResults";
 import SearchFloatingButton from "@/components/SearchFloatingButton";
+import Footer from "@/components/Footer"; // ✅ 追加
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen } from "@/lib/utils";
 import useSWR from "swr";
@@ -21,10 +22,8 @@ export default function SearchPageContent({ messages }: { messages: Messages }) 
   const [showOnlyOpen, setShowOnlyOpen] = useState<boolean>(false);
   const [isSearchTriggered, setIsSearchTriggered] = useState<boolean>(false);
 
-  // ✅ クエリ文字列の変化を検知するための変数
   const queryString = searchParams.toString();
 
-  // ✅ 件数取得
   const fetchPreviewCount = async (
     genres: string[],
     areas: string[],
@@ -49,7 +48,6 @@ export default function SearchPageContent({ messages }: { messages: Messages }) 
     { revalidateOnFocus: false }
   );
 
-  // ✅ クエリまたはセッションストレージから検索条件を初期化
   useEffect(() => {
     const genres = searchParams.get("genre")?.split(",") ??
       JSON.parse(sessionStorage.getItem("filterGenres") || "[]");
@@ -65,9 +63,8 @@ export default function SearchPageContent({ messages }: { messages: Messages }) 
     setSelectedPayments(payments);
     setShowOnlyOpen(open);
     setIsSearchTriggered(true);
-  }, [queryString]); // ← ここが重要！
+  }, [queryString]);
 
-  // ✅ モーダルなどからの検索実行
   const handleSearch = () => {
     sessionStorage.setItem("filterGenres", JSON.stringify(selectedGenres));
     sessionStorage.setItem("filterAreas", JSON.stringify(selectedAreas));
@@ -81,7 +78,7 @@ export default function SearchPageContent({ messages }: { messages: Messages }) 
     if (showOnlyOpen) params.set("open", "true");
 
     setIsSearchTriggered(false);
-    setTimeout(() => setIsSearchTriggered(true), 100); // リセットして再検索トリガー
+    setTimeout(() => setIsSearchTriggered(true), 100);
 
     router.push(`/${locale}/search?${params.toString()}`);
   };
@@ -97,36 +94,36 @@ export default function SearchPageContent({ messages }: { messages: Messages }) 
     setSelectedPayments(payments);
     setShowOnlyOpen(open);
     setIsSearchTriggered(true);
-  }, [queryString]); // ✅ クエリ文字列に反応
+  }, [queryString]);
 
   return (
-    <div className="bg-white mt-8 text-gray-800 pb-0 flex justify-center relative">
-      <div className="w-full">
-        {/* 検索結果 */}
-        {isSearchTriggered && (
-          <Suspense fallback={<div className="text-center py-10">検索結果を読み込み中...</div>}>
-            <SearchResults
-              key={queryString} // ✅ クエリが変わるたびに再レンダリング
-              selectedGenres={selectedGenres}
-              selectedAreas={selectedAreas}
-              selectedPayments={selectedPayments}
-              showOnlyOpen={showOnlyOpen}
-              isSearchTriggered={isSearchTriggered}
-              messages={{
-                ...messages.searchResults,
-                genres: messages.genres,
-              }}
-            />
-          </Suspense>
-        )}
+    <div className="min-h-screen flex flex-col bg-white text-gray-800">
+      <main className="flex-grow flex justify-center pt-8">
+        <div className="w-full max-w-[1024px] px-4 min-h-[200px]">
+          {isSearchTriggered && (
+            <Suspense fallback={<div className="text-center py-10">検索結果を読み込み中...</div>}>
+              <SearchResults
+                key={queryString}
+                selectedGenres={selectedGenres}
+                selectedAreas={selectedAreas}
+                selectedPayments={selectedPayments}
+                showOnlyOpen={showOnlyOpen}
+                isSearchTriggered={isSearchTriggered}
+                messages={{
+                  ...messages.searchResults,
+                  genres: messages.genres,
+                }}
+              />
+            </Suspense>
+          )}
 
-        {/* 常時表示の検索アイコン */}
-        <SearchFloatingButton
-          messages={messages.searchFilter}
-          genres={messages.genres}
-          areas={messages.areas}
-        />
-      </div>
+          <SearchFloatingButton
+            messages={messages.searchFilter}
+            genres={messages.genres}
+            areas={messages.areas}
+          />
+        </div>
+      </main>
     </div>
   );
 }
