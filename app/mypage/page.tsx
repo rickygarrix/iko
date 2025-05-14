@@ -24,17 +24,37 @@ export default function MyPage() {
   useEffect(() => {
     const fetchUserAndPosts = async () => {
       const { data: supaUser } = await supabase.auth.getUser();
+
       if (supaUser?.user) {
+        const userId = supaUser.user.id;
         setUser(supaUser.user);
-        setName(supaUser.user.user_metadata?.name || "");
-        setInstagram(supaUser.user.user_metadata?.instagram || "");
-        setAvatarUrl(supaUser.user.user_metadata?.avatar_url || null);
-        fetchPosts(supaUser.user.id);
+
+        // ✅ user_profiles からプロフィール情報を取得
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+
+        if (profile) {
+          setName(profile.name || "");
+          setInstagram(profile.instagram || "");
+          setAvatarUrl(profile.avatar_url || null);
+        } else {
+          // プロフィールがまだ存在しない場合 fallback として auth 情報を使う
+          setName(supaUser.user.user_metadata?.name || "");
+          setInstagram(supaUser.user.user_metadata?.instagram || "");
+          setAvatarUrl(supaUser.user.user_metadata?.avatar_url || null);
+        }
+
+        fetchPosts(userId);
         return;
       }
 
+      // LINEログイン（NextAuth経由）などセッションから取得する場合
       if (session?.user?.id) {
         const userId = session.user.id;
+
         setUser({
           id: userId,
           aud: "authenticated",
@@ -49,8 +69,25 @@ export default function MyPage() {
           },
           created_at: "",
         });
-        setName(session.user.name || "");
-        setAvatarUrl(session.user.image || null);
+
+        // ✅ user_profiles からプロフィール情報を取得
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("id", userId)
+          .single();
+
+        if (profile) {
+          setName(profile.name || "");
+          setInstagram(profile.instagram || "");
+          setAvatarUrl(profile.avatar_url || null);
+        } else {
+          // fallback
+          setName(session.user.name || "");
+          setInstagram(""); // セッションにはInstagram情報は無いので空文字に
+          setAvatarUrl(session.user.image || null);
+        }
+
         fetchPosts(userId);
       }
     };
@@ -115,15 +152,23 @@ export default function MyPage() {
     if (!name.trim()) {
       setNameError("名前を入力してください");
       return;
-    } else {
-      setNameError("");
     }
 
-    const updates = { name, instagram, avatar_url: avatarUrl };
-    const { error } = await supabase.auth.updateUser({ data: updates });
+    setNameError("");
+
+    const updates = {
+      id: user?.id,
+      name,
+      instagram,
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from("user_profiles").upsert(updates);
 
     if (error) {
       alert("更新に失敗しました");
+      console.error(error);
     } else {
       alert("プロフィールを更新しました");
       setIsEditing(false);
