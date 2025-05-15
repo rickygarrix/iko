@@ -9,6 +9,7 @@ import Image from "next/image";
 import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useRouter } from "next/navigation";
 
 export default function MyPage() {
   const { data: session, status } = useSession();
@@ -20,6 +21,7 @@ export default function MyPage() {
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [nameError, setNameError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserAndPosts = async () => {
@@ -297,12 +299,22 @@ export default function MyPage() {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900"
-            >
-              編集する
-            </button>
+            <>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900"
+              >
+                編集する
+              </button>
+              <div className="text-right mt-2">
+                <button
+                  onClick={() => router.push("/withdrawal")}
+                  className="text-sm text-red-500 underline hover:text-red-600"
+                >
+                  退会はこちら
+                </button>
+              </div>
+            </>
           )}
         </div>
 

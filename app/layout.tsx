@@ -1,25 +1,25 @@
+// app/layout.tsx
 import "./globals.css";
 import Script from "next/script";
-import { ReactNode } from "react";
-import SessionProviderWrapper from "@/components/SessionProviderWrapper"; // 👈 追加
+import type { ReactNode } from "react";
+import ScrollRestorationSetter from "@/components/ScrollRestorationSetter";
+import SessionProviderWrapper from "@/components/SessionProviderWrapper";
 
 export const metadata = {
   title: "Otonavi",
   description: "夜の音楽ナビ",
-  icons: {
-    icon: "/favicon.ico?v=2",
-  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ja">
+    <html lang="ja" data-scroll-restoring="true" style={{ opacity: 0 }}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico?v=2" />
         <title>Otonavi - 夜の音楽ナビ</title>
 
+        {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-WEZPMCLCSW"
           strategy="afterInteractive"
@@ -34,6 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </Script>
       </head>
       <body>
+        <ScrollRestorationSetter />
         <SessionProviderWrapper>{children}</SessionProviderWrapper>
       </body>
     </html>

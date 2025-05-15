@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useLayoutEffect, useEffect, useState, useRef } from "react";
 import useSWR from "swr";
 import { supabase } from "@/lib/supabase";
 import { checkIfOpen, logAction } from "@/lib/utils";
@@ -33,9 +33,15 @@ const fetchStores = async (
 ): Promise<TranslatedStore[]> => {
   let query = supabase.from("stores").select("*").eq("is_published", true);
 
-  if (selectedGenres.length) query = query.filter("genre_ids", "cs", JSON.stringify(selectedGenres));
-  if (selectedAreas.length) query = query.in("area_id", selectedAreas);
-  if (selectedPayments.length) query = query.overlaps("payment_method_ids", selectedPayments);
+  if (selectedGenres.length) {
+    query = query.filter("genre_ids", "cs", JSON.stringify(selectedGenres));
+  }
+  if (selectedAreas.length) {
+    query = query.in("area_id", selectedAreas);
+  }
+  if (selectedPayments.length) {
+    query = query.overlaps("payment_method_ids", selectedPayments);
+  }
 
   const { data: stores, error } = await query;
   if (error || !stores) throw new Error(error?.message || "データ取得に失敗しました");
@@ -72,6 +78,8 @@ export default function SearchResults({
   const [translatedDescriptions, setTranslatedDescriptions] = useState<Record<string, string>>({});
   const [restoreY, setRestoreY] = useState<number | null>(null);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   const clickedStoreIds = useRef<Set<string>>(new Set());
 
   const { data: stores, error, isLoading } = useSWR<TranslatedStore[]>(
@@ -80,28 +88,28 @@ export default function SearchResults({
     { revalidateOnFocus: false }
   );
 
-  useEffect(() => {
+  // 🧭 スクロール復元処理（ブラウザバック対策）
+  useLayoutEffect(() => {
     const savedY = sessionStorage.getItem("searchScrollY");
     if (savedY && pathname === `/${locale}/search`) {
-      setRestoreY(parseInt(savedY, 10));
+      const y = parseInt(savedY, 10);
+      setIsRestoring(true);
+      requestAnimationFrame(() => {
+        window.scrollTo(0, y);
+        setTimeout(() => {
+          window.scrollTo(0, y);
+          sessionStorage.removeItem("searchScrollY");
+          setRestoreY(null);
+          setIsRestoring(false);
+          setShouldRender(true);
+        }, 0);
+      });
+    } else {
+      setShouldRender(true);
     }
   }, [pathname, locale]);
 
-  useEffect(() => {
-    if (stores && restoreY !== null) {
-      let count = 0;
-      const interval = setInterval(() => {
-        if (document.body.scrollHeight >= restoreY || count > 40) {
-          clearInterval(interval);
-          window.scrollTo({ top: restoreY, behavior: "auto" });
-          sessionStorage.removeItem("searchScrollY");
-          setRestoreY(null);
-        }
-        count++;
-      }, 100);
-    }
-  }, [stores, restoreY]);
-
+  // 🌐 翻訳（非日本語時のみ）
   useEffect(() => {
     if (!stores || locale === "ja") return;
     const translateAll = async () => {
@@ -121,6 +129,7 @@ export default function SearchResults({
     translateAll();
   }, [stores, locale]);
 
+  // ✅ 店舗カードクリック時
   const handleStoreClick = async (storeId: string) => {
     if (locale !== "ja" || clickedStoreIds.current.has(storeId)) return;
     clickedStoreIds.current.add(storeId);
@@ -134,44 +143,51 @@ export default function SearchResults({
     }, 100);
   };
 
+  // 🔁 各状態
   if (!isSearchTriggered) return <p className="text-center py-6">{messages.prompt}</p>;
   if (isLoading) return <p className="text-center py-6">{messages.loading}</p>;
   if (error) return <p className="text-red-500 text-center py-6">⚠️ {messages.error}: {(error as Error).message}</p>;
   if (!stores || stores.length === 0) return <p className="text-center py-6">{messages.notFound}</p>;
 
   return (
-    <div className="relative w-full pb-8">
+    <div
+      className="relative w-full pb-8"
+      style={{
+        visibility: isRestoring ? "hidden" : "visible",
+        minHeight: "100vh",
+      }}
+    >
       {isOverlayVisible && <div className="fixed inset-0 z-[9999] bg-white/80" />}
-      <div className="mx-auto max-w-[600px] px-4">
-        <p className="text-lg font-semibold text-center py-5 text-gray-700">
-          {messages.resultLabel} <span className="text-[#4B5C9E]">{stores.length}</span> {messages.items}
-        </p>
-        <div className="flex flex-col items-center gap-4">
-          {stores.map((store, idx) => (
-            <StoreCard
-              key={store.id}
-              store={store}
-              locale={locale}
-              index={idx}
-              genresMap={messages.genres}
-              translatedDescription={translatedDescriptions[store.id]}
-              onClick={handleStoreClick}
-              onMapClick={(e) => {
-                e.stopPropagation();
-                sendGAEvent("click_searchresult_map", {
-                  store_id: store.id,
-                  store_name: store.name,
-                  latitude: store.latitude ?? undefined,
-                  longitude: store.longitude ?? undefined,
-                });
-              }}
-              messages={messages}
-              delay={idx * 0.05}
-              mapClickEventName="click_searchresult_map"
-            />
-          ))}
+      {shouldRender && (
+        <div className="mx-auto max-w-[600px] px-4">
+          <p className="text-lg font-semibold text-center py-5 text-gray-700">
+            {messages.resultLabel} <span className="text-[#4B5C9E]">{stores.length}</span> {messages.items}
+          </p>
+          <div className="flex flex-col items-center gap-4">
+            {stores.map((store) => (
+              <StoreCard
+                key={store.id}
+                store={store}
+                locale={locale}
+                index={0}
+                genresMap={messages.genres}
+                translatedDescription={translatedDescriptions[store.id]}
+                onClick={handleStoreClick}
+                onMapClick={(e) => {
+                  e.stopPropagation();
+                  sendGAEvent("click_searchresult_map", {
+                    store_id: store.id,
+                    store_name: store.name,
+                    latitude: store.latitude ?? undefined,
+                    longitude: store.longitude ?? undefined,
+                  });
+                }}
+                messages={messages}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

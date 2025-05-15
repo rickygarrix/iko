@@ -177,7 +177,7 @@ export default function SearchFilter({
               setSelectedPayments([]);
               setShowOnlyOpen(false);
             }}
-            className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21] text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
+            className="w-[100px] h-[48px] rounded-[8px] border border-[#1F1F21] bg-white text-[#1F1F21] text-[14px] font-normal active:scale-95 transition-transform"
           >
             {messages.reset}
           </button>
@@ -188,7 +188,7 @@ export default function SearchFilter({
               await logSearchAction("search");
               handleSearch();
             }}
-            className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21] px-4 flex items-center justify-center gap-2 text-[14px] font-normal hover:scale-105 active:scale-95 transition-transform"
+            className="w-[270px] h-[48px] bg-[#1F1F21] text-[#FEFCF6] rounded-[8px] border border-[#1F1F21] px-4 flex items-center justify-center gap-2 text-[14px] font-normal"
           >
             <div className="relative w-[14px] h-[14px]">
               <Image src="/icons/search.svg" alt="検索アイコン" fill className="object-contain" />

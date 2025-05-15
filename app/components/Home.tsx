@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -9,7 +8,6 @@ import SearchFilter from "@/components/SearchFilter";
 import AboutSection from "@/components/AboutSection";
 import RecommendedStores from "@/components/RecommendedStores";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import useSWR from "swr";
 import type { Messages } from "@/types/messages";
 import SearchFloatingButton from "@/components/SearchFloatingButton";
@@ -28,7 +26,7 @@ const fetchPreviewCount = async (
   let query = supabase.from("stores").select("*").eq("is_published", true);
 
   if (selectedGenres.length > 0) {
-    query = query.filter("genre_ids", "cs", JSON.stringify(selectedGenres)); // ✅ genre_ids用
+    query = query.filter("genre_ids", "cs", JSON.stringify(selectedGenres));
   }
   if (selectedAreas.length > 0) {
     query = query.in("area_id", selectedAreas);
@@ -79,21 +77,11 @@ export default function Home({ messages, locale }: HomeProps) {
   return (
     <div className="min-h-screen bg-[#F7F5EF] text-gray-800 pt-[70px]">
       <div className="text-center space-y-4">
-        <motion.p
-          className="text-xs font-light text-[#1F1F21] leading-none"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-        >
+        <p className="text-xs font-light text-[#1F1F21] leading-none">
           {messages.top.catchphrase}
-        </motion.p>
+        </p>
 
-        <motion.div
-          className="relative w-[121px] h-[40px] mx-auto"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
+        <div className="relative w-[121px] h-[40px] mx-auto">
           <Image
             src="/header/logo.svg"
             alt={`${messages.top.title} ロゴ`}
@@ -101,16 +89,10 @@ export default function Home({ messages, locale }: HomeProps) {
             className="object-contain"
             priority
           />
-        </motion.div>
+        </div>
       </div>
 
-      <motion.div
-        id="search-filter"
-        className="mt-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.8 }}
-      >
+      <div id="search-filter" className="mt-6">
         <SearchFilter
           selectedGenres={selectedGenres}
           setSelectedGenres={setSelectedGenres}
@@ -130,23 +112,13 @@ export default function Home({ messages, locale }: HomeProps) {
             areas: messages.areas,
           }}
         />
-      </motion.div>
+      </div>
 
-      <motion.div
-        className="mt-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
-      >
+      <div className="mt-8">
         <RecommendedStores messages={messages.recommend} />
-      </motion.div>
+      </div>
 
-      <motion.div
-        className="mt-0"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.6 }}
-      >
+      <div className="mt-0">
         <AboutSection />
 
         <SearchFloatingButton
@@ -154,7 +126,7 @@ export default function Home({ messages, locale }: HomeProps) {
           genres={messages.genres}
           areas={messages.areas}
         />
-      </motion.div>
+      </div>
     </div>
   );
 }

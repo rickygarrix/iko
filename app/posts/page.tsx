@@ -7,6 +7,7 @@ import NewPostModal from "@/components/NewPostModal";
 import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FollowButton from "@/components/FollowButton";
 
 type Store = {
   id: string;
@@ -49,6 +50,8 @@ export default function StorePostPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [tagCategories, setTagCategories] = useState<TagCategory[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [followings, setFollowings] = useState<string[]>([]);
+  const [showFollowedOnly, setShowFollowedOnly] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
@@ -58,11 +61,13 @@ export default function StorePostPage() {
       setUser(loggedInUser);
 
       if (loggedInUser) {
-        await supabase.from("users").upsert({
+        await supabase.from("user_profiles").upsert({
           id: loggedInUser.id,
           name: loggedInUser.user_metadata?.name,
           avatar_url: loggedInUser.user_metadata?.avatar_url,
         });
+
+        fetchFollowings(loggedInUser.id);
       }
 
       fetchStores();
@@ -70,6 +75,20 @@ export default function StorePostPage() {
       fetchPosts();
     });
   }, []);
+
+  const fetchFollowings = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("user_follows")
+      .select("following_id")
+      .eq("follower_id", userId);
+
+    if (error) {
+      console.error("フォロー取得エラー:", error.message);
+      return;
+    }
+
+    setFollowings(data.map((f) => f.following_id));
+  };
 
   const fetchStores = async () => {
     const { data } = await supabase.from("stores").select("id, name");
@@ -112,7 +131,7 @@ export default function StorePostPage() {
 
     const userIds = [...new Set(data.map((p) => p.user_id))];
     const { data: users } = await supabase
-      .from("users")
+      .from("user_profiles")
       .select("id, name, avatar_url")
       .in("id", userIds);
 
@@ -122,10 +141,7 @@ export default function StorePostPage() {
       return {
         ...post,
         store: post.store
-          ? {
-            id: post.store.id,
-            name: post.store.name,
-          }
+          ? { id: post.store.id, name: post.store.name }
           : undefined,
         user: matchedUser
           ? {
@@ -182,6 +198,10 @@ export default function StorePostPage() {
     fetchPosts();
   };
 
+  const filteredPosts = showFollowedOnly
+    ? posts.filter((post) => followings.includes(post.user_id))
+    : posts;
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header locale="ja" messages={{ search: "検索", map: "地図" }} />
@@ -221,8 +241,26 @@ export default function StorePostPage() {
         )}
 
         <h2 className="text-lg font-semibold mt-8 text-center">投稿一覧</h2>
+
+        <div className="flex justify-center mt-4 space-x-4">
+          <button
+            onClick={() => setShowFollowedOnly(false)}
+            className={`px-3 py-1 border rounded ${!showFollowedOnly ? "bg-blue-600 text-white" : "bg-white text-blue-600"
+              }`}
+          >
+            全体
+          </button>
+          <button
+            onClick={() => setShowFollowedOnly(true)}
+            className={`px-3 py-1 border rounded ${showFollowedOnly ? "bg-blue-600 text-white" : "bg-white text-blue-600"
+              }`}
+          >
+            フォロー中
+          </button>
+        </div>
+
         <ul className="mt-4 mb-16 flex flex-col items-center space-y-6">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <li
               key={post.id}
               className="bg-white border p-4 rounded shadow w-full max-w-[700px]"
@@ -235,9 +273,14 @@ export default function StorePostPage() {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 )}
-                <p className="text-sm font-semibold text-gray-800">
-                  {post.user?.name ?? "匿名ユーザー"}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-gray-800">
+                    {post.user?.name ?? "匿名ユーザー"}
+                  </p>
+                  {user && post.user && user.id !== post.user.id && (
+                    <FollowButton currentUserId={user.id} targetUserId={post.user.id} />
+                  )}
+                </div>
               </div>
 
               <p className="text-sm text-gray-700 mb-1">

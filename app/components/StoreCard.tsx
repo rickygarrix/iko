@@ -1,10 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
-import { checkIfOpen } from "@/lib/utils";
-import type { Messages } from "@/types/messages";
 import type { MouseEvent } from "react";
+import type { Messages } from "@/types/messages";
+import { checkIfOpen } from "@/lib/utils";
 
 const convertToAMPM = (time24: string): string => {
   const [hourStr, minuteStr] = time24.split(":");
@@ -41,7 +40,7 @@ export type StoreCardProps = {
     description?: string;
     genre_ids: string[];
     areaTranslated?: string;
-    opening_hours?: string; // ← ここを optional に！
+    opening_hours?: string;
     image_url?: string | null;
     latitude: number | null;
     longitude: number | null;
@@ -53,23 +52,18 @@ export type StoreCardProps = {
   messages: Messages["recommend"] | Messages["searchResults"];
   onClick: (storeId: string) => void;
   onMapClick: (e: MouseEvent, storeId: string) => void;
-  delay?: number;
-  mapClickEventName?: string;
 };
 
 export default function StoreCard({
   store,
   locale,
-  index,
   genresMap,
   translatedDescription,
   messages,
   onClick,
   onMapClick,
-  delay = 0,
 }: StoreCardProps) {
-  const { isOpen, nextOpening, closeTime } =
-    checkIfOpen(store.opening_hours ?? ""); // ← 空文字でフォールバック
+  const { isOpen, nextOpening, closeTime } = checkIfOpen(store.opening_hours ?? "");
 
   const staticMapUrl =
     store.latitude !== null && store.longitude !== null
@@ -77,19 +71,18 @@ export default function StoreCard({
       : null;
 
   return (
-    <motion.div
+    <div
       onClick={() => onClick(store.id)}
       className="w-full max-w-[520px] p-5 bg-white flex flex-row gap-5 rounded-lg transition-colors duration-200 cursor-pointer hover:bg-gray-100"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
     >
       <div className="flex flex-col justify-between flex-1">
         <div className="flex flex-col gap-3">
           <h3 className="text-lg font-bold text-zinc-900">{store.name}</h3>
           {store.description && (
             <p className="text-sm font-normal text-zinc-800 leading-snug line-clamp-2">
-              {locale === "ja" ? store.description : translatedDescription || store.description}
+              {locale === "ja"
+                ? store.description
+                : translatedDescription || store.description}
             </p>
           )}
           <p className="text-sm text-zinc-700 whitespace-pre-wrap">
@@ -111,22 +104,31 @@ export default function StoreCard({
           </div>
         </div>
       </div>
-      <a
-        href={`https://www.google.com/maps?q=${store.latitude},${store.longitude}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="relative w-[120px] h-[180px] rounded-md overflow-hidden border-2 border-[#1F1F21] block"
-        onClick={(e) => onMapClick(e, store.id)}
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMapClick(e, store.id);
+          if (store.latitude && store.longitude) {
+            window.open(
+              `https://www.google.com/maps?q=${store.latitude},${store.longitude}`,
+              "_blank",
+              "noopener,noreferrer"
+            );
+          }
+        }}
+        className="relative w-[120px] h-[180px] rounded-md overflow-hidden border-2 border-[#1F1F21]"
       >
         <Image
           src={staticMapUrl || store.image_url || "/default-image.jpg"}
-          alt={store.name}
+          alt={store.name || "店舗画像"}
           width={120}
           height={180}
           style={{ objectFit: "cover" }}
           unoptimized
         />
-      </a>
-    </motion.div>
+      </button>
+    </div>
   );
 }
