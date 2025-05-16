@@ -25,12 +25,13 @@ export const isFollowing = async (followerId: string, followingId: string) => {
     .select("id")
     .eq("follower_id", followerId)
     .eq("following_id", followingId)
-    .maybeSingle(); // ← ★ single() だと0件でエラーになるので maybeSingle()
+    .maybeSingle(); // ← 0件OK、安全
 
   if (error) {
     console.error("フォロー確認エラー:", error.message);
     return false;
   }
 
+  console.log("isFollowing check:", followerId, followingId, "=>", !!data);
   return !!data;
 };

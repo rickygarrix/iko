@@ -6,9 +6,14 @@ import { followUser, unfollowUser, isFollowing } from "@/lib/actions/follow";
 type FollowButtonProps = {
   currentUserId: string;
   targetUserId: string;
+  onFollowChange?: () => void; // ← フォロー変更通知用（任意）
 };
 
-export default function FollowButton({ currentUserId, targetUserId }: FollowButtonProps) {
+export default function FollowButton({
+  currentUserId,
+  targetUserId,
+  onFollowChange,
+}: FollowButtonProps) {
   const [following, setFollowing] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,9 +36,14 @@ export default function FollowButton({ currentUserId, targetUserId }: FollowButt
 
     setFollowing(!following);
     setLoading(false);
+
+    // ✅ 親に変化を通知（任意）
+    if (onFollowChange) {
+      onFollowChange();
+    }
   };
 
-  if (currentUserId === targetUserId) return null; // 自分自身には表示しない
+  if (currentUserId === targetUserId) return null; // 自分自身は非表示
 
   return (
     <button
