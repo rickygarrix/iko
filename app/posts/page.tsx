@@ -7,9 +7,7 @@ import NewPostModal from "@/components/NewPostModal";
 import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import FollowButton from "@/components/FollowButton";
 import { useRouter } from "next/navigation";
-import { Bookmark, BookmarkCheck } from "lucide-react";
 
 type Store = { id: string; name: string };
 
@@ -46,11 +44,8 @@ export default function StorePostPage() {
   const [tagCategories, setTagCategories] = useState<TagCategory[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [followings, setFollowings] = useState<string[]>([]);
-  const [savedPosts, setSavedPosts] = useState<string[]>([]);
-  const [showFollowedOnly, setShowFollowedOnly] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [savingPostIds, setSavingPostIds] = useState<string[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -67,7 +62,6 @@ export default function StorePostPage() {
         });
 
         fetchFollowings(loggedInUser.id);
-        fetchSavedPosts(loggedInUser.id);
       }
 
       fetchStores();
@@ -84,58 +78,6 @@ export default function StorePostPage() {
       .select("following_id")
       .eq("follower_id", userId);
     if (!error && data) setFollowings(data.map((f) => f.following_id));
-  };
-
-  const fetchSavedPosts = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("user_saved_posts")
-      .select("post_id")
-      .eq("user_id", userId);
-    if (!error && data) setSavedPosts(data.map((d) => d.post_id));
-  };
-
-  const toggleSavePost = async (postId: string) => {
-    if (!user) {
-      alert("ログインしてください");
-      return;
-    }
-
-    const alreadySaved = savedPosts.includes(postId);
-    setSavingPostIds((prev) => [...prev, postId]);
-
-    try {
-      if (alreadySaved) {
-        const { error } = await supabase
-          .from("user_saved_posts")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("post_id", postId);
-
-        if (!error) {
-          setSavedPosts((prev) => prev.filter((id) => id !== postId));
-        } else {
-          console.error("削除エラー:", error.message);
-        }
-      } else {
-        // ✅ 重複INSERTを防ぐために `upsert` を使用
-        const { error } = await supabase
-          .from("user_saved_posts")
-          .upsert(
-            { user_id: user.id, post_id: postId },
-            { onConflict: "user_id, post_id" }
-          );
-
-        if (!error) {
-          setSavedPosts((prev) => [...prev, postId]);
-        } else {
-          console.error("保存エラー:", error.message);
-        }
-      }
-    } catch (e) {
-      console.error("例外エラー:", e);
-    } finally {
-      setSavingPostIds((prev) => prev.filter((id) => id !== postId));
-    }
   };
 
   const fetchStores = async () => {
@@ -161,9 +103,10 @@ export default function StorePostPage() {
         post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))
       `)
       .eq("is_public", true)
+      .eq("is_active", true)
       .order("created_at", { ascending: false });
 
-    if (error || !data) return console.error("投稿取得エラー:", error?.message);
+    if (error || !data) return console.error("投稿取得エラー:", error.message);
 
     const userIds = [...new Set(data.map((p) => p.user_id))];
     const { data: users } = await supabase
@@ -175,8 +118,12 @@ export default function StorePostPage() {
       const matchedUser = users?.find((u) => u.id === post.user_id);
       return {
         ...post,
+        user: matchedUser ?? {
+          id: post.user_id,
+          name: "退会ユーザー",
+          avatar_url: "/default-avatar.svg",
+        },
         store: post.store ?? undefined,
-        user: matchedUser ?? undefined,
         post_tag_values: post.post_tag_values?.map((tag: any) => ({
           value: tag.value,
           tag_category: tag.tag_category,
@@ -205,10 +152,6 @@ export default function StorePostPage() {
     }
     fetchPosts();
   };
-
-  const filteredPosts = showFollowedOnly
-    ? posts.filter((post) => followings.includes(post.user_id))
-    : posts;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -249,56 +192,35 @@ export default function StorePostPage() {
 
         <h2 className="text-lg font-semibold mt-8 text-center">投稿一覧</h2>
 
-        <div className="flex justify-center mt-4 space-x-4">
-          <button
-            onClick={() => setShowFollowedOnly(false)}
-            className={`px-3 py-1 border rounded ${!showFollowedOnly ? "bg-blue-600 text-white" : "bg-white text-blue-600"}`}
-          >
-            全体
-          </button>
-          <button
-            onClick={() => setShowFollowedOnly(true)}
-            className={`px-3 py-1 border rounded ${showFollowedOnly ? "bg-blue-600 text-white" : "bg-white text-blue-600"}`}
-          >
-            フォロー中
-          </button>
-        </div>
-
         <ul className="mt-4 mb-16 flex flex-col items-center space-y-6">
-          {filteredPosts.map((post) => (
+          {posts.map((post) => (
             <li key={post.id} className="bg-white border p-4 rounded shadow w-full max-w-[700px]">
               <div className="flex items-center gap-3 mb-2">
-                {post.user?.avatar_url && (
-                  <img
-                    src={post.user.avatar_url}
-                    alt="avatar"
-                    className="w-8 h-8 rounded-full object-cover cursor-pointer"
-                    onClick={() => {
-                      if (user?.id !== post.user?.id) {
-                        router.push(`/users/${post.user?.id}`);
-                      }
-                    }}
-                  />
-                )}
+                <img
+                  src={post.user?.avatar_url ?? "/default-avatar.svg"}
+                  alt="avatar"
+                  className="w-8 h-8 rounded-full object-cover"
+                  onClick={() => {
+                    if (post.user && user?.id !== post.user.id) {
+                      router.push(`/users/${post.user.id}`);
+                    }
+                  }}
+                  style={{ cursor: post.user && user?.id !== post.user.id ? "pointer" : "default" }}
+                />
                 <div className="flex items-center gap-2">
                   <p
                     onClick={() => {
-                      if (user?.id !== post.user?.id) {
-                        router.push(`/users/${post.user?.id}`);
+                      if (post.user && user?.id !== post.user.id) {
+                        router.push(`/users/${post.user.id}`);
                       }
                     }}
-                    className={`text-sm font-semibold text-gray-800 ${user?.id !== post.user?.id ? "cursor-pointer hover:underline" : "text-gray-800"
+                    className={`text-sm font-semibold ${post.user && user?.id !== post.user.id
+                      ? "text-gray-800 hover:underline cursor-pointer"
+                      : "text-gray-500"
                       }`}
                   >
-                    {post.user?.name ?? "匿名ユーザー"}
+                    {post.user?.name ?? "退会ユーザー"}
                   </p>
-                  {user && post.user && user.id !== post.user.id && (
-                    <FollowButton
-                      currentUserId={user.id}
-                      targetUserId={post.user.id}
-                      onFollowChange={() => fetchFollowings(user.id)}
-                    />
-                  )}
                 </div>
               </div>
 
@@ -309,6 +231,7 @@ export default function StorePostPage() {
                 店舗：{post.store?.name ?? "（不明）"}
               </p>
               <p className="mb-2">{post.body}</p>
+
               <div className="text-sm text-gray-600 space-y-1 mb-2">
                 {post.post_tag_values?.map((tag) => (
                   <p key={tag.tag_category.key}>
@@ -316,6 +239,7 @@ export default function StorePostPage() {
                   </p>
                 ))}
               </div>
+
               <div className="flex items-center justify-between text-gray-500 text-xs mt-2">
                 <small>{new Date(post.created_at).toLocaleString()}</small>
                 <div className="flex items-center gap-4">
@@ -339,24 +263,10 @@ export default function StorePostPage() {
                     onClick={() => handleLike(post.id)}
                     className={`text-sm ${post.post_likes?.some((like) => like.user_id === user?.id)
                       ? "text-blue-600"
-                      : "text-gray-500"}`}
+                      : "text-gray-500"
+                      }`}
                   >
                     ♥ いいね {post.post_likes?.length ?? 0}
-                  </button>
-                  <button
-                    onClick={() => toggleSavePost(post.id)}
-                    // ✅ 検証用にこの行を一度コメントアウト
-                    // disabled={savingPostIds.includes(post.id)}
-                    className={`flex items-center text-sm gap-1 transition-colors duration-150 ${savedPosts.includes(post.id)
-                      ? "text-yellow-500"
-                      : "text-gray-400 hover:text-yellow-500"}`}
-                  >
-                    {savedPosts.includes(post.id) ? (
-                      <BookmarkCheck size={18} className="transition-transform duration-150" />
-                    ) : (
-                      <Bookmark size={18} className="transition-transform duration-150" />
-                    )}
-                    <span className="select-none">保存</span>
                   </button>
                 </div>
               </div>

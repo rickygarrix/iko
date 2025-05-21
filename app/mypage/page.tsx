@@ -10,7 +10,6 @@ import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
-import { unfollowUser } from "@/lib/actions/follow";
 
 export default function MyPage() {
   const { data: session, status } = useSession();
@@ -20,21 +19,17 @@ export default function MyPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Post[]>([]);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [nameError, setNameError] = useState("");
-  const [followedUsers, setFollowedUsers] = useState<
-    { id: string; name: string; avatar_url: string | null }[]
-  >([]);
   const router = useRouter();
-  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     const fetchUserAndPosts = async () => {
       const { data: supaUser } = await supabase.auth.getUser();
 
-      if (supaUser?.user) {
-        const userId = supaUser.user.id;
-        setUser(supaUser.user);
+      const loadData = async (userId: string, fallbackUser: User) => {
+        setUser(fallbackUser);
 
         const { data: profile } = await supabase
           .from("user_profiles")
@@ -47,21 +42,20 @@ export default function MyPage() {
           setInstagram(profile.instagram || "");
           setAvatarUrl(profile.avatar_url || null);
         } else {
-          setName(supaUser.user.user_metadata?.name || "");
-          setInstagram(supaUser.user.user_metadata?.instagram || "");
-          setAvatarUrl(supaUser.user.user_metadata?.avatar_url || null);
+          setName(fallbackUser.user_metadata?.name || "");
+          setInstagram(fallbackUser.user_metadata?.instagram || "");
+          setAvatarUrl(fallbackUser.user_metadata?.avatar_url || null);
         }
 
         fetchPosts(userId);
-        fetchSavedPosts(userId);
-        fetchFollowedUsers(userId);
-        return;
-      }
+        fetchLikedPosts(userId);
+      };
 
-      if (session?.user?.id) {
-        const userId = session.user.id;
-        setUser({
-          id: userId,
+      if (supaUser?.user) {
+        loadData(supaUser.user.id, supaUser.user);
+      } else if (session?.user?.id) {
+        loadData(session.user.id, {
+          id: session.user.id,
           aud: "authenticated",
           role: "authenticated",
           email: session.user.email ?? "",
@@ -69,128 +63,18 @@ export default function MyPage() {
             name: session.user.name ?? "",
             avatar_url: session.user.image ?? "",
           },
-          app_metadata: {
-            provider: "line",
-          },
+          app_metadata: { provider: "line" },
           created_at: "",
         });
-
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        if (profile) {
-          setName(profile.name || "");
-          setInstagram(profile.instagram || "");
-          setAvatarUrl(profile.avatar_url || null);
-        } else {
-          setName(session.user.name || "");
-          setInstagram("");
-          setAvatarUrl(session.user.image || null);
-        }
-
-        fetchPosts(userId);
-        fetchSavedPosts(userId);
-        fetchFollowedUsers(userId);
       }
-    };
-
-    const fetchSavedPosts = async (userId: string) => {
-      // まずは user_saved_posts から post_id を取得
-      const { data: saved, error: savedError } = await supabase
-        .from("user_saved_posts")
-        .select("post_id")
-        .eq("user_id", userId);
-
-      if (savedError) {
-        console.error("保存済み投稿の取得エラー:", savedError.message);
-        return;
-      }
-
-      const postIds = saved?.map((row) => row.post_id) ?? [];
-
-      if (postIds.length === 0) {
-        setSavedPosts([]);
-        return;
-      }
-
-      // 次に post_id から posts テーブルの詳細を取得
-      const { data: posts, error: postsError } = await supabase
-        .from("posts")
-        .select(`
-          id,
-          body,
-          created_at,
-          user_id,
-          store:stores!posts_store_id_fkey (
-            id,
-            name
-          ),
-          post_tag_values (
-            value,
-            tag_category:tag_categories (
-              key,
-              label,
-              min_label,
-              max_label
-            )
-          )
-        `)
-        .in("id", postIds);
-
-      if (postsError) {
-        console.error("投稿詳細の取得エラー:", postsError.message);
-        return;
-      }
-
-      const normalizedPosts: Post[] = posts.map((post: any) => {
-        const store = Array.isArray(post.store) ? post.store[0] : post.store;
-        return {
-          id: post.id,
-          body: post.body,
-          created_at: post.created_at,
-          user_id: post.user_id,
-          store: store ? { id: store.id, name: store.name } : undefined,
-          post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
-            value: tag.value,
-            tag_category: {
-              key: tag.tag_category?.key ?? "",
-              label: tag.tag_category?.label ?? "",
-              min_label: tag.tag_category?.min_label ?? "",
-              max_label: tag.tag_category?.max_label ?? "",
-            },
-          })),
-        };
-      });
-
-      setSavedPosts(normalizedPosts);
     };
 
     const fetchPosts = async (userId: string) => {
       const { data: posts } = await supabase
         .from("posts")
-        .select(`
-          id,
-          body,
-          created_at,
-          user_id,
-          store:stores!posts_store_id_fkey (
-            id,
-            name
-          ),
-          post_tag_values (
-            value,
-            tag_category:tag_categories (
-              key,
-              label,
-              min_label,
-              max_label
-            )
-          )
-        `)
+        .select(`id, body, created_at, user_id, store:stores!posts_store_id_fkey(id, name), post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))`)
         .eq("user_id", userId)
+        .eq("is_active", true) // ← 追加
         .order("created_at", { ascending: false });
 
       const normalizedPosts: Post[] = (posts ?? []).map((post: any) => {
@@ -216,55 +100,50 @@ export default function MyPage() {
       setMyPosts(normalizedPosts);
     };
 
-    const fetchFollowedUsers = async (userId: string) => {
-      const { data: follows, error } = await supabase
-        .from("user_follows")
-        .select("following_id")
-        .eq("follower_id", userId);
+    const fetchLikedPosts = async (userId: string) => {
+      const { data: likes, error } = await supabase
+        .from("post_likes")
+        .select("post_id")
+        .eq("user_id", userId);
 
-      if (error) return console.error("フォロー取得エラー:", error.message);
-      const followingIds = follows.map((f) => f.following_id);
+      if (error) return console.error("いいね取得エラー:", error.message);
 
-      if (followingIds.length === 0) return;
+      const postIds = likes?.map((l) => l.post_id);
+      if (!postIds?.length) return setLikedPosts([]);
 
-      const { data: profiles, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("id, name, avatar_url")
-        .in("id", followingIds);
+      const { data: posts, error: postsError } = await supabase
+        .from("posts")
+        .select(`id, body, created_at, user_id, store:stores!posts_store_id_fkey(id, name), post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))`)
+        .in("id", postIds)
+        .eq("is_active", true); // ← 追加
 
-      if (profileError) {
-        console.error("プロフィール取得エラー:", profileError.message);
-      } else {
-        setFollowedUsers(profiles);
-      }
+      if (postsError) return console.error("投稿取得エラー:", postsError.message);
+
+      const normalized: Post[] = (posts ?? []).map((post: any) => {
+        const store = Array.isArray(post.store) ? post.store[0] : post.store;
+        return {
+          id: post.id,
+          body: post.body,
+          created_at: post.created_at,
+          user_id: post.user_id,
+          store: store ? { id: store.id, name: store.name } : undefined,
+          post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
+            value: tag.value,
+            tag_category: {
+              key: tag.tag_category?.key ?? "",
+              label: tag.tag_category?.label ?? "",
+              min_label: tag.tag_category?.min_label ?? "",
+              max_label: tag.tag_category?.max_label ?? "",
+            },
+          })),
+        };
+      });
+
+      setLikedPosts(normalized);
     };
 
     fetchUserAndPosts();
   }, [session]);
-
-  const handleSave = async () => {
-    if (!name.trim()) {
-      setNameError("名前を入力してください");
-      return;
-    }
-
-    const updates = {
-      id: user?.id,
-      name,
-      instagram,
-      avatar_url: avatarUrl,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = await supabase.from("user_profiles").upsert(updates);
-    if (error) {
-      alert("更新に失敗しました");
-      console.error(error);
-    } else {
-      alert("プロフィールを更新しました");
-      setIsEditing(false);
-    }
-  };
 
   const handleDeletePost = async (postId: string) => {
     if (!confirm("この投稿を削除しますか？")) return;
@@ -274,42 +153,13 @@ export default function MyPage() {
     }
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    const ext = file.name.split(".").pop();
-    const fileName = `${Date.now()}.${ext}`;
-    const filePath = `${user.id}/${fileName}`;
-
-    const { data, error } = await supabase.storage
-      .from("avatars")
-      .upload(filePath, file, { upsert: true });
-
-    if (error || !data) {
-      console.error("Upload error:", error);
-      alert("画像のアップロードに失敗しました");
-      return;
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("avatars").getPublicUrl(filePath);
-
-    setAvatarUrl(publicUrl);
-  };
-
-  if (status === "loading" || !user) {
-    return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>;
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#FEFCF6]">
+    <div className="min-h-screen bg-[#FEFCF6]">
       <Header locale="ja" messages={{ search: "検索", map: "地図" }} />
-      <main className="flex-1 p-8 pt-[80px]">
+      <main className="px-4 py-8 pt-[80px] max-w-3xl mx-auto">
         <h1 className="text-xl font-bold mb-6">マイページ</h1>
 
-        {/* プロフィール */}
+        {/* プロフィール編集 */}
         <div className="space-y-6 max-w-md mx-auto mb-12">
           <div>
             <p className="font-semibold mb-2">アイコン</p>
@@ -325,7 +175,29 @@ export default function MyPage() {
                 />
               </div>
             )}
-            {isEditing && <input type="file" accept="image/*" onChange={handleAvatarChange} />}
+            {isEditing && <input type="file" accept="image/*" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file || !user) return;
+
+              const ext = file.name.split(".").pop();
+              const fileName = `${Date.now()}.${ext}`;
+              const filePath = `${user.id}/${fileName}`;
+
+              supabase.storage
+                .from("avatars")
+                .upload(filePath, file, { upsert: true })
+                .then(({ data, error }) => {
+                  if (error || !data) {
+                    console.error("Upload error:", error);
+                    alert("画像のアップロードに失敗しました");
+                    return;
+                  }
+                  const {
+                    data: { publicUrl },
+                  } = supabase.storage.from("avatars").getPublicUrl(filePath);
+                  setAvatarUrl(publicUrl);
+                });
+            }} />}
           </div>
 
           <div>
@@ -370,7 +242,27 @@ export default function MyPage() {
           {isEditing ? (
             <div className="flex gap-4">
               <button
-                onClick={handleSave}
+                onClick={async () => {
+                  if (!name.trim()) {
+                    setNameError("名前を入力してください");
+                    return;
+                  }
+                  const updates = {
+                    id: user?.id,
+                    name,
+                    instagram,
+                    avatar_url: avatarUrl,
+                    updated_at: new Date().toISOString(),
+                  };
+                  const { error } = await supabase.from("user_profiles").upsert(updates);
+                  if (error) {
+                    alert("更新に失敗しました");
+                    console.error(error);
+                  } else {
+                    alert("プロフィールを更新しました");
+                    setIsEditing(false);
+                  }
+                }}
                 className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
               >
                 保存する
@@ -402,49 +294,40 @@ export default function MyPage() {
           )}
         </div>
 
-        {/* 投稿一覧 */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">自分の投稿</h2>
-          <ul className="space-y-4">
-            {myPosts.map((post) => (
-              <li key={post.id} className="bg-white border p-4 rounded shadow">
-                <p className="text-sm text-gray-700 mb-1">
-                  店舗：{post.store?.name ?? "（不明）"}
-                </p>
-                <p className="mb-2">{post.body}</p>
-                <div className="text-sm text-gray-600 space-y-1 mb-2">
-                  {post.post_tag_values?.map((tag) => (
-                    <p key={tag.tag_category.key}>
-                      {tag.tag_category.label}：{tag.value}（
-                      {tag.tag_category.min_label}〜{tag.tag_category.max_label}）
-                    </p>
-                  ))}
-                </div>
-                <div className="flex justify-end gap-4 text-sm text-blue-600 mt-2">
-                  <button onClick={() => setEditingPost(post)}>編集</button>
-                  <button
-                    onClick={() => handleDeletePost(post.id)}
-                    className="text-red-500"
-                  >
-                    削除
-                  </button>
-                </div>
-                <small className="text-gray-500">
-                  {new Date(post.created_at).toLocaleString()}
-                </small>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* 自分の投稿 */}
+        <h2 className="text-lg font-semibold mb-4">自分の投稿</h2>
+        <ul className="space-y-4">
+          {myPosts.map((post) => (
+            <li key={post.id} className="bg-white border p-4 rounded shadow">
+              <p className="text-sm text-gray-700 mb-1">
+                店舗：{post.store?.name ?? "（不明）"}
+              </p>
+              <p className="mb-2">{post.body}</p>
+              <div className="text-sm text-gray-600 space-y-1 mb-2">
+                {post.post_tag_values?.map((tag) => (
+                  <p key={tag.tag_category.key}>
+                    {tag.tag_category.label}：{tag.value}（
+                    {tag.tag_category.min_label}〜{tag.tag_category.max_label}）
+                  </p>
+                ))}
+              </div>
+              <div className="flex justify-end gap-4 text-sm text-blue-600 mt-2">
+                <button onClick={() => setEditingPost(post)}>編集</button>
+                <button onClick={() => handleDeletePost(post.id)} className="text-red-500">削除</button>
+              </div>
+              <small className="text-gray-500">{new Date(post.created_at).toLocaleString()}</small>
+            </li>
+          ))}
+        </ul>
 
-        {/* 保存済み投稿 */}
+        {/* いいねした投稿 */}
         <div className="mt-12">
-          <h2 className="text-lg font-semibold mb-4">保存済みの投稿</h2>
-          {savedPosts.length === 0 ? (
-            <p className="text-gray-600">保存された投稿はありません。</p>
+          <h2 className="text-lg font-semibold mb-4">いいねした投稿</h2>
+          {likedPosts.length === 0 ? (
+            <p className="text-gray-600">いいねした投稿はありません。</p>
           ) : (
             <ul className="space-y-4">
-              {savedPosts.map((post) => (
+              {likedPosts.map((post) => (
                 <li key={post.id} className="bg-white border p-4 rounded shadow">
                   <p className="text-sm text-gray-700 mb-1">
                     店舗：{post.store?.name ?? "（不明）"}
@@ -458,84 +341,26 @@ export default function MyPage() {
                       </p>
                     ))}
                   </div>
-                  <small className="text-gray-500">
-                    {new Date(post.created_at).toLocaleString()}
-                  </small>
+                  <small className="text-gray-500">{new Date(post.created_at).toLocaleString()}</small>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        {/* フォロー中のユーザー */}
-        <div className="mt-12">
-          <h2 className="text-lg font-semibold mb-4">フォロー中のユーザー</h2>
-          {followedUsers.length === 0 ? (
-            <p className="text-gray-600">フォロー中のユーザーはいません。</p>
-          ) : (
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {followedUsers.map((u) => (
-                <li
-                  key={u.id}
-                  className="bg-white border rounded p-4 flex items-center justify-between"
-                >
-                  <div
-                    className="flex items-center gap-4 cursor-pointer"
-                    onClick={() => router.push(`/users/${u.id}`)}
-                  >
-                    {u.avatar_url ? (
-                      <img
-                        src={u.avatar_url}
-                        alt={u.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-300" />
-                    )}
-                    <p className="text-sm font-semibold text-blue-600 underline">
-                      {u.name}
-                    </p>
-                  </div>
-                  <button
-                    className="text-sm text-red-500 hover:underline"
-                    onClick={async () => {
-                      if (!user) return;
-                      const ok = confirm(`${u.name} のフォローを解除しますか？`);
-                      if (!ok) return;
-
-                      const error = await unfollowUser(user.id, u.id);
-                      if (error) {
-                        alert("フォロー解除に失敗しました");
-                        console.error(error);
-                      } else {
-                        setFollowedUsers((prev) =>
-                          prev.filter((f) => f.id !== u.id)
-                        );
-                      }
-                    }}
-                  >
-                    フォロー解除
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        {editingPost && (
+          <EditPostModal
+            post={editingPost}
+            stores={[]}
+            tagCategories={[]}
+            onClose={() => setEditingPost(null)}
+            onUpdated={() => {
+              setEditingPost(null);
+              location.reload();
+            }}
+          />
+        )}
       </main>
-
-      {editingPost && (
-        <EditPostModal
-          post={editingPost}
-          stores={[]}
-          tagCategories={[]}
-          onClose={() => setEditingPost(null)}
-          onUpdated={() => {
-            setEditingPost(null);
-            location.reload();
-          }}
-        />
-      )}
-
       <Footer
         locale="ja"
         messages={{

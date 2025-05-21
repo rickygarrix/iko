@@ -18,7 +18,8 @@ type TagCategory = {
 };
 
 type Props = {
-  stores: Store[];
+  stores?: Store[]; // 任意：投稿画面などで複数選択肢がある場合
+  selectedStore?: Store; // 任意：店舗詳細ページなどで特定の店舗に固定投稿
   tagCategories: TagCategory[];
   user: User;
   onClose: () => void;
@@ -26,14 +27,15 @@ type Props = {
 };
 
 export default function NewPostModal({
-  stores,
+  stores = [],
+  selectedStore,
   tagCategories,
   user,
   onClose,
   onPosted,
 }: Props) {
   const [body, setBody] = useState("");
-  const [storeId, setStoreId] = useState("");
+  const [storeId, setStoreId] = useState(selectedStore?.id ?? "");
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<Record<string, number>>(
     Object.fromEntries(tagCategories.map((cat) => [cat.key, 3]))
@@ -87,18 +89,27 @@ export default function NewPostModal({
     <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
         <h2 className="text-lg font-bold mb-4">新規投稿</h2>
-        <select
-          className="w-full border rounded p-2 mb-2 text-black"
-          value={storeId}
-          onChange={(e) => setStoreId(e.target.value)}
-        >
-          <option value="">店舗を選択</option>
-          {stores.map((store) => (
-            <option key={store.id} value={store.id}>
-              {store.name}
-            </option>
-          ))}
-        </select>
+
+        {/* 店舗選択 or 固定表示 */}
+        {selectedStore ? (
+          <div className="mb-2 text-center font-semibold text-sm text-gray-700">
+            📍 投稿先：{selectedStore.name}
+          </div>
+        ) : (
+          <select
+            className="w-full border rounded p-2 mb-2 text-black"
+            value={storeId}
+            onChange={(e) => setStoreId(e.target.value)}
+          >
+            <option value="">店舗を選択</option>
+            {stores.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+              </option>
+            ))}
+          </select>
+        )}
+
         <textarea
           className="w-full border rounded p-2 text-black mb-2"
           rows={4}
@@ -106,6 +117,7 @@ export default function NewPostModal({
           onChange={(e) => setBody(e.target.value)}
           placeholder="投稿内容を入力"
         />
+
         {tagCategories.map((cat) => (
           <div key={cat.id} className="mb-4">
             <p className="text-sm mb-1">
@@ -124,6 +136,7 @@ export default function NewPostModal({
             />
           </div>
         ))}
+
         <div className="flex justify-between mt-4">
           <button onClick={onClose} className="text-gray-500">
             キャンセル
