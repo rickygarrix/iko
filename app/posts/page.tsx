@@ -47,6 +47,7 @@ export default function StorePostPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const router = useRouter();
+  const [reportedPostIds, setReportedPostIds] = useState<string[]>([]);
 
   useEffect(() => {
     const initialize = async () => {
@@ -62,6 +63,7 @@ export default function StorePostPage() {
         });
 
         fetchFollowings(loggedInUser.id);
+        fetchReportedPosts(loggedInUser.id);
       }
 
       fetchStores();
@@ -78,6 +80,14 @@ export default function StorePostPage() {
       .select("following_id")
       .eq("follower_id", userId);
     if (!error && data) setFollowings(data.map((f) => f.following_id));
+  };
+
+  const fetchReportedPosts = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("reports")
+      .select("post_id")
+      .eq("reporter_id", userId);
+    if (!error && data) setReportedPostIds(data.map((r) => r.post_id));
   };
 
   const fetchStores = async () => {
@@ -138,6 +148,30 @@ export default function StorePostPage() {
     if (!window.confirm("この投稿を削除しますか？")) return;
     const { error } = await supabase.from("posts").delete().eq("id", postId);
     if (!error) fetchPosts();
+  };
+
+  const handleReportPost = async (postId: string) => {
+    if (!user) {
+      alert("ログインしてください");
+      return;
+    }
+
+    const confirmed = window.confirm("この投稿を運営に通報しますか？");
+    if (!confirmed) return;
+
+    const { error } = await supabase.from("reports").insert({
+      post_id: postId,
+      reporter_id: user.id,
+      reason: "", // 必要に応じて後でフォーム追加も可
+    });
+
+    if (error) {
+      console.error("通報エラー:", error.message);
+      alert("通報に失敗しました");
+    } else {
+      setReportedPostIds((prev) => [...prev, postId]);
+      alert("通報しました。ご協力ありがとうございます。");
+    }
   };
 
   const handleLike = async (postId: string) => {
@@ -243,21 +277,21 @@ export default function StorePostPage() {
               <div className="flex items-center justify-between text-gray-500 text-xs mt-2">
                 <small>{new Date(post.created_at).toLocaleString()}</small>
                 <div className="flex items-center gap-4">
-                  {user?.id === post.user_id && (
+                  {user?.id === post.user_id ? (
                     <>
-                      <button
-                        onClick={() => setEditingPost(post)}
-                        className="text-green-600 hover:underline"
-                      >
+                      <button onClick={() => setEditingPost(post)} className="text-green-600 hover:underline">
                         編集
                       </button>
-                      <button
-                        onClick={() => handleDeletePost(post.id)}
-                        className="text-red-500 hover:underline"
-                      >
+                      <button onClick={() => handleDeletePost(post.id)} className="text-red-500 hover:underline">
                         削除
                       </button>
                     </>
+                  ) : reportedPostIds.includes(post.id) ? (
+                    <span className="text-red-400 text-sm">🚨 通報済み</span>
+                  ) : (
+                    <button onClick={() => handleReportPost(post.id)} className="text-red-600 hover:underline">
+                      通報
+                    </button>
                   )}
                   <button
                     onClick={() => handleLike(post.id)}

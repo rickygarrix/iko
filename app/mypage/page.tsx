@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import type { Post } from "@/types/post";
+import type { Store } from "@/types/store";
 import Image from "next/image";
 import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
@@ -12,7 +13,7 @@ import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
 
 export default function MyPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -20,129 +21,169 @@ export default function MyPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = useState<Post[]>([]);
+  const [storeFollows, setStoreFollows] = useState<Store[]>([]);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [nameError, setNameError] = useState("");
+  const [postCount, setPostCount] = useState(0);
+  const [receivedLikeCount, setReceivedLikeCount] = useState(0);
   const router = useRouter();
 
+  // 投稿数
+  const fetchPosts = async (userId: string) => {
+    const { data: posts } = await supabase
+      .from("posts")
+      .select(`id, body, created_at, user_id, store:stores!posts_store_id_fkey(id, name), post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))`)
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+    const normalized: Post[] = (posts ?? []).map((post: any) => ({
+      id: post.id,
+      body: post.body,
+      created_at: post.created_at,
+      user_id: post.user_id,
+      store: Array.isArray(post.store) ? post.store[0] : post.store,
+      post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
+        value: tag.value,
+        tag_category: {
+          key: tag.tag_category?.key ?? "",
+          label: tag.tag_category?.label ?? "",
+          min_label: tag.tag_category?.min_label ?? "",
+          max_label: tag.tag_category?.max_label ?? "",
+        },
+      })),
+    }));
+
+    setMyPosts(normalized);
+    setPostCount(normalized.length);
+  };
+
+  // いいねした投稿
+  const fetchLikedPosts = async (userId: string) => {
+    const { data: likes, error } = await supabase
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", userId);
+
+    if (error) return;
+
+    const postIds = likes?.map((l) => l.post_id);
+    if (!postIds?.length) {
+      setLikedPosts([]);
+      return;
+    }
+
+    const { data: posts } = await supabase
+      .from("posts")
+      .select(`id, body, created_at, user_id, store:stores!posts_store_id_fkey(id, name), post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))`)
+      .in("id", postIds)
+      .eq("is_active", true);
+
+    const normalized: Post[] = (posts ?? []).map((post: any) => ({
+      id: post.id,
+      body: post.body,
+      created_at: post.created_at,
+      user_id: post.user_id,
+      store: Array.isArray(post.store) ? post.store[0] : post.store,
+      post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
+        value: tag.value,
+        tag_category: {
+          key: tag.tag_category?.key ?? "",
+          label: tag.tag_category?.label ?? "",
+          min_label: tag.tag_category?.min_label ?? "",
+          max_label: tag.tag_category?.max_label ?? "",
+        },
+      })),
+    }));
+
+    setLikedPosts(normalized);
+  };
+
+  // 自分の投稿に対するもらったいいね数
+  const fetchReceivedLikes = async (userId: string) => {
+    const { data: posts } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
+    if (!posts || posts.length === 0) {
+      setReceivedLikeCount(0);
+      return;
+    }
+
+    const postIds = posts.map((p) => p.id);
+
+    const { data: likes } = await supabase
+      .from("post_likes")
+      .select("*")
+      .in("post_id", postIds);
+
+    setReceivedLikeCount(likes?.length ?? 0);
+  };
+
+  // フォロー中の店舗
+  const fetchFollowedStores = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("store_follows")
+      .select("store:stores(id, name)")
+      .eq("user_id", userId);
+
+    if (!error && data) {
+      const stores: Store[] = data.map((f: any) => f.store);
+      setStoreFollows(stores);
+    }
+  };
+
+  // メインロジック
   useEffect(() => {
-    const fetchUserAndPosts = async () => {
+    const fetchUserAndData = async () => {
       const { data: supaUser } = await supabase.auth.getUser();
+      const supa = supaUser?.user;
+      const sessionUser = session?.user;
 
-      const loadData = async (userId: string, fallbackUser: User) => {
-        setUser(fallbackUser);
+      if (!supa && !sessionUser) return;
 
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("id", userId)
-          .single();
+      const activeUserId = supa?.id ?? sessionUser?.id ?? "";
 
-        if (profile) {
-          setName(profile.name || "");
-          setInstagram(profile.instagram || "");
-          setAvatarUrl(profile.avatar_url || null);
-        } else {
-          setName(fallbackUser.user_metadata?.name || "");
-          setInstagram(fallbackUser.user_metadata?.instagram || "");
-          setAvatarUrl(fallbackUser.user_metadata?.avatar_url || null);
-        }
-
-        fetchPosts(userId);
-        fetchLikedPosts(userId);
+      const fallbackUser: User = supa ?? {
+        id: activeUserId,
+        aud: "authenticated",
+        role: "authenticated",
+        email: sessionUser?.email ?? "",
+        user_metadata: {
+          name: sessionUser?.name ?? "",
+          avatar_url: sessionUser?.image ?? "",
+        },
+        app_metadata: { provider: "line" },
+        created_at: "",
       };
 
-      if (supaUser?.user) {
-        loadData(supaUser.user.id, supaUser.user);
-      } else if (session?.user?.id) {
-        loadData(session.user.id, {
-          id: session.user.id,
-          aud: "authenticated",
-          role: "authenticated",
-          email: session.user.email ?? "",
-          user_metadata: {
-            name: session.user.name ?? "",
-            avatar_url: session.user.image ?? "",
-          },
-          app_metadata: { provider: "line" },
-          created_at: "",
-        });
+      setUser(fallbackUser);
+
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", activeUserId)
+        .single();
+
+      if (profile) {
+        setName(profile.name || "");
+        setInstagram(profile.instagram || "");
+        setAvatarUrl(profile.avatar_url || null);
+      } else {
+        setName(fallbackUser.user_metadata?.name || "");
+        setInstagram("");
+        setAvatarUrl(fallbackUser.user_metadata?.avatar_url || null);
       }
+
+      await fetchPosts(activeUserId);
+      await fetchLikedPosts(activeUserId);
+      await fetchReceivedLikes(activeUserId);
+      await fetchFollowedStores(activeUserId);
     };
 
-    const fetchPosts = async (userId: string) => {
-      const { data: posts } = await supabase
-        .from("posts")
-        .select(`id, body, created_at, user_id, store:stores!posts_store_id_fkey(id, name), post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))`)
-        .eq("user_id", userId)
-        .eq("is_active", true) // ← 追加
-        .order("created_at", { ascending: false });
-
-      const normalizedPosts: Post[] = (posts ?? []).map((post: any) => {
-        const store = Array.isArray(post.store) ? post.store[0] : post.store;
-        return {
-          id: post.id,
-          body: post.body,
-          created_at: post.created_at,
-          user_id: post.user_id,
-          store: store ? { id: store.id, name: store.name } : undefined,
-          post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
-            value: tag.value,
-            tag_category: {
-              key: tag.tag_category?.key ?? "",
-              label: tag.tag_category?.label ?? "",
-              min_label: tag.tag_category?.min_label ?? "",
-              max_label: tag.tag_category?.max_label ?? "",
-            },
-          })),
-        };
-      });
-
-      setMyPosts(normalizedPosts);
-    };
-
-    const fetchLikedPosts = async (userId: string) => {
-      const { data: likes, error } = await supabase
-        .from("post_likes")
-        .select("post_id")
-        .eq("user_id", userId);
-
-      if (error) return console.error("いいね取得エラー:", error.message);
-
-      const postIds = likes?.map((l) => l.post_id);
-      if (!postIds?.length) return setLikedPosts([]);
-
-      const { data: posts, error: postsError } = await supabase
-        .from("posts")
-        .select(`id, body, created_at, user_id, store:stores!posts_store_id_fkey(id, name), post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))`)
-        .in("id", postIds)
-        .eq("is_active", true); // ← 追加
-
-      if (postsError) return console.error("投稿取得エラー:", postsError.message);
-
-      const normalized: Post[] = (posts ?? []).map((post: any) => {
-        const store = Array.isArray(post.store) ? post.store[0] : post.store;
-        return {
-          id: post.id,
-          body: post.body,
-          created_at: post.created_at,
-          user_id: post.user_id,
-          store: store ? { id: store.id, name: store.name } : undefined,
-          post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
-            value: tag.value,
-            tag_category: {
-              key: tag.tag_category?.key ?? "",
-              label: tag.tag_category?.label ?? "",
-              min_label: tag.tag_category?.min_label ?? "",
-              max_label: tag.tag_category?.max_label ?? "",
-            },
-          })),
-        };
-      });
-
-      setLikedPosts(normalized);
-    };
-
-    fetchUserAndPosts();
+    fetchUserAndData();
   }, [session]);
 
   const handleDeletePost = async (postId: string) => {
@@ -153,11 +194,14 @@ export default function MyPage() {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-[#FEFCF6]">
       <Header locale="ja" messages={{ search: "検索", map: "地図" }} />
       <main className="px-4 py-8 pt-[80px] max-w-3xl mx-auto">
         <h1 className="text-xl font-bold mb-6">マイページ</h1>
+
+
 
         {/* プロフィール編集 */}
         <div className="space-y-6 max-w-md mx-auto mb-12">
@@ -239,6 +283,18 @@ export default function MyPage() {
             )}
           </div>
 
+          <div className="mb-6 text-sm text-gray-700 flex gap-4">
+            <div>
+              <span className="font-bold">{postCount}</span> 投稿
+            </div>
+            <div>
+              <span className="font-bold">{receivedLikeCount}</span> もらったいいね
+            </div>
+            <div>
+              <span className="font-bold">{storeFollows.length}</span> フォロー中の店舗
+            </div>
+          </div>
+
           {isEditing ? (
             <div className="flex gap-4">
               <button
@@ -291,6 +347,22 @@ export default function MyPage() {
                 </button>
               </div>
             </>
+          )}
+        </div>
+
+        {/* フォロー中の店舗セクション */}
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold mb-2">フォロー中の店舗</h2>
+          {storeFollows.length === 0 ? (
+            <p className="text-gray-600">フォロー中の店舗はありません。</p>
+          ) : (
+            <ul className="space-y-2">
+              {storeFollows.map((store) => (
+                <li key={store.id} className="border p-3 rounded bg-white">
+                  {store.name}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 

@@ -1,15 +1,10 @@
-// types/post.ts
 export type Post = {
   id: string;
   body: string;
   created_at: string;
   user_id: string;
-  user?: {
-    id: string;
-    name?: string;
-    avatar_url?: string;
-  } | null;
-  store?: { id: string; name: string }; // ← ここに id を追加！
+  store?: { id: string; name: string };
+  post_likes?: { user_id: string }[];
   post_tag_values?: {
     value: number;
     tag_category: {
@@ -19,4 +14,10 @@ export type Post = {
       max_label: string;
     };
   }[];
+  // ✅ 追加
+  user?: {
+    id: string;
+    name?: string;
+    avatar_url?: string;
+  } | null;
 };
