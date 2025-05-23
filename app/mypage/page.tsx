@@ -35,8 +35,15 @@ export default function MyPage() {
   const fetchPosts = async (userId: string) => {
     const { data: posts } = await supabase
       .from("posts")
-      .select(`id, body, created_at, user_id, store:stores!posts_store_id_fkey(id, name), post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))`)
-      .eq("user_id", userId)
+      .select(`
+    id,
+    body,
+    created_at,
+    user_id,
+    store:stores(id, name),
+    post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label)),
+    user:user_profiles(id, name, avatar_url)
+  `)
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
@@ -101,6 +108,7 @@ export default function MyPage() {
       created_at: post.created_at,
       user_id: post.user_id,
       store: Array.isArray(post.store) ? post.store[0] : post.store,
+      user: post.user ?? null, // ← 🔥これが必要！
       post_tag_values: (post.post_tag_values ?? []).map((tag: any) => ({
         value: tag.value,
         tag_category: {
@@ -350,7 +358,7 @@ export default function MyPage() {
                 className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
               >
                 保存する
-              </button>d
+              </button>
               <button
                 onClick={() => setIsEditing(false)}
                 className="flex-1 border border-gray-400 text-gray-600 py-2 rounded hover:bg-gray-100"

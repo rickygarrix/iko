@@ -49,7 +49,11 @@ export default function NewPostModal({
     // 投稿データ挿入（画像なしで先に）
     const { data: inserted, error } = await supabase
       .from("posts")
-      .insert([{ user_id: user.id, body, store_id: storeId }])
+      .insert([{
+        user_id: user.id,
+        body,
+        store_id: storeId,
+      }])
       .select("id")
       .single();
 
@@ -80,7 +84,6 @@ export default function NewPostModal({
           .getPublicUrl(filePath);
         image_url = publicData.publicUrl;
 
-        // 投稿に画像URLを追加更新
         await supabase
           .from("posts")
           .update({ image_url })
@@ -96,7 +99,7 @@ export default function NewPostModal({
     }));
     await supabase.from("post_tag_values").insert(tagInserts);
 
-    // リセット
+    // リセットと閉じる
     setBody("");
     setStoreId("");
     setImage(null);

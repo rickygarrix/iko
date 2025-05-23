@@ -186,7 +186,7 @@ export default function Header({ locale, messages }: Props) {
                 <div ref={dropdownRef} className="relative">
                   <button onClick={() => setDropdownOpen(!dropdownOpen)}>
                     <img
-                      src={avatarUrl ?? "/default.png"}
+                      src={avatarUrl ?? "/setting.png"}
                       alt="avatar"
                       className="w-8 h-8 rounded-full object-cover"
                     />

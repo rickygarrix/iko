@@ -25,19 +25,7 @@ export default function WithdrawalPage() {
     const confirmed = confirm("本当に退会しますか？この操作は取り消せません。");
     if (!confirmed) return;
 
-    // ✅ アンケート保存
-    const { error: feedbackError } = await supabase.from("withdrawal_feedbacks").insert({
-      user_id: userId,
-      reason: reason === "その他" ? customReason : reason,
-      preserve_posts: preservePosts,
-    });
-    if (feedbackError) {
-      alert("退会アンケートの送信に失敗しました。");
-      console.error(feedbackError);
-      return;
-    }
-
-    // ✅ 投稿を非表示にする（削除ではなくis_active = false）
+    // ✅ 投稿を非表示に（is_active = false）
     const { error: deactivatePostsError } = await supabase
       .from("posts")
       .update({ is_active: false })
@@ -45,6 +33,18 @@ export default function WithdrawalPage() {
     if (deactivatePostsError) {
       alert("投稿の非表示に失敗しました。");
       console.error(deactivatePostsError);
+      return;
+    }
+
+    // ✅ アンケート送信
+    const { error: feedbackError } = await supabase.from("withdrawal_feedbacks").insert({
+      user_id: userId,
+      reason: reason === "その他" ? customReason : reason,
+      preserve_posts: true, // ← 常に true にして残す方針
+    });
+    if (feedbackError) {
+      alert("退会アンケートの送信に失敗しました。");
+      console.error(feedbackError);
       return;
     }
 
@@ -61,19 +61,18 @@ export default function WithdrawalPage() {
       return;
     }
 
-    // ✅ API経由でauthユーザーを削除
+    // ✅ Supabase Auth 削除（/api/delete-user）
     const res = await fetch("/api/delete-user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
     });
-
     if (!res.ok) {
       alert("アカウントの削除に失敗しました");
       return;
     }
 
-    // ✅ ログアウト＆リダイレクト
+    // ✅ ログアウト & トップへ
     await supabase.auth.signOut();
     alert("退会が完了しました。ご利用ありがとうございました。");
     router.push("/");
