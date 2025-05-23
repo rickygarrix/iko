@@ -153,7 +153,7 @@ export default function Header({ locale, messages }: Props) {
             {/* 投稿 */}
             <Link href="/posts" className="w-12 h-12 flex flex-col items-center justify-center">
               <div className="w-6 h-6 relative">
-                <Image src="/header/post.svg" alt="投稿" fill className="object-contain" />
+                <Image src="/header/Vector.svg" alt="投稿" fill className="object-contain" />
               </div>
               <span className="text-[10px] text-zinc-900">投稿</span>
             </Link>
@@ -170,8 +170,8 @@ export default function Header({ locale, messages }: Props) {
             <div
               onClick={handleMapClick}
               className={`w-12 h-12 flex flex-col items-center justify-center ${effectiveLocale === "ja"
-                  ? "hover:scale-105 active:scale-95 cursor-pointer"
-                  : "opacity-50 cursor-not-allowed"
+                ? "hover:scale-105 active:scale-95 cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
                 }`}
             >
               <div className="w-6 h-6 relative">

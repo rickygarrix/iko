@@ -317,20 +317,30 @@ export default function MyPage() {
             <div className="flex gap-4">
               <button
                 onClick={async () => {
+                  if (!user?.id) {
+                    alert("ユーザー情報が取得できません");
+                    return;
+                  }
+
                   if (!name.trim()) {
                     setNameError("名前を入力してください");
                     return;
                   }
+
+                  // ⭐️ ここに追加
+                  console.log("アップデート対象のID:", user?.id);
+
                   const updates = {
-                    id: user?.id,
+                    id: user.id,
                     name,
                     instagram,
                     avatar_url: avatarUrl,
                     updated_at: new Date().toISOString(),
                   };
+
                   const { error } = await supabase.from("user_profiles").upsert(updates);
                   if (error) {
-                    alert("更新に失敗しました");
+                    alert("プロフィールの更新に失敗しました");
                     console.error(error);
                   } else {
                     alert("プロフィールを更新しました");
@@ -340,7 +350,7 @@ export default function MyPage() {
                 className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
               >
                 保存する
-              </button>
+              </button>d
               <button
                 onClick={() => setIsEditing(false)}
                 className="flex-1 border border-gray-400 text-gray-600 py-2 rounded hover:bg-gray-100"
