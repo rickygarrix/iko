@@ -7,6 +7,7 @@ import NewPostModal from "@/components/NewPostModal";
 import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 type Store = { id: string; name: string };
@@ -24,6 +25,7 @@ type Post = {
   body: string;
   created_at: string;
   user_id: string;
+  image_url?: string | null; // ← 追加
   store?: { id: string; name: string };
   post_likes?: { user_id: string }[];
   user?: { id: string; name?: string; avatar_url?: string } | null;
@@ -48,6 +50,7 @@ export default function StorePostPage() {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const router = useRouter();
   const [reportedPostIds, setReportedPostIds] = useState<string[]>([]);
+  const handleCloseEdit = () => setEditingPost(null);
 
   useEffect(() => {
     const initialize = async () => {
@@ -104,10 +107,7 @@ export default function StorePostPage() {
     const { data, error } = await supabase
       .from("posts")
       .select(`
-        id,
-        body,
-        created_at,
-        user_id,
+        id, body, created_at, user_id, image_url,
         store:stores!posts_store_id_fkey(id, name),
         post_likes(user_id),
         post_tag_values(value, tag_category:tag_categories(key, label, min_label, max_label))
@@ -137,10 +137,12 @@ export default function StorePostPage() {
         post_tag_values: post.post_tag_values?.map((tag: any) => ({
           value: tag.value,
           tag_category: tag.tag_category,
-        })),
+        })) ?? [],
       };
     });
 
+    // 🔽 不要な重複を防ぐためリセット（任意）
+    setPosts([]);
     setPosts(enrichedPosts);
   };
 
@@ -219,8 +221,11 @@ export default function StorePostPage() {
             post={editingPost}
             stores={stores}
             tagCategories={tagCategories}
-            onClose={() => setEditingPost(null)}
-            onUpdated={fetchPosts}
+            onClose={handleCloseEdit}
+            onUpdated={async () => {
+              await fetchPosts();
+              handleCloseEdit();
+            }}
           />
         )}
 
@@ -229,6 +234,22 @@ export default function StorePostPage() {
         <ul className="mt-4 mb-16 flex flex-col items-center space-y-6">
           {posts.map((post) => (
             <li key={post.id} className="bg-white border p-4 rounded shadow w-full max-w-[700px]">
+
+              {/* 投稿画像表示（あれば） */}
+              {post.image_url && (
+                <div className="relative w-full h-48 mb-4">
+                  <Image
+                    src={post.image_url}
+                    alt="投稿画像"
+                    fill
+                    className="object-cover rounded"
+                    sizes="100vw"
+                    unoptimized
+                  />
+                </div>
+              )}
+
+              {/* ユーザー情報 */}
               <div className="flex items-center gap-3 mb-2">
                 <img
                   src={post.user?.avatar_url ?? "/default-avatar.svg"}
@@ -258,38 +279,53 @@ export default function StorePostPage() {
                 </div>
               </div>
 
+              {/* 店舗名 */}
               <p
                 className="text-sm text-gray-700 mb-1 cursor-pointer hover:underline"
                 onClick={() => router.push(`/stores/${post.store?.id}`)}
               >
                 店舗：{post.store?.name ?? "（不明）"}
               </p>
+
+              {/* 本文 */}
               <p className="mb-2">{post.body}</p>
 
+              {/* タグ情報 */}
               <div className="text-sm text-gray-600 space-y-1 mb-2">
-                {post.post_tag_values?.map((tag) => (
-                  <p key={tag.tag_category.key}>
-                    {tag.tag_category.label}：{tag.value}（{tag.tag_category.min_label}〜{tag.tag_category.max_label}）
+                {post.post_tag_values?.map((tag, index) => (
+                  <p key={`${tag.tag_category.key}-${index}`}>
+                    {tag.tag_category.label}：{tag.value}（
+                    {tag.tag_category.min_label}〜{tag.tag_category.max_label}）
                   </p>
                 ))}
               </div>
 
+              {/* メタ情報・アクション */}
               <div className="flex items-center justify-between text-gray-500 text-xs mt-2">
                 <small>{new Date(post.created_at).toLocaleString()}</small>
                 <div className="flex items-center gap-4">
                   {user?.id === post.user_id ? (
                     <>
-                      <button onClick={() => setEditingPost(post)} className="text-green-600 hover:underline">
+                      <button
+                        onClick={() => setEditingPost(post)}
+                        className="text-green-600 hover:underline"
+                      >
                         編集
                       </button>
-                      <button onClick={() => handleDeletePost(post.id)} className="text-red-500 hover:underline">
+                      <button
+                        onClick={() => handleDeletePost(post.id)}
+                        className="text-red-500 hover:underline"
+                      >
                         削除
                       </button>
                     </>
                   ) : reportedPostIds.includes(post.id) ? (
                     <span className="text-red-400 text-sm">🚨 通報済み</span>
                   ) : (
-                    <button onClick={() => handleReportPost(post.id)} className="text-red-600 hover:underline">
+                    <button
+                      onClick={() => handleReportPost(post.id)}
+                      className="text-red-600 hover:underline"
+                    >
                       通報
                     </button>
                   )}

@@ -11,6 +11,7 @@ import EditPostModal from "@/components/EditPostModal";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
+import type { TagCategory } from "@/types/tagCategory";
 
 export default function MyPage() {
   const { data: session } = useSession();
@@ -27,6 +28,8 @@ export default function MyPage() {
   const [postCount, setPostCount] = useState(0);
   const [receivedLikeCount, setReceivedLikeCount] = useState(0);
   const router = useRouter();
+  const [stores, setStores] = useState<Store[]>([]);
+  const [tagCategories, setTagCategories] = useState<TagCategory[]>([]);
 
   // 投稿数
   const fetchPosts = async (userId: string) => {
@@ -57,6 +60,19 @@ export default function MyPage() {
     setMyPosts(normalized);
     setPostCount(normalized.length);
   };
+
+  const fetchStores = async () => {
+    const { data } = await supabase
+      .from("stores")
+      .select("id, name, address, latitude, longitude, genre_ids, is_published"); // ← 足りないフィールドを追加
+    if (data) setStores(data);
+  };
+
+  const fetchTagCategories = async () => {
+    const { data } = await supabase.from("tag_categories").select("*");
+    if (data) setTagCategories(data);
+  };
+
 
   // いいねした投稿
   const fetchLikedPosts = async (userId: string) => {
@@ -180,6 +196,8 @@ export default function MyPage() {
       await fetchPosts(activeUserId);
       await fetchLikedPosts(activeUserId);
       await fetchReceivedLikes(activeUserId);
+      await fetchStores();
+      await fetchTagCategories();
       await fetchFollowedStores(activeUserId);
     };
 
@@ -427,12 +445,12 @@ export default function MyPage() {
         {editingPost && (
           <EditPostModal
             post={editingPost}
-            stores={[]}
-            tagCategories={[]}
+            stores={stores}
+            tagCategories={tagCategories}
             onClose={() => setEditingPost(null)}
-            onUpdated={() => {
+            onUpdated={async () => {
+              await fetchPosts(user?.id || "");
               setEditingPost(null);
-              location.reload();
             }}
           />
         )}
