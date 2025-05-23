@@ -9,7 +9,7 @@ type Props = {
   stores: Store[];
   tagCategories: TagCategory[];
   onClose: () => void;
-  onUpdated: () => Promise<void>; // fetchPosts を待機するため Promise
+  onUpdated: () => Promise<void>;
 };
 
 type Store = { id: string; name: string };
@@ -46,86 +46,88 @@ export default function EditPostModal({
   const handleUpdate = async () => {
     setLoading(true);
 
-    let newImageUrl = imageUrl;
+    try {
+      let newImageUrl = imageUrl;
 
-    if (imageFile) {
-      const fileExt = imageFile.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${post.id}/${fileName}`;
+      // 画像アップロード処理
+      if (imageFile) {
+        const ext = imageFile.name.split(".").pop();
+        const fileName = `${Date.now()}.${ext}`;
+        const filePath = `${post.id}/${fileName}`;
 
-      // 古い画像がある場合は削除（失敗しても続行）
-      if (post.image_url) {
-        const oldPath = post.image_url.split("/").slice(-2).join("/");
-        await supabase.storage.from("post-images").remove([oldPath]);
+        if (post.image_url) {
+          const oldPath = post.image_url.split("/").slice(-2).join("/");
+          await supabase.storage.from("post-images").remove([oldPath]);
+        }
+
+        const { error: uploadError } = await supabase.storage
+          .from("post-images")
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw new Error("画像のアップロードに失敗しました");
+
+        const { data: urlData } = supabase.storage
+          .from("post-images")
+          .getPublicUrl(filePath);
+        newImageUrl = urlData?.publicUrl || "";
       }
 
-      const { error: uploadError } = await supabase.storage
-        .from("post-images")
-        .upload(filePath, imageFile);
+      // 投稿の本体情報を更新
+      const { error: updateError } = await supabase
+        .from("posts")
+        .update({
+          body,
+          store_id: storeId,
+          image_url: newImageUrl,
+        })
+        .eq("id", post.id);
 
-      if (uploadError) {
-        alert("画像のアップロードに失敗しました");
-        setLoading(false);
-        return;
+      if (updateError) throw new Error("投稿の更新に失敗しました");
+
+      // タグ削除（即時整合性のため delay）
+      await supabase.from("post_tag_values").delete().eq("post_id", post.id);
+      await new Promise((res) => setTimeout(res, 300));
+
+      // タグの upsert
+      const tagInserts = Object.entries(tagValues)
+        .map(([key, value]) => {
+          const cat = tagCategories.find((c) => c.key === key);
+          if (!cat) return null;
+          return {
+            post_id: post.id,
+            tag_category_id: cat.id,
+            value,
+          };
+        })
+        .filter(
+          (item): item is { post_id: string; tag_category_id: string; value: number } => !!item
+        );
+
+      const seen = new Set<string>();
+      const filtered = tagInserts.filter((item) => {
+        const key = `${item.post_id}_${item.tag_category_id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      if (filtered.length > 0) {
+        const { error: upsertError } = await supabase
+          .from("post_tag_values")
+          .upsert(filtered, {
+            onConflict: "post_id,tag_category_id", // ← カンマ区切りで文字列
+          });
+
+        if (upsertError) throw new Error("タグの更新に失敗しました");
       }
 
-      const { data: urlData } = supabase.storage
-        .from("post-images")
-        .getPublicUrl(filePath);
-      newImageUrl = urlData?.publicUrl || "";
-    }
-
-    // 投稿内容更新
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({
-        body,
-        store_id: storeId,
-        image_url: newImageUrl,
-      })
-      .eq("id", post.id);
-
-    if (updateError) {
-      alert("投稿の更新に失敗しました");
+      await onUpdated();
+      onClose();
+    } catch (err: any) {
+      alert(err.message || "更新に失敗しました");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // タグ削除 → 挿入（連続処理）
-    const { error: deleteError } = await supabase
-      .from("post_tag_values")
-      .delete()
-      .eq("post_id", post.id);
-
-    if (deleteError) {
-      console.error("タグ削除失敗:", deleteError);
-    }
-
-    // 最小遅延を加える（Supabaseの即時整合性の問題対策）
-    await new Promise((res) => setTimeout(res, 300));
-
-    const tagInserts = Object.entries(tagValues).map(([key, value]) => {
-      const cat = tagCategories.find((c) => c.key === key);
-      return {
-        post_id: post.id,
-        tag_category_id: cat?.id,
-        value,
-      };
-    });
-
-    const { error: insertError } = await supabase
-      .from("post_tag_values")
-      .insert(tagInserts);
-
-    if (insertError) {
-      alert("タグ更新に失敗しました");
-      setLoading(false);
-      return;
-    }
-
-    await onUpdated(); // ← fetchPosts を await で確実に反映
-    setLoading(false);
-    onClose();
   };
 
   return (
@@ -133,7 +135,6 @@ export default function EditPostModal({
       <div className="bg-white p-6 rounded-lg w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-bold">投稿を編集</h2>
 
-        {/* 店舗選択 */}
         <select
           value={storeId}
           onChange={(e) => setStoreId(e.target.value)}
@@ -147,7 +148,6 @@ export default function EditPostModal({
           ))}
         </select>
 
-        {/* 本文 */}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -155,7 +155,6 @@ export default function EditPostModal({
           rows={3}
         />
 
-        {/* タグ入力 */}
         <div className="space-y-3">
           {tagCategories.map((cat) => (
             <div key={cat.id}>
@@ -178,7 +177,6 @@ export default function EditPostModal({
           ))}
         </div>
 
-        {/* 画像変更 */}
         <div className="mt-4 space-y-2">
           <label className="text-sm font-medium">画像（変更する場合）</label>
           {imageUrl && !imageFile && (
@@ -203,7 +201,6 @@ export default function EditPostModal({
           />
         </div>
 
-        {/* 操作ボタン */}
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="text-gray-500">
             キャンセル
