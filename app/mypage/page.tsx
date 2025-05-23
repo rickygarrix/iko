@@ -358,7 +358,11 @@ export default function MyPage() {
           ) : (
             <ul className="space-y-2">
               {storeFollows.map((store) => (
-                <li key={store.id} className="border p-3 rounded bg-white">
+                <li
+                  key={store.id}
+                  className="border p-3 rounded bg-white text-blue-600 hover:underline cursor-pointer"
+                  onClick={() => router.push(`/stores/${store.id}`)}
+                >
                   {store.name}
                 </li>
               ))}

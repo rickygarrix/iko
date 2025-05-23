@@ -18,8 +18,8 @@ type TagCategory = {
 };
 
 type Props = {
-  stores?: Store[]; // 任意：投稿画面などで複数選択肢がある場合
-  selectedStore?: Store; // 任意：店舗詳細ページなどで特定の店舗に固定投稿
+  stores?: Store[];
+  selectedStore?: Store;
   tagCategories: TagCategory[];
   user: User;
   onClose: () => void;
@@ -40,46 +40,66 @@ export default function NewPostModal({
   const [tags, setTags] = useState<Record<string, number>>(
     Object.fromEntries(tagCategories.map((cat) => [cat.key, 3]))
   );
+  const [image, setImage] = useState<File | null>(null);
 
   const handleSubmit = async () => {
-    if (!body || !user || !storeId) return;
+    if (!body || !storeId) return;
     setLoading(true);
 
+    // 投稿データ挿入（画像なしで先に）
     const { data: inserted, error } = await supabase
       .from("posts")
-      .insert([
-        {
-          user_id: user.id,
-          body,
-          is_public: true,
-          store_id: storeId,
-        },
-      ])
-      .select("id");
+      .insert([{ user_id: user.id, body, store_id: storeId }])
+      .select("id")
+      .single();
 
-    if (error || !inserted?.[0]?.id) {
+    if (error || !inserted?.id) {
       console.error("投稿エラー:", error?.message);
       setLoading(false);
       return;
     }
 
-    const postId = inserted[0].id;
+    const postId = inserted.id;
+
+    // 画像アップロード
+    let image_url = null;
+    if (image) {
+      const ext = image.name.split(".").pop();
+      const fileName = `${Date.now()}.${ext}`;
+      const filePath = `${postId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("post-images")
+        .upload(filePath, image);
+
+      if (uploadError) {
+        console.error("画像アップロード失敗:", uploadError.message);
+      } else {
+        const { data: publicData } = supabase.storage
+          .from("post-images")
+          .getPublicUrl(filePath);
+        image_url = publicData.publicUrl;
+
+        // 投稿に画像URLを追加更新
+        await supabase
+          .from("posts")
+          .update({ image_url })
+          .eq("id", postId);
+      }
+    }
+
+    // タグ登録
     const tagInserts = tagCategories.map((cat) => ({
       post_id: postId,
       tag_category_id: cat.id,
       value: tags[cat.key],
     }));
+    await supabase.from("post_tag_values").insert(tagInserts);
 
-    const { error: tagError } = await supabase
-      .from("post_tag_values")
-      .insert(tagInserts);
-
-    if (tagError) {
-      console.error("タグ登録エラー:", tagError.message);
-    }
-
+    // リセット
     setBody("");
     setStoreId("");
+    setImage(null);
     onPosted();
     onClose();
     setLoading(false);
@@ -90,7 +110,7 @@ export default function NewPostModal({
       <div className="bg-white p-6 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
         <h2 className="text-lg font-bold mb-4">新規投稿</h2>
 
-        {/* 店舗選択 or 固定表示 */}
+        {/* 店舗選択 or 固定 */}
         {selectedStore ? (
           <div className="mb-2 text-center font-semibold text-sm text-gray-700">
             📍 投稿先：{selectedStore.name}
@@ -110,6 +130,7 @@ export default function NewPostModal({
           </select>
         )}
 
+        {/* 本文 */}
         <textarea
           className="w-full border rounded p-2 text-black mb-2"
           rows={4}
@@ -118,6 +139,15 @@ export default function NewPostModal({
           placeholder="投稿内容を入力"
         />
 
+        {/* 画像アップロード */}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImage(e.target.files?.[0] ?? null)}
+          className="mb-4"
+        />
+
+        {/* タグ */}
         {tagCategories.map((cat) => (
           <div key={cat.id} className="mb-4">
             <p className="text-sm mb-1">

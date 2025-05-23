@@ -6,13 +6,12 @@ import type { Post } from "@/types/post";
 
 type Props = {
   post: Post;
-  stores: Store[]; // ⭐ 追加
-  tagCategories: TagCategory[]; // ⭐ 追加
+  stores: Store[];
+  tagCategories: TagCategory[];
   onClose: () => void;
   onUpdated: () => void;
 };
 
-// 仮の型（必要に応じて共通化してOK）
 type Store = { id: string; name: string };
 type TagCategory = {
   id: string;
@@ -22,19 +21,15 @@ type TagCategory = {
   max_label: string;
 };
 
-export default function EditPostModal({ post, onClose, onUpdated }: Props) {
-  const [body, setBody] = useState(post.body);
+export default function EditPostModal({ post, stores, tagCategories, onClose, onUpdated }: Props) {
+  const [body, setBody] = useState(post.body || "");
   const [storeId, setStoreId] = useState(post.store?.id || "");
   const [tagValues, setTagValues] = useState<{ [key: string]: number }>({});
-  const [stores, setStores] = useState<Store[]>([]);
-  const [tagCategories, setTagCategories] = useState<TagCategory[]>([]);
+  const [imageUrl, setImageUrl] = useState(post.image_url || "");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchStores();
-    fetchTagCategories();
-
-    // 初期評価のセット
     const initialValues: { [key: string]: number } = {};
     post.post_tag_values?.forEach((tag) => {
       initialValues[tag.tag_category.key] = tag.value;
@@ -42,67 +37,70 @@ export default function EditPostModal({ post, onClose, onUpdated }: Props) {
     setTagValues(initialValues);
   }, [post]);
 
-  const fetchStores = async () => {
-    const { data } = await supabase.from("stores").select("id, name");
-    if (data) setStores(data);
-  };
-
-  const fetchTagCategories = async () => {
-    const { data } = await supabase.from("tag_categories").select("*");
-    if (data) setTagCategories(data);
-  };
-
   const handleUpdate = async () => {
     setLoading(true);
 
-    // 本体更新
+    // Step 1: Upload new image if provided
+    let newImageUrl = imageUrl;
+    if (imageFile) {
+      const filePath = `${post.id}/${imageFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("post-images")
+        .upload(filePath, imageFile, { upsert: true });
+
+      if (uploadError) {
+        alert("画像のアップロードに失敗しました");
+        setLoading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(filePath);
+      newImageUrl = urlData?.publicUrl || "";
+    }
+
+    // Step 2: Update post
     const { error: updateError } = await supabase
       .from("posts")
-      .update({ body, store_id: storeId })
+      .update({
+        body,
+        store_id: storeId,
+        image_url: newImageUrl,
+      })
       .eq("id", post.id);
 
     if (updateError) {
-      alert("更新に失敗しました");
+      alert("投稿の更新に失敗しました");
       console.error(updateError);
       setLoading(false);
       return;
     }
 
-    // 評価削除 → 再挿入（上書き）
+    // Step 3: Update tag values
     await supabase.from("post_tag_values").delete().eq("post_id", post.id);
-
     const tagInserts = Object.entries(tagValues).map(([key, value]) => {
-      const category = tagCategories.find((c) => c.key === key);
+      const cat = tagCategories.find((c) => c.key === key);
       return {
         post_id: post.id,
-        tag_category_id: category?.id,
+        tag_category_id: cat?.id,
         value,
       };
     });
-
-    const { error: tagError } = await supabase.from("post_tag_values").insert(tagInserts);
+    await supabase.from("post_tag_values").insert(tagInserts);
 
     setLoading(false);
-
-    if (tagError) {
-      alert("評価の更新に失敗しました");
-      console.error(tagError);
-    } else {
-      onUpdated();
-      onClose();
-    }
+    onUpdated();
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center">
-      <div className="bg-white p-6 rounded-md w-full max-w-md space-y-4">
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-bold">投稿を編集</h2>
 
-        {/* 店舗選択 */}
         <select
           value={storeId}
           onChange={(e) => setStoreId(e.target.value)}
-          className="w-full border rounded p-2"
+          className="w-full border p-2 rounded"
         >
           <option value="">店舗を選択</option>
           {stores.map((store) => (
@@ -112,46 +110,57 @@ export default function EditPostModal({ post, onClose, onUpdated }: Props) {
           ))}
         </select>
 
-        {/* コメント */}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="w-full border rounded p-2"
+          className="w-full border p-2 rounded"
           rows={3}
         />
 
-        {/* 評価スライダー */}
-        {tagCategories.map((tag) => (
-          <div key={tag.id} className="space-y-1">
-            <label className="text-sm font-medium">{tag.label}</label>
-            <input
-              type="range"
-              min={1}
-              max={5}
-              value={tagValues[tag.key] || 3}
-              onChange={(e) =>
-                setTagValues({ ...tagValues, [tag.key]: Number(e.target.value) })
-              }
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>{tag.min_label}</span>
-              <span>{tag.max_label}</span>
+        <div className="space-y-3">
+          {tagCategories.map((cat) => (
+            <div key={cat.id}>
+              <label className="text-sm font-medium">{cat.label}</label>
+              <input
+                type="range"
+                min={1}
+                max={5}
+                value={tagValues[cat.key] || 3}
+                onChange={(e) => setTagValues({ ...tagValues, [cat.key]: +e.target.value })}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>{cat.min_label}</span>
+                <span>{cat.max_label}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
-        {/* ボタン */}
-        <div className="flex justify-end gap-3 pt-2">
-          <button onClick={onClose} className="text-gray-600">
-            キャンセル
-          </button>
+        <div className="mt-4 space-y-2">
+          <label className="text-sm font-medium">画像（変更する場合）</label>
+          {imageUrl && !imageFile && (
+            <img src={imageUrl} alt="preview" className="rounded w-full object-cover max-h-48" />
+          )}
+          {imageFile && (
+            <img src={URL.createObjectURL(imageFile)} alt="new" className="rounded w-full max-h-48 object-cover" />
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+            className="w-full border p-1 text-sm"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="text-gray-500">キャンセル</button>
           <button
             onClick={handleUpdate}
-            className="bg-blue-600 text-white px-4 py-1 rounded"
             disabled={loading}
+            className="bg-blue-600 text-white px-4 py-1 rounded disabled:opacity-50"
           >
-            更新
+            {loading ? "更新中..." : "更新"}
           </button>
         </div>
       </div>

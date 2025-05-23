@@ -3,8 +3,14 @@ export type Post = {
   body: string;
   created_at: string;
   user_id: string;
-  store?: { id: string; name: string };
-  post_likes?: { user_id: string }[];
+  image_url?: string | null;
+  store?: {
+    id: string;
+    name: string;
+  };
+  post_likes?: {
+    user_id: string;
+  }[];
   post_tag_values?: {
     value: number;
     tag_category: {
@@ -14,7 +20,6 @@ export type Post = {
       max_label: string;
     };
   }[];
-  // ✅ 追加
   user?: {
     id: string;
     name?: string;
